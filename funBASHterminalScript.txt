@@ -1,0 +1,1 @@
+## here we will keep our scripts for learning about the BASH terminal and other Linux tools
