@@ -4385,6 +4385,41 @@ ssh -p 30089 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
 
 ## let's try dd
 ## we'll need to detach the volume from our model, attach it to the 
-## new vm, and attach another volume, :
+## new vm, and attach another volume
 
+## and de.NBI saved us there.  
 
+## first day is only linux and login
+
+## our try one machine (say Kai's machine)
+
+## find our keys, got them on our 
+
+lsblk ## looks like here:
+
+prvKey=/media/daniel/1830bdb2-352f-4183-ab70-2519b79d7f0f/keys/danHomekey4denbi
+
+ssh -p 30089 -i $prvKey ubuntu@129.70.51.6 
+
+## works. great
+
+## we need a script to teach about all of the intro concepts
+
+## maybe a line for each of the commands in the syllabus, 
+## and special character
+
+## log into your own linux machine 
+
+## look around the filetree systems
+
+## make a file, look at it, move it, delete it
+
+## log into de.NBI machine
+
+## file transfers between de.NBI and local
+
+## plant a file on the github repo, have everyone get it,
+
+## get a file from de.NBI machine into excel on your own machine
+
+wget 
