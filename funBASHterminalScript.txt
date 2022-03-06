@@ -1,1 +1,5 @@
 ## here we will keep our scripts for learning about the BASH terminal and other Linux tools
+
+## first step is get your WSL setup working! After that, let's look at the following:
+
+
