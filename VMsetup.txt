@@ -1,0 +1,4390 @@
+############## non-conda installs #############
+
+## these will need to be added to some environments
+## sudo apt-get install libtbb2 ## sometimes bowtie2 asks for this
+## pip3 install checkm-genome ## checkM not really on conda
+## sudo apt install make ## CCMetagen needed make. But do I need CCmetagen?
+
+############## non-conda installs #############
+
+## let's see if we can get onto VMs they's given us, and get ubuntu on there, etc. etc.
+
+## they want to use ssh keys... should we use a new one? The other I have is for 
+## github. 
+
+## let's make a new one. 
+
+ssh-keygen -t rsa -f denbiTestVM
+
+## our vm will be called FunMicZero
+
+## we'll add a volume of 500 g (why not?), called "funMicZeroVolume1"
+
+## so mountpath is /vol/funMicZeroVolume1
+
+## we'll start by trying to use the published mock community metagenome 
+## from 
+
+## Singer, E., Andreopoulos, B., Bowers, R. et al. Next generation sequencing data of a defined microbial mock community. Sci Data 3, 160081 (2016). 
+
+## available at:
+https://doi.org/10.1038/sdata.2016.81
+
+## this seems very convenient, perhaps a better option than
+## randomly sampling published, single genomes. 
+
+## the ncbi github site (?? so NIH is beholden to microsoft now for public access,
+## version control, etc?? jeez.) for SRAtoolkit is here:
+
+https://github.com/ncbi/sra-tools/wiki/02.-Installing-SRA-Toolkit
+
+## they have ubuntu binaries:
+
+wget --output-document sratoolkit.tar.gz http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz 
+
+vdb-config --interactive
+
+## great, installed, now how to get our data...
+## we'll use just the short read libraries for the moment.
+
+## these are:
+
+## Illumina shotgun sequences generated from MBARC-26
+## BioSample: SAMN05213576; Sample name: Illumina shotgun sequences; SRA: SRS1496147
+## BioProject PRJNA324704 
+## SRA run accession: SRR3656745
+
+## jeezus so many identifiers
+
+## I guess we need this SRA run accession is what we need for the download...
+## change our max download size setting
+
+prefetch --max-size 41943040 SRR3656745
+
+## great. we can start developing our work environment, etc. 
+
+## next steps would be get the mock community on our VM. 
+## start a conda environment, build it up as we go. 
+## try repeating felix's pipelines
+
+## today, just try to get SRAtools and the mock community 
+## data onto the VM
+
+conda install anaconda-clean
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+
+## how do we mount our extra storage space?
+
+/vol/funMicZeroVolume1
+
+sudo mount /dev/vdd /vol/funMicZeroVolume1
+
+## oops, looks like they did it for us
+
+## in general, this storage space is at 
+
+cd /vol/funMicZeroVolume1
+
+## permissions seem to be an issue here, especially for conda. 
+
+## will have to look into this more, this may be a good post to follow:
+https://askubuntu.com/questions/1104865/change-permissions-of-windows-mounted-folder-from-linux
+
+## great, can we put our sequences there?
+
+## looks like it will work. Can we set a script or ssh command that will run without us?
+
+## try ssh first 
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 "/home/ubuntu/.sratoolkit/sratoolkit.2.11.2-ubuntu64/bin/prefetch --max-size 41943040 SRR3656745"
+
+## the file to watch is here:
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 "ls -lh /vol/funMicZeroVolume1/sra_temp/sra/SRR3656745.sra.tmp"
+## great. Tomorrow we can convert to fastq. 
+
+## github repo useful here? 
+
+## looks like it worked. now convert to a fasta, I guess? 
+
+## Felix taught about SRA tools. I wonder if we can install them using 
+## bioconda, or other conda channel. I think it's time to 
+## start a conda environment, and collect all the tools we need. 
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 
+
+## time to install anaconda, I guess:
+## https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
+
+
+wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
+bash Anaconda3-2021.11-Linux-x86_64.sh
+
+## looks good. Disabled the auto activation of conda with:
+conda config --set auto_activate_base false
+
+conda config --add channels bioconda
+
+## from here, stay in an environment?:
+
+
+conda create --name tryFunMic
+
+conda activate tryFunMic
+
+## as a first test, let's uninstall sratools and install it only 
+## using bioconda
+
+conda install -c bioconda sra-tools 
+
+## looks okay, now we should be able to do our sra to fasta conversion
+## inside conda
+
+## looks like every time we restart we need to remount our volume.
+## we probably should have unmounted it. Not sure how sensitive these
+## virtual devices are, it all seems so imaginary. 
+
+sudo mount /dev/vdd /vol/funMicZeroVolume1
+
+fastq-dump SRR3656745
+## mysteriously, that works
+## how does this new SRA know where to look? Haven't configured it...
+## i think when we directly enter a file location with fastq-dump,
+## it does the double job of downloading and conversion. So it is 
+## not even aware of our old manual configuration, etc. 
+
+## so we have to be careful with our outputs, since our working 
+## directory is so small:
+
+fastq-dump --help | less
+
+sudo mkdir /vol/funMicZeroVolume1/MBARC-26-illumina
+sudo chmod 777 MBARC-26-illumina/
+
+fastq-dump SRR3656745 --outdir /vol/funMicZeroVolume1/MBARC-26-illumina & ## PID 13762
+
+ls -l /vol/funMicZeroVolume1/MBARC-26-illumina
+
+ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina
+
+## working. but that will take forever...
+
+## in the meantime, can we keep track of installations in this conda environment
+
+## get our current environment in a yaml file:
+
+conda env export > testEnv.yml
+
+conda env export
+
+## can we get metawrap inside a conda environment? This hurts my head a little,
+## metawrap is sort of a virtual environment itself.
+
+## but its on bioconda...
+
+conda install -c bioconda metawrap
+
+## yeah, it didn't like that. a bunch of dependencies are screwed up.
+
+## what does Metawrap offer us? It's mostly the standard tools like kraken2, 
+## with a hybridized binning process with maxbin, metabat2, and concoct
+
+## it's worth reading up to see if people are actually still using this.
+
+## the process seems to survive even if I log out. That's unexpected:
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 "ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina"
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 "ls -l /vol/funMicZeroVolume1/MBARC-26-illumina"
+
+## great.  
+
+## so the I think the strategy here is to plod through felix's pipeline, and 
+## install as we go. At the end we should have an environment that works for 
+## the class, that we can use to build the other vms. 
+
+## and we can keep a record of the memory usage, to report back to the denbi
+## folks. 
+
+## so we are waiting on that download. the next step is qc, so might as well 
+## get fastqc on there:
+
+conda install -c bioconda fastqc
+
+######### shopping for second dataset #############
+
+## put that on hold, let's get a possible second dataset, 
+## I think we need a script for this. 
+
+## the influent libraries from Chu 2018 might be a good place to
+## start:
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 
+
+conda activate tryFunMic
+
+cd /vol/funMicZeroVolume1/MBARC-26-illumina/ChuLibs
+
+## we need these runs:
+
+prefetch SRR5570996
+
+sudo prefetch SRR5570996
+
+( fastq-dump \
+SRR5570996 \ 
+SRR5570997 \ 
+SRR5570998 \ 
+SRR5570999 \ 
+SRR5571000 \ 
+SRR5571001 \ 
+SRR5571002 &) &
+
+## to check on these: 
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"ls -ltrh /vol/funMicZeroVolume1/MBARC-26-illumina/ChuLibs"
+
+## well, that downloaded kind of weirdly... more inspection needed, later
+
+## here is the new alias on my computer for logging into the remote VM
+
+funmic
+
+## can we do the check sum on the data from the MBARC data?
+
+## don't see them. It's probably buried in some sort of specialized
+## SRA tools file format. Ugn. 
+
+## Can we confirm the number of reads match, at least?
+
+/vol/funMicZeroVolume1/MBARC-26-illumina/SRR3656745.fastq
+
+
+ls -l /vol/funMicZeroVolume1/MBARC-26-illumina/SRR3656745.fastq
+
+ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina/SRR3656745.fastq
+## 45 gig, which is much bigger than listed on SRA, probably 
+## because they are giving the compressed SRA format file size
+
+## do number of reads match up?
+## I think there are 17398200 reads in this run...
+## which is 17,398,200
+## at least, that is as high as the run previewer will go...
+
+## so, do we find that many reads in our file
+
+## interesting, they number up to 70577403
+
+head SRR3656745.fastq
+
+tail SRR3656745.fastq
+
+grep "@SRR" SRR3656745.fastq | wc -l
+## this gives us 70621124 reads
+## or 70,621,124
+
+grep "@SRR3656745" SRR3656745.fastq | wc -l
+## this gives us 70685638 reads
+## or 70,685,638
+
+wc -l SRR3656745.fastq
+## 282945083
+## 282,945,083
+
+## divided by 4, we get 70,736,270.75
+
+## so something is funky. 
+## line breaks or something. 
+
+## but it all kind of points to ~70 million reads. 
+
+## this gives us 70621124 reads
+## or 70,621,124
+
+## oh, shoot, this is still downloading. That explains all the above.
+## Luckily, it looks like moving the file didn't interrupt the download. 
+## Never tried to move a downloading file before...
+
+## it looks like origal raw read number was 355,875,608
+
+## if that's the case, we're not even close yet, maybe 20% there. 
+
+## I think we will need to 
+
+## anyway, look at it with fastqc
+
+## this is a good chance to figure out how to record memory use
+
+conda activate tryFunMic
+
+## make shorter test file, since download is not complete:
+
+mkdir testFastqcOut
+
+head -n 1000000 /vol/funMicZeroVolume1/MBARC-26-illumina/reads/SRR3656745.fastq > example.fastq
+
+fastqc \
+    -o testFastqcOut \
+    example.fastq
+
+## get from our local comp, to look at in a browser
+
+sftp -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 
+
+## nope, didn't work. With wiki page on the denbi cloud has no mention of sftp, only scp
+
+## so, let's try scp:
+
+scp -i /home/daniel/.ssh/denbiTestVM -p 30228 ubuntu@129.70.51.6:/home/ubuntu/testFastqcOut/example_fastqc.html example_fastqc.html
+scp -i /home/daniel/.ssh/denbiTestVM -p 30228 ubuntu@129.70.51.6:/home/ubuntu/testFastqcOut/example_fastqc.html .
+## these are not working. why not?
+
+## this works:
+touch test.txt
+scp -i /home/daniel/.ssh/denbiTestVM -P 30228 test.txt ubuntu@129.70.51.6:/home/ubuntu/
+
+## there is a little gotchya there. You need a capital P for the port with scp,
+## unlike ssh 
+## and denbi regulates port use. so important. we get one port. 
+
+## how about downloading?
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30228 ubuntu@129.70.51.6:/home/ubuntu/testFastqcOut/example_fastqc.html .
+
+## okay, that works. 
+
+/usr/bin/time -v \
+
+## we can track our memory usages with the time program. 
+
+\time -v \
+fastqc \
+    -o  testFastqcOut \
+    example.fastq \
+&
+
+fastqc \
+    -o /vol/funMicZeroVolume1/MBARC-26-illumina/fastqcOut \
+    /vol/funMicZeroVolume1/MBARC-26-illumina/reads/SRR3656745.fastq \
+&
+
+ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina/reads/
+
+## to track the download now
+ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina/reads/
+
+## we have a long way to go on that. I think we will need to subset, 
+## to something like a quarter of that, if possible. 
+
+## hmm, so what's the strategy there...let the download run go, 
+## it will get there, eventually. 
+
+## in the meantime, work through the pipeline with as large of a subset 
+## as possible. 
+
+## when the full dataset is in, experiment with the largest possible 
+## dataset that gives us enough mags to work with  
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina/reads/"
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"ls -l /vol/funMicZeroVolume1/MBARC-26-illumina/reads/"
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"grep @SRR3656745 /vol/funMicZeroVolume1/MBARC-26-illumina/reads/SRR3656745.fastq | wc -l"
+
+## 76969103
+
+## tomorrow maybe let's set up a prefetch. This is ridiculous.
+
+## for the moment, let's grab what we have and use this as a representative
+## subsample:
+
+
+ls -lh /vol/funMicZeroVolume1/MBARC-26-illumina/reads/SRR3656745.fastq 
+
+ls -l /vol/funMicZeroVolume1/MBARC-26-illumina/reads/SRR3656745.fastq 
+
+
+# cp /vol/funMicZeroVolume1/MBARC-26-illumina/reads/SRR3656745.fastq /vol/funMicZeroVolume1/smallMBARC.fastq
+
+
+
+## let's trim this down to 20 gig or so. ideally, this be a random process, rather than shaving 
+## off the top reads.
+
+## but I really don't want to spend the time to write that script.
+
+ls -lh /vol/funMicZeroVolume1/smallMBARC.fastq
+wc -l /vol/funMicZeroVolume1/smallMBARC.fastq
+
+## 442930408 lines / 4 = 110,732,602 reads 
+## =110,732,602 reads = 71 gig
+## so 1 gig = 1.6 million reads or so. 
+## if we want ~20 million reads, this means
+## ~30 million reads, or 120 million lines?
+
+
+cd /vol/funMicZeroVolume1/
+
+head -n 120000000 smallMBARC.fastq > smallerMBARC.fastq
+
+head smallerMBARC.fastq
+
+120,000,000
+
+tail smallerMBARC.fastq
+
+## close enough
+
+####### checking for illumina tags, primers, and phix ###########
+
+## some good websites
+## https://github.com/bxlab/metaWRAP/blob/master/Module_descriptions.md
+## https://bioinformaticsworkbook.org/dataAnalysis/GenomeAssembly/PhiXContaminationCheck.html#gsc.tab=0
+
+## https://github.com/FelixKrueger/TrimGalore/blob/master/Docs/Trim_Galore_User_Guide.md
+
+## it looks like metawraps read_qc module is mostly based on (1) Trim-galore and 
+## (2) Fastqc
+
+## we've already installed fastqc, let's get trim galore
+## trim galore is used with default settings
+
+conda activate tryFunMic
+
+conda install -c bioconda trim-galore
+
+## looks like trim galore is itself a wrapper, of 
+## fastqc and cutadapt. wrappers upon wrappers
+
+## it looks like trim-galore has all possible varieties 
+## of illumina adaptors built into its search algorithms
+
+## so try it out? 
+
+\time -v trim_galore smallerMBARC.fastq
+
+## time report:
+
+#################################################################
+## Command being timed: "trim_galore smallerMBARC.fastq"
+## User time (seconds): 690.98
+## System time (seconds): 53.11
+## Percent of CPU this job got: 108%
+## Elapsed (wall clock) time (h:mm:ss or m:ss): 11:24.30
+## Average shared text size (kbytes): 0
+## Average unshared data size (kbytes): 0
+## Average stack size (kbytes): 0
+## Average total size (kbytes): 0
+## Maximum resident set size (kbytes): 17016
+## Average resident set size (kbytes): 0
+## Major (requiring I/O) page faults: 0
+## Minor (reclaiming a frame) page faults: 9973
+## Voluntary context switches: 2276523
+## Involuntary context switches: 1379628
+## Swaps: 0
+## File system inputs: 0
+## File system outputs: 38229136
+## Socket messages sent: 0
+## Socket messages received: 0
+## Signals delivered: 0
+## Page size (bytes): 4096
+## Exit status: 0
+#################################################################
+
+## trim_galore found the illumina adapters in there, that is great
+## nice program.
+
+## great. So what's next?
+
+## I think download for the mbarc reads is finally done?
+## the file is listed as 173,981,994 million reads
+
+## this makes sense, because it looks like they paired the reads for
+## us. 173,981,994 x 2 = 347,963,988 reads, exactly the amount
+## of reads listed in the paper after QC. 
+
+## this means they have done the pairing for us. And probably 
+## all the other qc steps listed in the paper
+
+## don't know if that changes our plan much. Keep pushing through 
+## with the subsetted reads to the end of the pipeline,
+## to get the software package in place. 
+
+## then run with the full data, and subset until it is possible 
+## given the resources allocated to us. 
+
+## or better yet, until the resource use is reasonable, so we
+## don't annoy de.nbi.
+
+## so what's next?
+
+## where were our cleaned reads?:
+
+conda activate tryFunMic
+ 
+cd /vol/funMicZeroVolume1/
+
+ls -l smallerMBARC_trimmed.fq
+
+## make fastqc reports, to compare the new and the old:
+
+## old reads:
+
+#mkdir untrimmedFastqcOut 
+fastqc \
+    -o  untrimmedFastqcOut \
+    smallerMBARC.fastq \
+& ## pid 51094
+
+#mkdir trimmedFastqcOut 
+fastqc \
+    -o  trimmedFastqcOut \
+    smallerMBARC_trimmed.fq \
+&
+
+## get these for local lookat:
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30228 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/untrimmedFastqcOut/smallerMBARC_fastqc.html .
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30228 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/trimmedFastqcOut/smallerMBARC_trimmed_fastqc.html .
+
+####### dedup #######
+
+## we haven't deduplicated our sequences. Forgot about this. 
+## so back up, samtools has methods for this...
+
+## fastqc is showing significant duplication, ~%20 of our reads...
+
+## can we dedup with samtools?
+
+conda install -c bioconda samtools
+
+conda uninstall samtools
+
+samtools fixmate -h
+
+## says we're lacking some libraries. But don't 
+## want to fuck with the shared libraries, 
+## this person fixed this by soft-linking to existing older
+## libraries in the conda environment:
+
+## https://programmerah.com/samtools-run-error-error-while-loading-shared-libraries-libcrypto-so-1-0-0-or-libncurses-so-5-or-libtinfow-so-5-28066/
+
+## we're missing:
+libcrypto.so.1.0.0
+
+## first, try a newer version:
+
+conda install -c bioconda samtools=1.9 
+
+## might need this
+conda install -c bioconda samtools=1.9 --force-reinstall
+
+## it seems like that fixed things. But it changed some dependencies
+## did that break anything?
+
+## so far we've use sra tools, fastqc. trim_galore
+
+## anyway, seems ok. 
+## how do we dedup an unaligned read set? can samtools do this?
+
+## actually, it seems like the field has progressed since
+## my last genome assembly 
+
+## and some folks don't feel the need for deduplication. 
+
+## as per here: https://opensourcebiology.eu/2021/09/03/do-you-need-a-deduplication-tool-for-fastq-data-in-fastp/
+
+## so, let's skip for the moment. 
+
+####### assembly #######
+## the next big package is megahit. This is probably the most memory intensive, also
+
+conda install -c bioconda megahit
+
+## should be something as simple as?
+
+conda activate assembly
+MBARCreads=/vol/funMicZeroVolume1/MBARC-26-illumina/reads/smallerMBARC_trimmed.fq
+megahit -r $MBARCreads -o megahitMBARCOut
+
+## wow. Right away we're at 230 gig memory use?:
+
+## but our time report never shows more 7 gig...can this be?
+
+## the time report is here:
+
+########################################
+
+
+        Command being timed: "megahit -r smallerMBARC_trimmed.fq -o megahitOut"
+        User time (seconds): 134561.04
+        System time (seconds): 101.84
+        Percent of CPU this job got: 2527%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:28:48
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 6956728
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 1
+        Minor (reclaiming a frame) page faults: 13563277
+        Voluntary context switches: 1454942
+        Involuntary context switches: 302416
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 17804992
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+#####################################
+
+## so I guess it used a lot of virtual memory, maybe not that 
+## much actual RAM at any given time...I wonder which matters
+## most to the folks at denbi? I'll tell them both.
+
+funmic 
+
+conda activate tryFunMic
+
+## look at results with quast:
+
+conda install -c bioconda quast 
+
+## gives this error:
+######################################################################
+
+UnsatisfiableError: The following specifications were found to be incompatible with each other:
+
+Output in format: Requested package -> Available versionsThe following specifications were found to be incompatible with your system:
+
+  - feature:/linux-64::__glibc==2.31=0
+  - feature:|@/linux-64::__glibc==2.31=0
+  - quast -> libgcc-ng[version='>=9.3.0'] -> __glibc[version='>=2.17']
+
+Your installed version is: 2.31
+
+
+
+######################################################################
+## don't understand, that doesn't look like a conflict
+
+## just try to install the libgcc-ng utilities anyway:
+
+conda install -c conda-forge libgcc-ng
+
+## and that appears to have let us install quast
+
+## use metaquast to generate a report:
+
+## should be something like this?
+
+\time -v metaquast /vol/funMicZeroVolume1/megahitOut/final.contigs.fa
+
+        Command being timed: "metaquast /vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
+        User time (seconds): 1789.78
+        System time (seconds): 68.23
+        Percent of CPU this job got: 185%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 16:43.66
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 1088488
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 24
+        Minor (reclaiming a frame) page faults: 5847523
+        Voluntary context switches: 10246875
+        Involuntary context switches: 4634
+        Swaps: 0
+        File system inputs: 8
+        File system outputs: 7876072
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+## one gig memory used. so far so good.
+
+## get these results locally to look at
+
+tar -zcvf quasts.tar.gz results_2022_01_20_12_33_01
+
+## locally:
+scp -i /home/daniel/.ssh/denbiTestVM -P 30228 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/quast_results/quasts.tar.gz .
+
+gunzip quasts.tar.gz
+tar -xf quasts.tar
+
+conda install -c bioconda bandage 
+
+## while we're getting into genomic metrics, this article has great graphics 
+## for N50 and L50 
+
+
+###### bandage/ de Bruijn graphs ########
+
+## bandage has binaries for mac, linux, and windows
+https://rrwick.github.io/Bandage/
+
+## we're going to need to spend some time getting all students
+## to point of being able to communicate with their 
+## vm. Mac should be easy, but I still would like to test 
+
+## bandage installed without errors. but this is a gui program, what inputs does
+## it need?
+
+## documentation for contig2fastg:
+
+## https://toolshed.g2.bx.psu.edu/repository/display_tool?repository_id=550f3d446ad9f40d&tool_config=%2Fsrv%2Ftoolshed%2Fmain%2Fvar%2Fdata%2Frepos%2F004%2Frepo_4245%2Fmegahit_contig2fastg.xml&changeset_revision=4ec5b3777508
+
+## and on megahit's github 
+## https://github.com/voutcn/megahit/wiki/Visualizing-MEGAHIT's-contig-graph
+
+megahit_toolkit contig2fastg --help
+
+## bandage needs a fastg format for the intermediate contigs
+## felix did the following to make the conversions:
+
+
+cd /vol/funMicZeroVolume1/megahitOut/intermediate_contigs
+
+rm *.final.contigs.fa
+
+for F in k*.contigs.fa; do 
+    BASE=$(echo $F | cut -d'k' -f 2 | cut -d'.' -f 1)
+    megahit_toolkit contig2fastg ${BASE} $F > K${BASE}.fastg
+done
+
+## let's grab these intermediate contigs:
+
+mkdir fastg
+
+mv *.fastg fastg/
+
+tar -zcvf fastg.tar.gz fastg
+
+/vol/funMicZeroVolume1/megahitOut/intermediate_contigs/fastg.tar.gz
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30228 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/megahitOut/intermediate_contigs/fastg.tar.gz .
+
+tar -xf fastg.tar.gz
+
+## we should be able to view these with bandage?:
+
+Bandage &
+
+## what is the next step for the vm? kraken2:
+
+#################### kraken2 ########################
+
+## okay, Felix recommends using kraken2 to check for interesting
+## genes before continuing with genome refinement
+
+## the first step for kraken2 is to download and construct 
+## their standard database
+
+## https://github.com/bxlab/metaWRAP/blob/master/installation/database_installation.md
+## https://github.com/DerrickWood/kraken2/wiki/Manual#kraken-2-databases
+
+kraken2-build
+
+## can we build a database with just bacteria, archea, viruses, and fungi?
+
+DBNAME="/vol/funMicZeroVolume1/k2standDB"
+
+kraken2-build --download-taxonomy --skip-maps --db $DBNAME ## doesn't work
+
+kraken2-build --download-library archaea --use-ftp --db $DBNAME ## doesn't work
+
+kraken2-build --download-taxonomy --use-ftp --db $DBNAME ## doesn't work
+
+kraken2-build --download-library viral --db $DBNAME ## doesn't work
+
+kraken2-build --standard --threads 24 --db $DBNAME ## nothing works!!!
+
+## ugh. try again tomorrow. Maybe skip step for the moment. 
+
+## an alternative may be clark:
+https://anaconda.org/bioconda/clark
+
+## but all these classifiers rely on NCBI on some level, I'd bet. 
+
+## ugh, back to this on monday. 
+
+##kraken2-build --standard \
+
+##  --db /vol/funMicZeroVolume1/k2standDB \
+##  --threads 24
+
+
+conda install -c bioconda kraken2 
+
+\time kraken2 
+
+## kraken is fucked. NCBI changed their file structure,
+## kraken's developer skipped town, p
+## Skip for now.
+
+conda uninstall kraken2 
+
+## try ccmetagen instead?
+
+############## CCMetagen ################
+## https://github.com/vrmarcelino/CCMetagen
+
+## make an environment for this:
+
+conda create -n CCMetagen  
+
+conda activate CCMetagen  
+
+conda install -c bioconda ccmetagen 
+
+## needed to install make here:
+sudo apt install make 
+
+## get database
+ktUpdateTaxonomy.sh
+
+## what is this file?
+less ./anaconda3/envs/CCMetagen/bin/ktUpdateTaxonomy.sh
+
+## what do we need to do to run on our data?
+
+## first, we need to KMA to align the contigs 
+## to an NCBI database
+
+## or I guess they have done the work here, 
+## though it is a bit out of date:
+
+## it saves us some steps, and maybe sidesteps the 
+## issues with the recent NCBI restructure...
+
+(wget 'https://cloudstor.aarnet.edu.au/plus/s/vfKH9S8c5FVGBjV/download?path=%2F&files=ncbi_nt_no_env_11jun2019.zip' &) &
+
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"ls -l '/vol/funMicZeroVolume1/download?path=%2F&files=ncbi_nt_no_env_11jun2019.zip'"
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"ls -lh '/vol/funMicZeroVolume1/download?path=%2F&files=ncbi_nt_no_env_11jun2019.zip'"
+
+SAMPLE=/vol/funMicZeroVolume1/megahitOut/final.contigs.fa
+
+dB
+
+kma -i $SAMPLE -o sample_out_kma -t_db $db -t 10 -1t1 -mem_mode -and
+
+kma -h
+
+CCMetagen.py
+
+############################################
+
+## try out 
+
+conda activate tryFunMic
+
+conda install -c bioconda das_tool 
+
+conda install -c conda-forge r-base=4.1 --force-reinstall 
+
+conda install -c conda-forge r-base 
+ 
+conda install das_tool
+
+conda search ruby
+
+conda install -c pkgs/main ruby=2.5.1
+
+## nope
+## ugh this is all so fucked. Too many versioning issues everywhere. 
+
+## maybe we should isolate the steps, each has its own environment. 
+
+## so for instance, I think we have a working environment up to 
+## 
+
+## I think this will work better because we can then work backword 
+## from each program.
+
+## the environment becomes more brittle the more applications 
+## we try to do with it. 
+
+## but we are also up against a timeline, I need to get back to the
+## denbi folks
+
+## so the best thing here is to start a new environment for next
+## steps.
+
+## I think next steps are the binning steps. 
+
+## let's try MaxBin2, metaBAT2, CONCOCT, ABAWACA
+
+## so try a new environment just for binning?
+
+conda deactivate
+
+conda create --name binning
+
+conda activate binning
+
+conda config --add channels bioconda
+
+
+
+
+
+########### CONCOCT ################
+
+conda search CONCOCT
+
+conda install CONCOCT
+
+conda install -c conda-forge libgcc-ng
+
+libgcc=7.2.0=h69d50b8_2
+libgcc-ng=9.3.0=h5101ec6_17
+
+## this is fucked. Do we need a new environment just for concoct?
+
+conda deactivate
+
+conda create --name concoct
+
+conda activate concoct
+
+conda install concoct
+
+## fails. the dependency is meaningless
+
+
+
+## when installing on base, the python version
+## seems old:
+
+  - concoct -> python[version='2.7.*|>=2.7,<2.8.0a0|>=3.6,<3.7.0a0|>=3.8,<3.9.0a0|>=3.7,<3.8.0a0|>=3.5,<3.6.0a0']
+
+## here is the prescribed method on the concoct 
+## https://concoct.readthedocs.io/en/latest/installation.html
+## site. Can't see how this is different, but let's 
+## try:
+
+conda remove --name concoct --all
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+conda create -n concoct_env python=3 concoct
+
+## huh, that worked. also needed the following math library:
+conda install mkl
+
+####### their workflow goes like this: ###########
+## cut_up_fasta.py original_contigs.fa -c 10000 -o 0 --merge_last -b contigs_10K.bed > contigs_10K.fa
+## concoct_coverage_table.py contigs_10K.bed mapping/Sample*.sorted.bam > coverage_table.tsv
+## concoct --composition_file contigs_10K.fa --coverage_file coverage_table.tsv -b concoct_output/
+## merge_cutup_clustering.py concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+## mkdir concoct_output/fasta_bins
+## extract_fasta_bins.py original_contigs.fa concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+
+cd /vol/funMicZeroVolume1
+conda activate concoct_env 
+
+cont="/vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
+samtools index rawReads2ContigsSorted.bam
+cut_up_fasta.py $cont -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+concoct_coverage_table.py concoctContigs_10K.bed rawReads2ContigsSorted.bam > coverage_table.tsv
+## the meat of it is here:
+\time -v concoct \
+    --composition_file concoctContigs_10K.fa \
+    --coverage_file coverage_table.tsv \
+    -t 20 \
+    -b concoct_output/
+
+### time results ######
+        Command being timed: "concoct --composition_file concoctContigs_10K.fa --coverage_file coverage_table.tsv -t 20 -b concoct_output/"
+        User time (seconds): 174.95
+        System time (seconds): 2.37
+        Percent of CPU this job got: 454%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:38.99
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 253956
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 105011
+        Voluntary context switches: 14962
+        Involuntary context switches: 39244
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 60296
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+
+merge_cutup_clustering.py concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+
+mkdir concoct_output/fasta_bins
+
+extract_fasta_bins.py $cont concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+
+## this looks like concoct found 44 mags? ...
+
+
+########### ABAWACA ################
+
+conda activate binning
+
+conda search ABAWACA
+
+conda install abawaca
+
+abawaca
+
+abawaca --help
+## wow, that's worthless. It's like the dude wrote it for his buddies. 
+
+mkdir abaOut
+
+cont="/vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
+
+abawaca $cont abaOut
+
+## ugh... why no documentation? 3 nature papers and no documentation?
+
+## is that science? fuck that.
+
+########### groopm ################
+
+conda install -c bioconda groopm 
+
+## ah that is a very old piece of software
+## let it lie....
+
+########### groopm ################
+
+## seems to work. 
+
+## 3 out of 4 ain't bad. 
+
+## assuming they work, can we get DAS_tool going? or some sort 
+## of bin refining software?
+
+########## maxbin2  #################
+
+## the manual is the readme file here:
+less /home/ubuntu/anaconda3/pkgs/maxbin2-2.2.7-he1b5a44_0/opt/MaxBin-2.2.7/README.txt
+
+## our contig file from megahit is here:
+
+
+## to generate abundance, I guess we need the raw reads? 
+## I don't see options from the megahit program to 
+## generate contig abundances, so let's do this
+
+cont="/vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
+rawReads=/vol/funMicZeroVolume1/smallerMBARC_trimmed.fq
+
+
+conda search MaxBin2
+
+## https://sourceforge.net/projects/maxbin2/
+
+less /home/ubuntu/anaconda3/pkgs/maxbin2-2.2.7-he1b5a44_0/opt/MaxBin-2.2.7/README.txt
+
+
+conda activate binning
+
+conda install MaxBin2
+
+## to run, use:
+
+
+run_MaxBin.pl
+
+#mkdir maxbin_out
+cd /vol/funMicZeroVolume1/maxbin_out
+
+
+\time -v run_MaxBin.pl -contig $cont -reads $rawReads -out maxBinOut 
+
+########## max bin time info ########:
+
+2 hours 37 minutes and 49 seconds.
+
+        Command being timed: "run_MaxBin.pl -contig /vol/funMicZeroVolume1/megahitOut/final.contigs.fa -reads /vol/funMicZeroVolume1/smallerMBARC_trimmed.fq -out maxBinOut"
+        User time (seconds): 9334.86
+        System time (seconds): 93.42
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 2:37:49
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 589204
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 7966503
+        Voluntary context switches: 1422443
+        Involuntary context switches: 46651
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 37269304
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+
+## error from bowtie:
+## /home/ubuntu/anaconda3/envs/binning/bin/bowtie2-align-s: error while loading shared libraries: libtbb.so.2: cannot open shared object file: No such file or directory
+
+## conda doesn't seem to have this library. seems like we have to 
+## install it from elsewhere, and try not to forget this?:
+
+sudo apt-get install libtbb2
+
+## let that run a while, and start some of the other 
+## binning software
+
+######## metabat2 ##########
+
+## https://bitbucket.org/berkeleylab/metabat/src/master/
+
+conda activate binning
+
+conda search metaBAT2
+
+conda install metabat2
+
+## to use:
+metabat2
+conda activate binning
+
+
+metabat2 --help | less
+
+## they have a script that wraps the metabat program,
+## so you don't have to generate an abundance file yourself
+
+cont="/vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
+bam="/vol/funMicZeroVolume1/rawReads2ContigsSorted.bam"
+\time runMetaBat.sh $cont $bam
+
+## that was inexpensive and lightning fast.
+## I wonder how good it was...
+
+## it found 31 bins, more than maxbin, which found 21
+## it's also 5 genomes than are actually present (MBARC-26)
+## metabat2 needs an abundance file, in the form of sorted bams. I think this means bowtie
+## bowtie2 was installed with something else.
+
+
+######## bowtied to make abundance files ##########
+
+bowtie2
+
+## we need to align our raw reads against the metagenome assembly file. How do we do this?
+
+## max bin is doing something like this...will it save the outputs so we can use them 
+## here? I think the file would be 
+
+ls -l /vol/funMicZeroVolume1/maxbin_out/maxBinOut.sam0
+
+ls -lh /vol/funMicZeroVolume1/maxbin_out/maxBinOut.sam0
+
+## if maxbin doesn't erase this when it is done. For now let's keep an eye on it
+
+
+## and now...?  
+
+## need to shift over to graham work soon. 
+
+## two tasks - try to install concoct, and set up remote bowtie command
+## in case maxbin deletes our sam file
+
+## bowtie 
+
+## just as we suspected, maxbin doesn't keep the SAM it generates, 
+## so we need another, at least for  metabat.
+## maybe also concoct? yup...
+
+## first we need to build an index from our assembly:
+
+bowtie2-build ref.fasta indexDir/ref
+
+\time -v bowtie2-build $cont alignments2contigs/contIndDir
+
+## time outputs
+Total time for backward call to driver() for mirror index: 00:00:59
+        Command being timed: "bowtie2-build /vol/funMicZeroVolume1/megahitOut/final.contigs.fa alignments2contigs/contIndDir"
+        User time (seconds): 116.89
+        System time (seconds): 1.86
+        Percent of CPU this job got: 99%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:58.81
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 589328
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 545100
+        Voluntary context switches: 13
+        Involuntary context switches: 324
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 318624
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+## so 0.5 gig RAM. fine
+
+
+## not sure if we should use local or end-to-end alignments. 
+## let's try local
+
+
+rawReads="/vol/funMicZeroVolume1/smallerMBARC_trimmed.fq"
+
+\time -v bowtie2 -x btIndDir/contIndDir -U $rawReads -S rawReads2Contigs.sam  --local
+
+29996765 reads; of these:
+  29996765 (100.00%) were unpaired; of these:
+    26649 (0.09%) aligned 0 times
+    882760 (2.94%) aligned exactly 1 time
+    29087356 (96.97%) aligned >1 times
+99.91% overall alignment rate
+        Command being timed: "bowtie2 -x btIndDir/contIndDir -U /vol/funMicZeroVolume1/smallerMBARC_trimmed.fq -S rawReads2Contigs.sam --local"
+        User time (seconds): 38611.30
+        System time (seconds): 107.24
+        Percent of CPU this job got: 100%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 10:44:24
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 166412
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 44942
+        Voluntary context switches: 3806146
+        Involuntary context switches: 110013
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 40896608
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+(
+
+## also surprisingly modest memory requirements
+## I'm starting to think that Max resident set size
+## is the wrong stat to follow
+
+## so now, can we sort this SAM file? 
+## still in the binning environment:
+
+conda install -c bioconda samtools 
+
+conda install -c bioconda samtools=1.9 --force-reinstall
+
+## that was too complex, messed with some low level 
+## packages, shared libraries.
+
+## so samtools in its own environment?:
+
+conda create --name samtools_env
+
+conda activate samtools_env
+
+conda install -c bioconda samtools
+
+conda install -c bioconda samtools=1.9 --force-reinstall
+
+## looks like we may need bedtools, this may be a good place for that:
+conda install -c bioconda bedtools
+
+samtools
+
+samtools sort --help
+
+\time -v samtools sort -l 1 \
+    -@20 \
+    -o rawReads2ContigsSorted.bam \
+    -O BAM \
+    -T /tmp/sortRR2C \
+    rawReads2Contigs.sam
+
+
+
+## VSZ = 19118480 RSS = 16483876 samtools is using ~16 gig physical memory, 
+## according to ps. does this line up with the report from time?:
+
+        Command being timed: "samtools sort -l 1 -@20 -o rawReads2ContigsSorted.bam -O BAM -T /tmp/sortRR2C rawReads2Contigs.sam"
+        User time (seconds): 500.93
+        System time (seconds): 92.82
+        Percent of CPU this job got: 140%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 7:03.79
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 16984044
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 4283327
+        Voluntary context switches: 381530
+        Involuntary context switches: 1258
+        Swaps: 0
+        File system inputs: 136
+        File system outputs: 21777464
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+## yup. That's reassuring. 
+
+## looks like we will also need to index our file for 
+## concoct
+
+\time -v samtools sort -l 1 \
+
+bam="/vol/funMicZeroVolume1/rawReads2ContigsSorted.bam"
+samtools index rawReads2ContigsSorted.bam rawReads2ContigsIndexed.bai
+
+## so now we have a sorted bam that should be useful for metabat and concoct
+
+###### das_tool ########
+
+## https://github.com/cmks/DAS_Tool
+
+conda activate binning
+
+conda install das_tool
+## nope. either a python or gcclib error...
+
+conda deactivate 
+
+conda create --name bin_refine
+
+conda activate bin_refine
+
+conda install python=3.6
+
+conda install das_tool
+
+## didn't work
+conda remove bin_refine
+
+## meh. work on it later. May need to install outside of 
+## conda: https://github.com/cmks/DAS_Tool
+
+## error reported is:
+## Specifications:
+## 
+##   - das_tool -> python=3.6
+##   - das_tool -> python[version='>=2.7,<2.8.0a0|>=3.5,<3.6.0a0|>=3.7,<3.8.0a0|>=3.6,<3.7.0a0']
+## 
+## Your python: python=3.9
+
+## start over, with a new environment
+
+conda activate das_env
+
+## as before, strict adherence to the 
+## installation instructions helps
+
+conda create -n das_env
+
+conda activate das_env
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+conda install -c bioconda das_tool
+
+## das_tool needs a sequence aligner. It's default is 
+## usearch but I don't think we have a license
+
+## another option is diamond:
+
+##conda install -c bioconda diamond 
+## already in there!
+
+## as far as data, do we have what Das tool needs? 
+
+DAS_Tool
+
+DAS_Tool \
+    -i sample_data/sample.human.gut_concoct_scaffolds2bin.tsv,\
+    sample_data/sample.human.gut_maxbin2_scaffolds2bin.tsv,\
+    sample_data/sample.human.gut_metabat_scaffolds2bin.tsv,\
+    sample_data/sample.human.gut_tetraESOM_scaffolds2bin.tsv\
+    -l concoct,maxbin,metabat,tetraESOM \
+    -c sample_data/sample.human.gut_contigs.fa \
+    -o sample_output/DASToolRun1
+
+## DAS_tool needs a scaffold (contig?) to bin map for each of our metagenomes
+
+
+cont="/vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
+
+head -n 3 $cont
+head  -n 3 /vol/funMicZeroVolume1/concoct_output/fasta_bins/18.fa
+
+## which of our methods provided a scaffolds2bin type file?
+
+## with maxbin, the manual makes it sound like it should be the summary file:
+
+ls /vol/funMicZeroVolume1/maxbin_out/maxBinOut.summary
+
+less /vol/funMicZeroVolume1/maxbin_out/maxBinOut.summary
+
+## actually, with programs that generate their own fasta mags, 
+## das_tools needs to generate a tsv, I guess
+## they have their own scripts
+
+Fasta_to_Scaffolds2Bin.sh \
+    -e fasta \
+    -i /vol/funMicZeroVolume1/maxbin_out \
+        > /vol/funMicZeroVolume1/maxbin_out/maxbin_scaffolds2bin.tsv
+
+## great, and...
+## with metabat?
+
+cd final.contigs.fa.metabat-bins-20220127_120241
+
+Fasta_to_Scaffolds2Bin.sh \
+    -e fa \
+    -i /vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241 \
+        > /vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241/metabat_scaffolds2bin.tsv
+
+head /vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241/metabat_scaffolds2bin.tsv
+
+cd /vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241/
+
+## and concoct
+Fasta_to_Scaffolds2Bin.sh \
+    -e fa \
+    -i /vol/funMicZeroVolume1/concoct_output/fasta_bins \
+        > /vol/funMicZeroVolume1/concoct_output/concoct_scaffolds2bin.tsv
+
+
+ls -lh /vol/funMicZeroVolume1/concoct_output/concoct_scaffolds2bin.tsv
+
+## great
+
+conda activate das_env
+
+maxbin_scaffolds2bin=/vol/funMicZeroVolume1/maxbin_out/maxbin_scaffolds2bin.tsv
+metabat_scaffolds2bin=/vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241/metabat_scaffolds2bin.tsv
+concoct_scaffolds2bin=/vol/funMicZeroVolume1/concoct_output/concoct_scaffolds2bin.tsv
+finalContigs=/vol/funMicZeroVolume1/megahitOut/final.contigs.fa
+
+cd /vol/funMicZeroVolume1/dastoolWD
+
+\time -v DAS_Tool \
+    -i $maxbin_scaffolds2bin,$metabat_scaffolds2bin,$concoct_scaffolds2bin \
+    -l maxbin,metabat,concoct \
+    -t 20 \
+    --search_engine diamond \
+    -c $finalContigs \
+    --create_plots 1 \
+    --write_bin_evals 1 \
+    --write_bins 1 \
+    -o DASToolRun1
+
+
+        Command being timed: "DAS_Tool -i /vol/funMicZeroVolume1/maxbin_out/maxbin_scaffolds2bin.tsv,/vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241/metabat_scaffolds2bin.tsv,/vol/funMicZeroVolume1/concoct_output/concoct_scaffolds2bin.tsv -l maxbin,metabat,concoct -t 20 --search_engine diamond -c /vol/funMicZeroVolume1/megahitOut/final.contigs.fa --create_plots 1 --write_bin_evals 1 --write_bins 1 -o DASToolRun1"
+        User time (seconds): 831.36
+        System time (seconds): 12.14
+        Percent of CPU this job got: 1209%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:09.73
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 302268
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 1968376
+        Voluntary context switches: 15616
+        Involuntary context switches: 50041
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 932208
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+
+## looks like DAS_Tool brought us back down to 20 bins. that's a good sign
+
+## so what is next? bin reassembly:
+
+############### bin reassembly ###########################
+
+## the goal here is to reassemble the original reads against 
+## our new  
+
+## the metawrap package go through each of the bins,
+## and realigns the initial reads to them. 
+
+## it then uses spades to re-assemble the bins from 
+## these reads. 
+
+## they use bwa. can we use bowtie?
+
+## start an environment. We will use spades, not metaspades,
+## plus bowtie plus checkm
+
+## start with the most demanding software 
+## and work backward
+
+## the heaviest program is checkM, I think:
+
+
+conda remove --name  --all
+
+conda create -n reassemble_env python=3.9
+conda activate reassemble_env
+conda install numpy matplotlib pysam
+conda install hmmer prodigal pplacer
+pip3 install checkm-genome ## broken
+## install goes ok, but then there is a python library incomplatibility 
+## try giving checkm its own environment, below
+
+## but spades is probably also pretty complex? see if they will fit in the 
+### same env:
+
+conda install -c bioconda spades
+
+## can we also get samtools?
+conda install -c bioconda samtools
+## nope. breaks things. 
+## best to use the sam_tools env we already have
+
+## seems happy for the moment
+
+## and is bowtie in there somewhere?
+
+
+which bowtie2
+## nope
+
+conda install -c bioconda bowtie2
+
+bowtie2 
+
+## try with one bin, our largest:
+
+mkdir /vol/funMicZeroVolume1/reassemblyWD
+
+cd /vol/funMicZeroVolume1/reassemblyWD
+
+ls -lShr /vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins
+## 13_sub.fa
+
+sub13=/vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins/13_sub.fa
+
+## index this bin:
+
+\time -v bowtie2-build $sub13 sub13Ind
+## 0.1 gig RSS
+
+## the reads to align are here:
+reads=/vol/funMicZeroVolume1/smallerMBARC_trimmed.fq
+## we have our one test bin index here:
+## /vol/funMicZeroVolume1/reassemblyWD
+
+bowtie2 -x sub13Ind -U $reads -S rawReads2sub13.sam  --local
+
+## put these index files somewhere else...
+
+mkdir sub13Ind
+mv sub13Ind.* sub13Ind/
+
+\time -v bowtie2 -x sub13Ind/sub13Ind -U $reads -S rawReads2sub13.sam  --local
+## takes really long time...an hour or so
+
+## and...now how to extract only the aligned reads?:
+
+conda activate samtools_env
+
+\time -v samtools fastq -F 4 rawReads2sub13.sam > readsMapped2sub13.fastq
+
+## can we ask spades to work on this new fastq?
+
+conda activate reassemble_env
+
+sub13reads=/vol/funMicZeroVolume1/reassemblyWD/readsMapped2sub13.fastq
+spadeOutSub13=/vol/funMicZeroVolume1/reassemblyWD/sub13reassembly/
+
+\time -v spades.py -s $sub13reads --careful -o $spadeOutSub13
+
+## 15gig RAM
+## 30 minutes. But don't think I multi-threaded?
+
+## so that works great. To recap:
+
+
+sub13=/vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins/13_sub.fa
+reads=/vol/funMicZeroVolume1/smallerMBARC_trimmed.fq
+
+bowtie2-build $sub13 sub13Ind
+mkdir sub13Ind
+mv sub13Ind.* sub13Ind/
+bowtie2 -x sub13Ind/sub13Ind -U $reads -S rawReads2sub13.sam  --local
+conda activate samtools_env
+samtools fastq -F 4 rawReads2sub13.sam > readsMapped2sub13.fastq
+
+conda activate reassemble_env
+
+sub13reads=/vol/funMicZeroVolume1/reassemblyWD/readsMapped2sub13.fastq
+spadeOutSub13=/vol/funMicZeroVolume1/reassemblyWD/sub13reassembly/
+
+spades.py -s $sub13reads --careful -o $spadeOutSub13
+
+## then run the whole resulting directory of bins as fasta files 
+## and the original bins through checkM
+
+## this is memory and time intensive. I think we will need to script these 
+## so can we generalize the above code block for all of our 
+## bins that came out of DAS_Tools?
+
+###############################
+#!/bin/bash
+
+reassemblyWD=/vol/funMicZeroVolume1/reassemblyWD
+refinedBinFolder=/vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins
+reads=/vol/funMicZeroVolume1/smallerMBARC_trimmed.fq
+cd $reassemblyWD
+
+for refineBin_i in $refinedBinFolder/*
+do 
+    bn=$(basename $refineBin_i)
+    btInd_i=${bn%.fa}_ind
+    sam_i=${bn%fa}sam
+    fastq_i=${bn%fa}fq
+    spadeOut=${bn%.fa}_reassembled/
+    echo "working on: "$bn
+    conda activate reassemble_env
+    bowtie2-build $refineBin_i $btInd_i
+    bowtie2 -x $btInd_i -U $reads -S $sam_i  --local
+    conda activate samtools_env
+    samtools fastq -F 4 $sam_i > $fastq_i
+    rm $sam_i 
+    conda activate reassemble_env
+    spades.py -s $fastq_i --careful -o $spadeOut
+done
+
+################################################
+
+reassemblyWD=/vol/funMicZeroVolume1/reassemblyWD
+refinedBinFolder=/vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins
+reads=/vol/funMicZeroVolume1/smallerMBARC_trimmed.fq
+
+cd $reassemblyWD
+
+for refineBin_i in $refinedBinFolder/*
+do 
+    echo $refineBin_i
+done
+
+ls $refinedBinFolder
+
+ls -d $reassemblyWD*/
+
+## can this be run remotely?
+
+## looks like this stopped at 26.fa. 
+## move these out for the moment, rerun loop with remaining
+
+cd $refinedBinFolder
+
+## these are done:
+ls -d $reassemblyWD/*/
+
+0.fa
+11.fa
+13_sub.fa
+16.fa
+19.fa
+2.fa
+23.fa
+24.fa
+
+cd $refinedBinFolder
+
+doneReassemblies=(0.fa 11.fa 13_sub.fa 16.fa 19.fa 2.fa 23.fa 24.fa)
+for i in ${doneReassemblies[@]}; do
+    ls $i
+    mv $i ../alreadyReassembled/
+done
+
+
+## this leaves:
+26.fa
+3.fa
+36.fa
+38.fa
+42.fa
+43.fa
+44.fa
+4_sub.fa
+bin.10.fa
+bin.25.fa
+maxBinOut.012_sub.fa
+maxBinOut.015_sub.fa
+
+## this tells us what its working on...
+
+ls $reassemblyWD
+
+ls -d $reassemblyWD/*/
+
+ls $reassemblyWD/*sam
+
+ls $reassemblyWD/*.fq -l
+
+
+## I think we need to delete the same files as we go. 
+
+## can this be run remotely?
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"bash /vol/funMicZeroVolume1/reassemblyScript.sh"
+
+ssh -p 30228 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6 \
+"conda env list"
+
+## meh, looks like a mess. 
+
+## how about running it as a script
+
+bash reassemblyScript.sh &
+
+(bash reassemblyScript.sh &) &
+
+## nope, also really messy. not sure I have time to follow this. Let's just 
+## run it interactively 
+## for the class, this can be homework: everyone does one bin, then we combine
+
+## todo: try out ccmetagen
+## apply CheckM to the new and old
+## start thinking about classifying the bins
+
+## ccmetagen should be ready to go, right?
+## but it needs a HUGE data base... let's do this later?
+
+## so what can we do while the reassemblies run?
+
+###### try out checkM #######
+
+## https://github.com/Ecogenomics/CheckM/wiki
+
+## we thought we installed checkM in the reassemble_env,
+## but it fails. Maybe spades broke it?
+
+## try again here, in its own environment:
+
+conda create -n checkm python=3.9
+conda activate checkm
+conda install numpy matplotlib pysam 
+conda install hmmer prodigal pplacer
+pip3 install checkm-genome
+
+## not sure, do we still need to install the 
+## reference data?
+
+#checkm_data_dir=/vol/funMicZeroVolume1/reassemblyWD/checkm_data_dir
+
+checkm_data_dir=/vol/funMicZeroVolume1/checkm/checkm_data_dir
+cd $checkm_data_dir
+#wget 'https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz'
+#tar -xvf checkm_data_2015_01_16.tar.gz
+checkm data setRoot $checkm_data_dir
+
+## their recommended workflow
+
+## let's put three genomes, first assembly, refined assembly, and after reassembly
+## into a directory and take a look at them with fastm
+
+compare=/vol/funMicZeroVolume1/reassemblyWD/compare/
+
+ln -s /vol/funMicZeroVolume1/concoct_output/fasta_bins/0.fa $compare"0rawBin.fa"
+ln -s /vol/funMicZeroVolume1/dastoolWD/alreadyReassembled/0.fa $compare"0refinedBin.fa"
+ln -s /vol/funMicZeroVolume1/reassemblyWD/0_reassembled/contigs.fasta $compare"0reassembledBin.fa"
+
+cd /vol/funMicZeroVolume1/reassemblyWD/compare
+
+
+## I think we can use this directory to make some comparisons?
+
+## suggested workflow is as thusly:
+checkm tree <bin folder> <output folder>
+checkm tree_qa <output folder>
+checkm lineage_set <output folder> <marker file>
+checkm analyze <marker file> <bin folder> <output folder>
+checkm qa <marker file> <output folder>
+
+conda activate checkm
+
+cd $compare
+
+\time -v checkm tree -x fa -t 20 $compare ./checkMout
+## ~22 gig ram, ~5 min
+checkm tree_qa -h ## meh, let's not bother, its optional. maybe if this were actual data...
+\time -v checkm lineage_set ./checkMout 0markers
+## trivial resource usage
+
+checkm analyze -h
+
+checkm analyze -t 20 -x fa  0markers $compare <output folder>
+
+checkm lineage_wf -h
+
+## or can we just do this? a wrapper for all the above required commands
+\time -v checkm lineage_wf -t 20 -x fa $compare checkmOut
+## still ~20 gig. expensive for three little genomes. something to watch out for.
+## does it scale up with more genomes? or is the memory heavy part the 
+
+## maybe something to try later.
+
+## how can we look at our results?
+
+checkm qa -h
+
+cd $compare
+
+checkm qa 0markers checkmOut > checkMtestResults.txt
+
+## okay, reassemblies are finished. Let's reorganize and 
+## check them
+
+## let's undo the above reorganization of reassembled 
+## genomes
+
+alreadyAssembled=/vol/funMicZeroVolume1/dastoolWD/alreadyReassembled/
+
+mv $alreadyAssembled* $refinedBinFolder
+
+ls $refinedBinFolder
+
+#rm -r $alreadyAssembled
+
+reassemblyWD=/vol/funMicZeroVolume1/reassemblyWD
+## raw bins
+## from maxbin:
+maxbinBins=/vol/funMicZeroVolume1/maxbin_out/
+## from concoct:
+concoctBins=/vol/funMicZeroVolume1/concoct_output/fasta_bins/
+## from metabat:
+metabat=/vol/funMicZeroVolume1/final.contigs.fa.metabat-bins-20220127_120241/
+## refined bins from DAS
+refinedBinFolder=/vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins/
+## reassemblies following refinement, using spades:
+reassembledBins=/vol/funMicZeroVolume1/reassembledBins
+
+## for maxbins, it will be helpful to change the file extensions a bit
+
+ls $maxbinBins
+ls $maxbinBins*fasta
+ls $maxbinBins*fa
+
+for i in $maxbinBins*fasta; do
+    mv $i ${i%sta}
+done
+
+## the reassemblies are a little more difficult to extract
+## we have to extract these manually, place into another folder
+mkdir /vol/funMicZeroVolume1/reassembledBins
+reassembledBins=/vol/funMicZeroVolume1/reassembledBins
+cd /vol/funMicZeroVolume1/reassemblyWD
+for i in $(ls -d *_reassembled); do
+    cp $i"/contigs.fasta" $reassembledBins/$i.fa
+done
+## add this to the list above
+
+## there is the problem of DAS_tools not relabeling its refined
+## genomes. Let's add a tag to these to keep them separate:
+
+ls $refinedBinFolder
+
+cd $refinedBinFolder
+
+for i in *; do
+    mv $i das_$i
+done
+
+## could we have done that without a loop?
+
+cd 
+
+mkdir testmv
+
+## now, how can we evalute the above directories 
+## using checkM
+
+conda activate checkm
+cd /vol/funMicZeroVolume1
+
+
+binStages=(\
+    $maxbinBins \
+    $concoctBins \
+    $metabat \
+    $refinedBinFolder \
+    $reassembledBins\
+)
+
+for i in ${binStages[@]}; do
+    echo $i
+    ls $i
+done
+
+cd checkMout
+
+for i in ${binStages[@]}; do
+    echo $i
+    outDir=$(basename $i)_checkM
+    \time -v checkm lineage_wf -t 10 -x fa $i $outDir
+done
+
+## great, so how do they look?
+
+conda activate checkm
+
+cd checkMout
+
+for i in ${binStages[@]}; do
+    #echo $i
+    outDir=$(basename $i)_checkM
+    #echo $outDir
+    #ls -h $outDir/lineage.ms
+    checkm qa $outDir/lineage.ms $outDir >> checkMtestResults.txt
+done
+
+## wow. DAS refinement amazingly improved the genomes, and 
+## reassembly most definitely did not help. Made things worse,
+## actually. 
+
+
+## next steps: quant bins, classify bins, pathways
+
+## for quantification metawrap adapts salmon.
+## but it looks like I would have to script a lot to make
+## that work. 
+
+## I think we need another way. My two favorites right now
+## are metaphlan:
+## https://github.com/biobakery/MetaPhlAn/wiki/MetaPhlAn-3.0
+## that has the marker database. Marker based methods are 
+## nice for memory, as long as they keep their databases up to date.
+## https://github.com/biobakery/biobakery/wiki/metaphlan3#overview
+## or kaiju:
+## https://kaiju.binf.ku.dk/
+
+## but neither of these tries to use the MAGs, as far as I can 
+## tell. Oh well, not going to care too much about that. 
+
+## as far as pathways, what about humann?:
+## https://github.com/biobakery/biobakery/wiki/humann3
+
+## I assume it's also somehow marker based, with their own database...not sure though
+
+## it looks like we can do these two steps together (taxonomic profiling with abundances,
+## and metabolic profiling) with metaphlan/humann combination
+
+## humann needs metaphlan, so why not?.
+
+## I think we can hold of on the pathways until we apply to real world 
+## data. 
+
+## might also want to upload their genomes to kegg or koala or whatever,
+## so they can see what their mags might be contributing to the 
+## metagenome. 
+
+## if we can find MAGs in the data we use (chu?)
+
+
+
+## we also need to start checking the environmental dataset to make sure it 
+## works with this pipeline
+
+## so the plan:
+
+## run mock community through phlan, get chron-like diagram
+## see how it matches our MAGs and the actual MBARC26 species
+## figure out how to classify bins taxonomically
+## try out BlastKoala, etc on one or two genomes
+
+## then try the whole pipeline with the Chu dataset
+## and add on the humann analysis to see differences
+## between the before after of wastewater treatment
+
+##########  MetaPhlAn  ##########
+
+## https://github.com/biobakery/biobakery/wiki/humann3
+
+conda create --name mpa -c bioconda python=3.7 metaphlan
+
+conda install -c bioconda metaphlan
+
+conda activate mpa
+
+## meh, let's do humann and metaphlan in the same environment
+conda remove --name mpa --all
+## conda won't let me, maybe after the checkM usage stops,
+## conda may have locks on such things while running. 
+## as it should, I guess
+
+## but a new install should be okay. Does installing humann 
+## automatically install metaphlan?
+
+conda create --name biobak
+
+conda install -c biobakery humann
+
+## and conda is down. Looks like we are out of memory. We have used 
+## up the whole storage on the local storage of the vm
+
+## good to know for our future use. I will need to 
+## reinstall using the volume they've supplied
+
+## there is our afternoon....
+
+## what do we need to protect during this? Our 
+
+du -h --max-depth 2 | sort -h
+
+
+######### starting over on new machine ###########
+
+## for the moment, one VM is down. I attempted to 
+## restart it for upgrades and it won't wake up. 
+## They gave me another to play with way back
+## when I started it this, so let's start with that 
+## one
+
+## alias for that alias funmic2="ssh -p 30192 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6"
+
+
+## we detached the volume we were using from the 
+## the non-functioning vm, and attached it to the 
+## new VM (using the denbi cloud site for managing
+## instances)
+
+## mount it:
+
+sudo mkdir -p /vol/funMicZeroVolume1
+
+sudo mount /dev/vdd /vol/funMicZeroVolume1
+## added to .bashrc
+
+## added to bashrc:
+
+alias  vol="cd /vol/funMicZeroVolume1"
+
+## let's install anaconda on the volume this time, if possible
+
+wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
+
+bash Anaconda3-2021.11-Linux-x86_64.sh
+
+source /vol/funMicZeroVolume1/anaconda3/bin/activate 
+
+conda init 
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+####################################
+
+
+## great. so where were we?
+
+## we were trying to run checkm on all the genomes
+
+## we still haven't really resolved issues of taxonomic classification
+
+## let's try GtdbTK 
+
+####### GtdbTK ###########
+
+https://github.com/Ecogenomics/GtdbTk
+https://ecogenomics.github.io/GTDBTk/installing/bioconda.html
+
+## what does gtdbTK need?
+
+conda create -n gtdbtk -c conda-forge -c bioconda gtdbtk
+## then they have an additional install script to 
+## get databases:
+
+conda activate gtdbtk
+
+download-db.sh
+## holy shit, that's 47 gig...that is going to take a long time
+
+## what now, while we wait? 
+
+## got it, what do we want to do with it?
+
+## by far the best genomes were from DAS tools:
+
+## using the classify workflow:
+## https://ecogenomics.github.io/GTDBTk/commands/classify_wf.html
+dasGenomes=/vol/funMicZeroVolume1/dastoolWD/DASToolRun1_DASTool_bins/
+gtdbtkOut=/vol/funMicZeroVolume1/getdbtkOut/
+
+\time -v gtdbtk classify_wf --genome_dir $dasGenomes --out_dir $gtdbtkOut --cpus 20 --force --extension fa
+
+## whoah, 130,624,800 kn = 131 gig of memore used. And that wasn't 
+## enough, pplacer died on us. 
+
+## I'm assuming that's why pplacer died. Not sure...
+
+## so to test this we need the other, higher memory machine
+## which we are locked out of right now. We are waiting on 
+## denbi to look at that for us
+
+## luckily, this was pretty much the last step for mbarc data.
+
+## for now, start the chu data, and comback to this
+
+########### starting over with real data ##########
+
+## download reads
+## check read quality - fastqc and trimgalore
+## trim reads
+## assembly
+## bin
+## refine
+## metaquast? and checkm
+## taxonomy with gtdb-tk if possible
+## then pathways with humann
+
+########## chu data download #########
+
+## among other things, we can get the chu data, 
+
+## let's try again with SRA tools
+
+conda install -c bioconda sra-tools 
+
+## oops, installed to base. oh well.
+
+## make an accession file:
+
+SraAccList.txt
+prefetch --option-file SraAccList.txt
+
+## that went to our home directly, which fills up quick.
+mv /home/ubuntu/ncbi/public/sra/* /vol/funMicZeroVolume1/ChuLibs/
+
+## have our metadata on the local machine. From loca:
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    /home/daniel/Downloads/SraRunTable.txt \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/ChuLibs/SraRunTable.csv
+
+cd /vol/funMicZeroVolume1/ChuLibs
+
+cut -d , -f 26 SraRunTable.csv ## looks right.
+
+## now we need to convert to fastq:
+
+fastq-dump SRR5571001.sra
+
+for i in ./*.sra; do
+    fastq-dump $i
+done
+
+## let's combine the pre-treatment and post-treatment into 
+## two files. 
+
+## Influent files are:
+cat \
+  SRR5571002.fastq \
+  SRR5571006.fastq \
+  SRR5571001.fastq \
+  > chuInfluent.fastq
+
+## effluent files are:
+cat \
+  SRR5571004.fastq \
+  SRR5571005.fastq \
+  SRR5571010.fastq \
+  > chuEffluent.fastq &
+
+## space is actually an issue, so
+
+ls SRR*.fastq
+#rm SRR*.fastq
+
+## great. let's run it through the above pipeline.
+## next step is to check read quality
+
+###### chu data qc ########
+
+## we want to be a little tidier about our installations and 
+## environments, so we can clone this setup to the other vms
+
+## build the environment, trim galore and fastqc:
+
+
+## for cleaning:
+#conda remove --name readQC --all
+
+conda create -n readQC -c bioconda trim-galore fastqc bbmap
+
+conda activate readQC 
+
+## later, we realized we need bbtools in this environment?
+
+conda install -c bioconda bbmap
+
+## do they work? 
+
+fastqc --help
+trim_galore --help
+
+fastqc --help
+## seems okay
+
+## run the pre-trim qc
+
+chuFastq=/vol/funMicZeroVolume1/ChuLibs
+
+fastqc -o /vol/funMicZeroVolume1/fastqChuOut/ \
+    $chuFastq/*fastq &
+
+## get these locally:
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/fastqChuOut/chuEffluent_fastqc.html .
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/fastqChuOut/chuInfluent_fastqc.html .
+
+(firefox chuEffluent_fastqc.html &) &
+
+(firefox chuInfluent_fastqc.html &) &
+
+## Looks pretty good, let's see if trimgalore can improve anything. 
+
+## run trim?
+
+trim_galore --paired --cores 8 $chuFastq/chuInfluent.fastq
+
+## doesn't like interleaved files like this...
+## bbmap can handle this...
+## https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/reformat-guide/
+
+cd $chuFastq
+
+reformat.sh 
+
+reformat.sh in=chuInfluent.fastq out1=chuInfluentR1.fastq out2=chuInfluentR2.fastq
+
+trim_galore --paired --cores 8 chuInfluentR1.fastq chuInfluentR2.fastq
+## still found over a thousand illumina primers...neat. 
+
+## repeat with effluent:
+
+reformat.sh in=chuEffluent.fastq out1=chuEffluentR1.fastq out2=chuEffluentR2.fastq
+
+trim_galore --paired --cores 8 chuEffluentR1.fastq chuEffluentR2.fastq
+
+## we can put these back together into an interleaved file, if only to check 
+## the the quality:
+
+reformat.sh in1=chuInfluentR1_val_1.fq in2=chuInfluentR2_val_2.fq out=chuInfluent_trimmed_interleaved.fq
+reformat.sh in1=chuEffluentR1_val_1.fq in2=chuEffluentR2_val_2.fq out=chuEffluent_trimmed_interleaved.fq
+
+## now run fastq on these:
+
+mkdir /vol/funMicZeroVolume1/fastqChuTrimmedOut/ 
+
+fastqc -o /vol/funMicZeroVolume1/fastqChuTrimmedOut/ \
+    $chuFastq/chuInfluent_trimmed_interleaved.fq \
+    $chuFastq/chuEffluent_trimmed_interleaved.fq 
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/fastqChuTrimmedOut/chuInfluent_trimmed_interleaved_fastqc.html .
+
+(firefox chuInfluent_trimmed_interleaved_fastqc.html &) &
+
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/fastqChuTrimmedOut/chuEffluent_trimmed_interleaved_fastqc.html .
+
+(firefox chuEffluent_trimmed_interleaved_fastqc.html &) &
+
+## looks like that helped a tiny bit. Let's keep the 
+## trimmed files and move on. Not sure if we want the 
+## interleaved or the paired for the assembly? 
+
+## let's clean up a little, the directory is huge
+
+#rm chu??fluentR?.fastq
+#rm chuInfluent.fastq
+#rm chuEffluent.fastq
+
+## a little redundant to have the interleaved and separate paired files 
+## but not sure what we need going forward?
+
+####### Chu data assembly #######
+
+## get an assembly environment going
+
+#conda deactivate
+
+conda create -n assembly -c bioconda megahit
+
+## can we also look at our metagenomes with quast?
+conda install -c bioconda quast
+## nope give it its own environment, below
+
+conda activate assembly
+
+chuFastq=/vol/funMicZeroVolume1/ChuLibs
+megahitOutInfluent=/vol/funMicZeroVolume1/megahitOutInfluent
+megahitOutEffluent=/vol/funMicZeroVolume1/megahitOutEffluent
+
+megahit --help | less
+
+## influent assembly
+\time -v megahit \
+  --num-cpu-threads 6 \
+  --12 $chuFastq/chuInfluent_trimmed_interleaved.fq \
+  -o $megahitOutInfluent
+
+## can we run the effluent assembly at the same time?
+
+## effluent assembly
+\time -v megahit \
+  --num-cpu-threads 6 \
+  --12 $chuFastq/chuEffluent_trimmed_interleaved.fq \
+  -o $megahitOutEffluent
+
+#\time -v megahit -r smallerMBARC_trimmed.fq -o megahitOut
+
+## get the debrujin graphs, take a peek:
+
+infAssembIntermediate=/vol/funMicZeroVolume1/megahitOutInfluent/intermediate_contigs
+effAssembIntermediate=/vol/funMicZeroVolume1/megahitOutEffluent/intermediate_contigs
+
+#cd $infAssembIntermediate
+
+#cd $effAssembIntermediate
+
+for i in k*[!final].contigs.fa; do
+    bb=${i%.con*} 
+    kmerLength=${bb#k}
+    outFile=${i/fa/fastg}
+    megahit_toolkit contig2fastg $kmerLength $i > $outFile
+done
+
+## get these to take a look at them.
+## influent
+cd $infAssembIntermediate
+cd ..
+tar -cvf infAssembFastg.tar $infAssembIntermediate/*.fastg
+
+## local
+mkdir -p /home/daniel/Documents/teaching/functionalMicrobiomes/fastg/chu/influent
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/fastg/chu/influent
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/megahitOutInfluent/intermediate_contigs/infAssembFastg.tar .
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/fastg/chu/influent
+tar -xvf infAssembFastg.tar
+
+## effluent get fastgs
+
+effAssembIntermediate=/vol/funMicZeroVolume1/megahitOutEffluent/intermediate_contigs
+
+cd $effAssembIntermediate
+
+cd ..
+tar -cvf effAssembFastg.tar $effAssembIntermediate/*.fastg
+
+## local
+mkdir -p /home/daniel/Documents/teaching/functionalMicrobiomes/fastg/chu/effluent
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/fastg/chu/effluent
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/megahitOutEffluent/intermediate_contigs/effAssembFastg.tar .
+
+cd /vol/funMicZeroVolume1/megahitOutEffluent/intermediate_contigs/effAssembFastg.tar 
+
+## assuming this works, run these through binning software
+
+## we do need to do some alignments of the raw reads to 
+## contigs, for the binning software
+
+#### chu look at metagenome assemblies with quast  #######
+
+## look at these with metaquast?
+
+conda create --name quast_env -c bioconda quast
+
+## first, how does it do with the mock community?
+
+conda activate quast_env
+
+#mkdir /vol/funMicZeroVolume1/quastMBARC
+
+cd /vol/funMicZeroVolume1/metaquastMBARC
+
+mbarcCont=/vol/funMicZeroVolume1/megahitMBARCOut/final.contigs.fa
+mbarcMetaQuastOut=/vol/funMicZeroVolume1/metaquastMBARC/metaquastMBARCOut
+metaquast --threads 7 $mbarcCont -o $mbarcMetaQuastOut
+
+## get it local
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/metaquastMBARC/metaquastMBARCOut .
+
+## wow, that looks great. I wonder why it fails so badly
+## on the chu data? 
+
+## chu data
+conda activate quast_env
+cd /vol/funMicZeroVolume1/quastChu
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+
+\time -v metaquast --threads 10 $infCont
+## that only took ~2gig RAM, but did take ~half hour
+
+## while we're at it, let's look at the mbarc data
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+metaquast --threads 10 $effCont &
+
+## can we get the whole folder to look at from each of those?
+
+## first one should be influent:
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/quastChu/quast_results/results_2022_02_11_14_40_13/ .
+
+mv results_2022_02_11_14_40_13 quastInfluent/
+
+## effluent quast results ## not run yet
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/quastChu/quast_results/results_2022_02_11_15_43_05/ .
+
+
+## let's look at these:
+
+## chu influent assembly metaquast:
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/quastInfluent
+firefox report.html &
+firefox icarus.html &
+
+## chu influent assembly metaquast:
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/quastEffluent
+firefox report.html &
+firefox icarus.html &
+
+## compare these to our mbarc dataset? maybe later. with the class or something. 
+
+
+#### chu align reads to contigs #######
+
+## we need to align our reads to our 
+## contigs, and sort, for downstream use
+## by the binning software
+
+conda create --name bowtie_env -c bioconda bowtie2 samtools
+
+
+mkdir -p /vol/funMicZeroVolume1/alignment2contigs/influent
+mkdir /vol/funMicZeroVolume1/alignment2contigs/effluent
+
+conda activate bowtie_env
+
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+al2contInfDir=/vol/funMicZeroVolume1/alignment2contigs/influent
+al2contEffDir=/vol/funMicZeroVolume1/alignment2contigs/effluent
+infR1=/vol/funMicZeroVolume1/ChuLibs/chuInfluentR1_val_1.fq
+infR2=/vol/funMicZeroVolume1/ChuLibs/chuInfluentR2_val_2.fq
+effR1=/vol/funMicZeroVolume1/ChuLibs/chuEffluentR1_val_1.fq
+effR2=/vol/funMicZeroVolume1/ChuLibs/chuEffluentR2_val_2.fq
+
+## build a bowtie index file for each of the assemblies
+\time -v bowtie2-build --threads 6 $infCont $al2contInfDir/influentCont
+\time -v bowtie2-build --threads 6 $effCont $al2contEffDir/effluentCont &
+
+## now use these to make our actual alignments. Doesn't look like bowtie 
+## will accept a single, interleaved file for paired sequences?
+
+## so we want to use our separated, trimmed R1 and R2 files
+
+ls $al2contInfDir/influentCont 
+
+## influent rawread alignment
+bowtie2 -x $al2contInfDir/influentCont \
+    -1 $infR1 \
+    -2 $infR2 \
+    --threads 7 \
+    -S influentReads2Contig.sam 
+
+## effluent rawread alignment
+bowtie2 -x $al2contEffDir/effluentCont \
+    -1 $effR1 \
+    -2 $effR2 \
+    --threads 7 \
+    -S effluentReads2Contig.sam &
+
+bowtie2 -x $btInd_i -U $reads -S $sam_i  --local
+
+## there were some low success metrics on this alignment, which doesn't make sense to me
+
+cd /vol/funMicZeroVolume1/alignment2contigs/influentAlignments
+samtools view -c -@ 7 -f 4 influentReads2Contig.sam ## 29,539,694
+samtools view -c -@ 7 -F 4 influentReads2Contig.sam ## 32,216,956
+samtools view -c -@ 7 influentReads2Contig.sam ## 2,677,262 
+
+cd /vol/funMicZeroVolume1/alignment2contigs/effluentAlignments
+## same problem with the effluent reads:
+samtools view -c -f 4 -@ 7 effluentReads2Contig.sam  ## 44,823,372
+samtools view -c -F 4 -@ 7 -@ 7 effluentReads2Contig.sam ## 3,133,118
+samtools view -c -@ 7 effluentReads2Contig.sam  ## 47,956,490
+
+## very few reads aligned what happens if we don't 
+## tell bowtie this is paired?
+
+infInterleaved=/vol/funMicZeroVolume1/ChuLibs/chuInfluent_trimmed_interleaved.fq
+bowtie2 -x $al2contInfDir/influentCont \
+    --interleaved $infInterleaved \
+    --threads 10 \
+    -S influentReads2ContigInterleaved.sam 
+
+## did that help?
+samtools view -c -f 4 influentReads2ContigInterleaved.sam ##
+samtools view -c -F 4 iinfluentReads2ContigInterleaved.sam ##
+samtools view -c influentReads2ContigInterleaved.sam ##
+## same issues. what happened here? 
+
+## could be low quality assemblies, checking above with metaquast
+## maybe look at the de brujin graphs?
+
+## work on that, for now tuck these into their own field:
+## give index their own dirs for later
+mv effluent/ effluentContigBTindex/
+mv influent/ influentContigBTindex/
+mkdir influentAlignments
+mkdir effluentAlignments
+
+#
+
+infAlignments=/vol/funMicZeroVolume1/alignment2contigs/influentAlignments/
+effAlignments=/vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/
+
+ls $infAlignments
+ls $effAlignments
+
+### I think we need to sort these?
+
+cd $infAlignments
+samtools sort -@7 -o influentReads2ContigSorted.bam -O BAM influentReads2Contig.sam &
+
+cd $effAlignments
+samtools sort -@7 -o effluentReads2ContigSorted.bam -O BAM effluentReads2Contig.sam &
+
+### and we need indexes for this also, for some of the binning software
+
+cd $infAlignments
+
+samtools index -@7 influentReads2ContigSorted.bam &
+
+cd $effAlignments
+
+samtools index -@7 effluentReads2ContigSorted.bam &
+
+#### chu concoct ######
+
+conda remove concoct_env --all ## why doesn't this work?
+
+## make environment:
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda create -n concoct_env python=3 concoct mkl samtools
+
+#conda install -c anaconda mkl 
+
+conda activate concoct_env
+infAlignments=/vol/funMicZeroVolume1/alignment2contigs/influentAlignments/
+effAlignments=/vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+
+
+cd $infAlignments/
+
+ls $infAlignments
+
+echo $infAlignments
+
+## do we need this?
+conda install mkl
+
+#conda remove --name concoct_env --all
+
+./alignment2contigs/influentAlignments/infConcoctCoverage_table.tsv
+
+## concoct influent
+
+cd $infAlignments
+cut_up_fasta.py $infCont -c 10000 -o 0 --merge_last -b infConcoctContigs_10K.bed > infConcoctContigs_10K.fa
+concoct_coverage_table.py infConcoctContigs_10K.bed \
+  $infAlignments/influentReads2ContigSorted.bam > infConcoctCoverage_table.tsv
+## the meat of it is here:
+cvgTable=/vol/funMicZeroVolume1/alignment2contigs/influentAlignments/infConcoctCoverage_table.tsv
+concoct \
+  --composition_file $infAlignments/infConcoctContigs_10K.fa \
+  --coverage_file $cvgTable \
+  -t 7 \
+  -b concoct_output/ &
+merge_cutup_clustering.py \
+  concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+mkdir concoct_output/fasta_bins
+extract_fasta_bins.py $infCont concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+## check this...
+ls /vol/funMicZeroVolume1/alignment2contigs/influentAlignments/concoct_output/fasta_bins | wc -l
+## jeezus, 43 bins?
+
+## concoct effluent
+cd $effAlignments
+
+cut_up_fasta.py $effCont -c 10000 -o 0 --merge_last -b effConcoctContigs_10K.bed > effConcoctContigs_10K.fa
+concoct_coverage_table.py effConcoctContigs_10K.bed \
+  $effAlignments/effluentReads2ContigSorted.bam > effConcoctCoverage_table.tsv
+## the meat of it is here:
+cvgTable=/vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/effConcoctCoverage_table.tsv
+concoct \
+  --composition_file $effAlignments/effConcoctContigs_10K.fa \
+  --coverage_file $cvgTable \
+  -t 7 \
+  -b concoct_output/ & ## pid 10287
+
+merge_cutup_clustering.py \
+  concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+
+mkdir concoct_output/fasta_bins
+extract_fasta_bins.py $effCont concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+## oh even more jeezus, 134 bins! This be fucked. 
+
+## move these bins to be somewhere more accessible
+
+## move influent concoct outputs to a more sensible spot
+mv /vol/funMicZeroVolume1/alignment2contigs/influentAlignments/concoct_output \
+  /vol/funMicZeroVolume1/concoctChu/influentConcoct_output/
+mv /vol/funMicZeroVolume1/alignment2contigs/influentAlignments/*Conc* \
+  /vol/funMicZeroVolume1/concoctChu/influentConcoct_output/
+
+
+## move influent concoct outputs to a more sensible spot
+mv /vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/concoct_output \
+  /vol/funMicZeroVolume1/concoctChu/effluentConcoct_output/
+
+mv /vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/*Conc* \
+  /vol/funMicZeroVolume1/concoctChu/effluentConcoct_output/
+
+#### chu metabat2 ######
+
+## make an environment for it:
+conda create --name metabat2 -c bioconda metabat2 
+
+conda activate metabat2
+
+vol
+
+cd /vol/funMicZeroVolume1
+## influent metabat2 binning:
+
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+infBam="/vol/funMicZeroVolume1/alignment2contigs/influentAlignments/influentReads2ContigSorted.bam"
+
+runMetaBat.sh $infCont $infBam 
+
+## that was really fast. But it didn't output any bins?
+## let's force the issue with the actual metabat2 command:
+
+## coverage table generated by metabat script: 
+mbCvTable=/vol/funMicZeroVolume1/final.contigs.fa.depth.txt
+
+metabat2 -i $infCont -a $mbCvTable -o infMetabat2Out
+
+## are these abundance tables the same as with concoct?
+
+head $mbCvTable
+head /vol/funMicZeroVolume1/concoctChu/influentConcoct_output/infConcoctCoverage_table.tsv
+## not at all. shit.
+
+## does the same occur with the effluent?
+
+## effluent metabat2 binning:
+effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+effBam="/vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/effluentReads2ContigSorted.bam"
+runMetaBat.sh $effCont $effBam 
+
+## yeah, same issue. Shitty data, methinks
+
+## tomorrow try maxbin. 
+
+## if nothing else, pull out largest bins from concoct
+
+############ chu maxbin2 ##########
+
+conda create -n maxbin2_env 
+conda activate maxbin2_env
+conda install MaxBin2
+
+conda create -n maxbin2_env maxbin2
+
+## great. Set up two binning processes, inf and eff 
+
+conda activate maxbin2_env
+## influent maxbin:
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+infRawReads="/vol/funMicZeroVolume1/ChuLibs/chuInfluent_trimmed_interleaved.fq"
+cd /vol/funMicZeroVolume1/maxbinOut/influentMaxBinOut
+run_MaxBin.pl -contig $infCont -reads $infRawReads -out influentMaxBinOut 
+
+conda activate maxbin2_env
+## effluent maxbin:
+effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+effRawReads="/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq"
+#mkdir -p /vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut
+cd /vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut
+run_MaxBin.pl -contig $effCont -reads $effRawReads -out effluentMaxBinOut 
+
+
+
+##### Chu DAS refine bins #######
+
+conda create -n das_env
+conda activate das_env
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda install -c bioconda das_tool
+
+
+## influent bin refinement
+
+conda activate das_env
+
+## to make the bin map for maxbin
+Fasta_to_Scaffolds2Bin.sh \
+    -e fasta \
+    -i /vol/funMicZeroVolume1/maxbinOut/influentMaxBinOut \
+        > /vol/funMicZeroVolume1/maxbinOut/influentMaxBinOut/maxbin_scaffolds2bin.tsv
+
+## and concoct
+Fasta_to_Scaffolds2Bin.sh \
+    -e fa \
+    -i /vol/funMicZeroVolume1/concoctChu/influentConcoct_output/fasta_bins \
+        > /vol/funMicZeroVolume1/concoctChu/influentConcoct_output/concoct_scaffolds2bin.tsv
+
+infMaxbin_scaffolds2bin=/vol/funMicZeroVolume1/maxbinOut/influentMaxBinOut/maxbin_scaffolds2bin.tsv
+infConcoct_scaffolds2bin=/vol/funMicZeroVolume1/concoctChu/influentConcoct_output/concoct_scaffolds2bin.tsv
+infContigs=/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa
+
+cd /vol/funMicZeroVolume1/dastoolWD/influent_DAS_out
+
+\time -v DAS_Tool \
+    -i $infMaxbin_scaffolds2bin,$infConcoct_scaffolds2bin \
+    -l maxbin,concoct \
+    -t 7 \
+    --search_engine diamond \
+    -c $infContigs \
+    --create_plots 1 \
+    --write_bin_evals 1 \
+    --write_bins 1 \
+    -o infDAS
+
+
+
+##### effluent bin refinement
+
+conda activate das_env
+
+## to make the bin map for maxbin
+Fasta_to_Scaffolds2Bin.sh \
+    -e fasta \
+    -i /vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut \
+        > /vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut/maxbin_scaffolds2bin.tsv
+
+## and concoct
+Fasta_to_Scaffolds2Bin.sh \
+    -e fa \
+    -i /vol/funMicZeroVolume1/concoctChu/effluentConcoct_output/fasta_bins \
+        > /vol/funMicZeroVolume1/concoctChu/effluentConcoct_output/concoct_scaffolds2bin.tsv
+
+effMaxbin_scaffolds2bin=/vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut/maxbin_scaffolds2bin.tsv
+effConcoct_scaffolds2bin=/vol/funMicZeroVolume1/concoctChu/effluentConcoct_output/concoct_scaffolds2bin.tsv
+effContigs=/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa
+
+
+#mkdir /vol/funMicZeroVolume1/dastoolWD/effluent_DAS_out
+cd /vol/funMicZeroVolume1/dastoolWD/effluent_DAS_out
+
+\time -v DAS_Tool \
+    -i $effMaxbin_scaffolds2bin,$effConcoct_scaffolds2bin \
+    -l maxbin,concoct \
+    -t 7 \
+    --search_engine diamond \
+    -c $effContigs \
+    --create_plots 1 \
+    --write_bin_evals 1 \
+    --write_bins 1 \
+    -o effDAS
+
+## looks like it worked. Let's relabel, because 
+
+## influent das_tool relabel
+cd /vol/funMicZeroVolume1/dastoolWD/influent_DAS_out/infDAS_DASTool_bins 
+
+for i in *; do
+  mv $i refinedInf_$i 
+done
+
+## effluent das_tool relabel
+cd /vol/funMicZeroVolume1/dastoolWD/effluent_DAS_out/effDAS_DASTool_bins 
+
+for i in *; do
+  mv $i refinedEff_$i 
+done
+
+for i in *; do
+  mv $i ${i/effluentMaxBinOut/MaxBin}
+done
+
+#### chu data genome assessment ####
+
+## let's check these MAGs out
+## can metaquast be used on refined MAGs? I don't see why not. 
+
+## I remember checkM to be a bit resource intensive, start with this:
+
+## chu checkM ##
+
+## already installed
+
+## checkm influent
+conda activate checkm
+infBins=/vol/funMicZeroVolume1/dastoolWD/influent_DAS_out/infDAS_DASTool_bins
+\time -v checkm lineage_wf -t 7 -x fa $infBins checkmInfluent
+
+cd /vol/funMicZeroVolume1/checkm/
+infMarkers=/vol/funMicZeroVolume1/checkm/checkmInfluent/lineage.ms
+checkm qa $infMarkers checkmInfluent > checkmInfluent/checkmInfluentResults.txt
+
+## checkm effluent
+effBins=/vol/funMicZeroVolume1/dastoolWD/effluent_DAS_out/effDAS_DASTool_bins
+\time -v checkm lineage_wf -t 7 -x fa $effBins checkmEffluent
+
+cd /vol/funMicZeroVolume1/checkm/
+
+effMarkers=/vol/funMicZeroVolume1/checkm/checkmEffluent/lineage.ms
+checkm qa $effMarkers checkmEffluent > checkmEffluent/checkmEffluentResults.txt
+
+
+## chu quast ##
+
+conda activate quast_env
+
+## influent quast 
+## there is only one
+infRefinedBins=/vol/funMicZeroVolume1/dastoolWD/influent_DAS_out/infDAS_DASTool_bins
+influentQuastOut=/vol/funMicZeroVolume1/quastChu/checkBins/influentQuast
+cd $influentQuastOut
+for i in $infRefinedBins/*; do
+  bin=$(basename $i .fa)
+  #echo $i
+  #echo $bin
+  quast -o $bin $i
+done
+
+## effluent quast 
+effRefinedBins=/vol/funMicZeroVolume1/dastoolWD/effluent_DAS_out/effDAS_DASTool_bins
+effluentQuastOut=/vol/funMicZeroVolume1/quastChu/checkBins/effluentQuast
+#mkdir -p $effluentQuastOut
+
+cd $effluentQuastOut
+
+for i in $effRefinedBins/*; do
+  bin=$(basename $i .fa)
+  #echo $i
+  #echo $bin
+  quast -o $bin $i
+done
+
+## let's get all these:
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/quastChu/ .
+
+## that wasn't really what we wanted. I forgot that just using 
+## quast, especially quast without reference genomes, doesn't
+## give us anything but structural results
+
+## here's an idea: can we put our genomes back into a pile and run
+## metaquast on it?
+
+## meh. maybe try that if we have time. For now, we have several
+## more important tasks to get done here
+
+
+## since humann3 looks big and powerful, let's see if it 
+## run on our smallmem vms?
+
+## actually, let's try metaphlan for taxonomic profiling first, 
+## then explore humann
+
+## looking at it, the biobakery ecosystem in general is just awesome.
+## they also have phylophlan for assigning taxonomy to our 
+## MAGs
+
+## so maybe first metaphlan to see if we can step over the process
+## of extracting 16s
+
+## then phylophlan to assign taxonomy to our MAGs
+
+## then humann3 to get a grasp on pathways present in the data
+
+####### metaphlan #######
+
+## install as recommended at:
+## https://github.com/biobakery/MetaPhlAn/wiki/MetaPhlAn-3.0
+## even better: 
+## https://github.com/biobakery/biobakery/wiki/metaphlan3#overview
+
+conda create --name mpa -c bioconda python=3.7 metaphlan
+
+conda create --name mpa -c bioconda python=3.7 metaphlan
+
+
+## according to them, we should install the marker database
+## outside of anaconda. 
+
+conda activate mpa
+
+metaphlan --install --bowtie2db /vol/funMicZeroVolume1/metaphlanMarkerDB
+
+## fails. something like this issue:
+## https://forum.biobakery.org/t/no-metaphlan-bowtie2-database-found-index-option/1688/3
+## try this:
+sudo apt-get install libtbb2
+
+## let's also try to get humann3 in there?:
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --add channels biobakery
+conda install humann -c biobakery
+
+
+
+### install hclust for heatmaps:
+#conda install -c biobakery hclust2 ## broken!!
+### for the cladogram functionality
+
+
+## looks okay, give it a spin?:
+
+## tutorial here: https://github.com/biobakery/biobakery/wiki/metaphlan3#overview
+
+conda activate mpa
+
+## metaphlan with influent data:
+
+metaphlanMarkerDB=/vol/funMicZeroVolume1/metaphlanMarkerDB
+influentRaw=/vol/funMicZeroVolume1/ChuLibs/chuInfluent_trimmed_interleaved.fq
+#mkdir -p /vol/funMicZeroVolume1/metaphlanWD/influentMPA
+cd /vol/funMicZeroVolume1/metaphlanWD/influentMPA
+\time -v metaphlan $influentRaw \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out influentMPA.bowtie2.bz2 \
+    --nproc 5 \
+    --input_type fastq \
+    -o influentMPSprofiled_metagenome.txt 
+
+
+## metaphlan with effluent data:
+metaphlanMarkerDB=/vol/funMicZeroVolume1/metaphlanMarkerDB
+effluentRaw=/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq
+#mkdir -p /vol/funMicZeroVolume1/metaphlanWD/effluentMPA
+cd /vol/funMicZeroVolume1/metaphlanWD/effluentMPA
+\time -v metaphlan $effluentRaw \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out effluentMPA.bowtie2.bz2 \
+    --nproc 5 \
+    --input_type fastq \
+    -o effluentMPSprofiled_metagenome.txt 
+
+## now we can combine these two tables
+
+cd /vol/funMicZeroVolume1/metaphlanWD
+
+infMetaphlanAbundance=/vol/funMicZeroVolume1/metaphlanWD/influentMPA/influentMPSprofiled_metagenome.txt
+effMetaphlanAbundance=/vol/funMicZeroVolume1/metaphlanWD/effluentMPA/effluentMPSprofiled_metagenome.txt
+
+merge_metaphlan_tables.py \
+  $infMetaphlanAbundance \
+  $effMetaphlanAbundance \
+      > metaphlanInfEff_merged_abundance_table.txt
+
+## we want just the species-level "tips"
+
+grep -E "s__|clade" metaphlanInfEff_merged_abundance_table.txt | sed 's/^.*s__//g' \
+| cut -f1,3-8 | sed -e 's/clade_name/body_site/g' 
+## all zeros for the effluent?
+
+less $effMetaphlanAbundance ## just one, to a completely unknown organism?
+
+## can we repeat this with our mbarc minidata?
+
+conda activate mpa
+
+metaphlanMarkerDB=/vol/funMicZeroVolume1/metaphlanMarkerDB
+MBARCraw=/vol/funMicZeroVolume1/MBARC-26-illumina/reads/smallerMBARC_trimmed.fq
+#mkdir -p /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+
+metaphlan $MBARCraw \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out mbarcMPA.bowtie2.bz2 \
+    --nproc 5 \
+    --input_type fastq \
+    -o mbarcMPSprofiled_metagenome.txt 
+
+
+## results are here:
+less /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/mbarcMPSprofiled_metagenome.txt
+
+cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/
+
+
+## to see the full taxonomy, to species level
+grep "s__\|clade" mbarcMPSprofiled_metagenome.txt
+
+## clean it up:
+grep -E "s__|clade" mbarcMPSprofiled_metagenome.txt | sed 's/^.*s__//g'\
+| cut -f1,3-8 >  mbarcMetaphlanPredictions.txt
+
+## interesting. maybe We should compare this to a metaquast, which is
+## based on 16s and pretty abysmal in its predictions?
+
+##### visualizing metaphlan outputs ######
+
+## does this mean that it aligned with an sequence on NCBI, but that 
+## nothing is known about that sequence? Or does it mean that nothing aligned a
+## previously known sequence?
+
+grep -E "s__|clade" metaphlanInfEff_merged_abundance_table.txt | sed 's/^.*s__//g' \
+| cut -f1,3-8 | sed -e 's/clade_name/body_site/g' > metaphlanInfEff_merged_abundance_table_species.txt
+
+## the package uses a heatmapping software, fun to play with
+## hclust.
+
+ hclust2.py -i metaphlanInfEff_merged_abundance_table_species.txt \
+  -o metaphlanInfEff_heatmap.png \
+  --f_dist_f braycurtis \
+  --s_dist_f braycurtis \
+  --cell_aspect_ratio 0.5 \
+  -l \
+  --flabel_size 10 \
+  --slabel_size 10 \
+  --max_flabel_len 100 \
+  --max_slabel_len 100 \
+  --minv 0.1 \
+  --dpi 300
+
+## and that's broken. some sort of matplotlib error
+## oh well. 
+
+## does the cladogram plotting feature still work?
+
+## install fails on the graphlan installation.
+## the python or c libraries are fucked somehow
+## let's try giving it its own env
+
+conda create --name graphlan -c biobakery graphlan
+
+conda install -c bioconda export2graphlan
+
+conda activate graphlan
+
+cat metaphlanInfEff_merged_abundance_table_species.txt
+
+## will this work better if we just show the influent sample?
+tail -n +2 metaphlanInfEff_merged_abundance_table_species.txt | cut -f 1,3 > merged_abundance_table_reformatted.txt
+
+export2graphlan.py \
+  -i merged_abundance_table_reformatted.txt \
+  --tree merged_abundance.tree.txt \
+  --annotation merged_abundance.annot.txt
+
+export2graphlan.py --skip_rows 1 -i merged_abundance_table_reformatted.txt --tree merged_abundance.tree.txt --annotation merged_abundance.annot.txt --most_abundant 100 --abundance_threshold 1 --least_biomarkers 10 --annotations 5,6 --external_annotations 7 --min_clade_size 1
+
+graphlan.py --dpi 300 merged_abundance.xml merged_abundance.png --external_legends
+
+## ugh. None of this visualization stuff works. so frustrating. I guess we don't need it, since we 
+## have such simple results. 
+
+####### PhyloPhlAn #######
+
+## let's also try to identify our mags with phylophlan
+
+## we are really piling on the installations. it might be 
+## useful to couple all the biobakery installations together?
+## I assume they are mostly compatible, with dependencies, etc...
+ 
+conda activate mpa
+
+conda activate metaphlan
+
+conda install -c bioconda phylophlan
+
+## hah, I think it was already in there!
+
+## how do we run this on our influent MAG?
+
+## example here: https://github.com/biobakery/biobakery/wiki/PhyloPhlAn-3.0:-Example-03:-Metagenomic-application
+
+## example tsv file map here:
+https://raw.githubusercontent.com/biobakery/phylophlan/master/phylophlan/examples/03_metagenomic/bin2meta.tsv
+
+
+## let's get their example data, might be useful:
+
+cd /vol/funMicZeroVolume1/phylophlanWD/exampleData
+wget https://www.dropbox.com/s/fuafzwj67tguj31/ethiopian_mags.tar.bz2?dl=1 -O ethiopian_mags.tar.bz2
+tar -xjf ethiopian_mags.tar.bz2 -C /vol/funMicZeroVolume1/phylophlanWD/exampleData
+wget https://raw.githubusercontent.com/biobakery/phylophlan/master/phylophlan/examples/03_metagenomic/bin2meta.tsv
+
+## can we make a directory of links to the mags we have?
+
+infMAGs=/vol/funMicZeroVolume1/dastoolWD/influent_DAS_out/infDAS_DASTool_bins
+effMAGs=/vol/funMicZeroVolume1/dastoolWD/effluent_DAS_out/effDAS_DASTool_bins
+magLinks=/vol/funMicZeroVolume1/phylophlanWD/maglinks
+
+ln -s $infMAGs/* $magLinks/
+ln -s $effMAGs/* $magLinks/
+
+cd /vol/funMicZeroVolume1/phylophlanWD 
+
+\time -v phylophlan_metagenomic \
+    -i $magLinks \
+    -d SGB.Jul20
+    -o phylophlanMAG \
+    --nproc 7 \
+    -n 1 \
+    --verbose 2>&1 | tee logs/phylophlan_metagenomic.log
+
+## that is not being very verbose for being set to verbose...
+## and it works! results are here:
+
+less /vol/funMicZeroVolume1/phylophlanWD/maglinks/maglinks.tsv
+
+cd /vol/funMicZeroVolume1/phylophlanWD/maglinks/
+
+## let's look at this reformatted a bit:
+
+cd /vol/funMicZeroVolume1/phylophlanWD/maglinks/
+
+maglinks.tsv
+
+tail -n +2 maglinks.tsv | sed "s/\t/\n/g" > chu_phylophan_matches.txt
+
+## get it
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/phylophlanWD/maglinks/maglinks.tsv .
+
+infEffPhylOut=/vol/funMicZeroVolume1/phylophlanWD/maglinks/maglinks.tsv
+
+tail -n +2 $infEffPhylOut | sed "s/\t/\n/g" 
+
+sed "s/\t/\n/g" $infEffPhylOut > infEffPhylPretty.txt
+
+## I think we can sort this by sample... first let's try 
+## getting mbarc results. 
+
+phylophlan_metagenomic --help
+
+mbarcBinDir=/vol/funMicZeroVolume1/dastoolWD/mbarc_DAS_out/DASToolRun1_DASTool_bins
+cd /vol/funMicZeroVolume1/phylophlanWD/mbarc_phylophlan
+
+phylophlan_metagenomic \
+    -i $mbarcBinDir \
+    -d SGB.Jul20 \
+    -e fa \
+    -o phylophlanMAG_mbarc \
+    --nproc 10 \
+#    -n 1 \
+#    --verbose 2>&1 | tee logs/phylophlan_metabarc.log
+
+mbarcPhyl=/vol/funMicZeroVolume1/phylophlanWD/mbarc_phylophlan/mbarc_phylophlanIDs.tsv
+
+less mbarc_phylophlanIDs.tsv 
+
+## if we clean up our first bin resutls (line two) looks like this:
+
+das_11  
+kSGB_6191:Species:k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Clostridiaceae|g__Clostridium|s__Clostridium_perfringens|t__SGB6191:0.024382568378378378
+uSGB_47278:Family:k__Bacteria|p__Proteobacteria|c__Alphaproteobacteria|o__Alphaproteobacteria_unclassified|f__Alphaproteobacteria_unclassified|g__GGB37667|s__GGB37667_SGB47278|t__SGB47278:0.0372613
+uSGB_65119:Genus:k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Clostridiaceae|g__Clostridium|s__Clostridium_SGB65119|t__SGB65119:0.0452744
+uSGB_47276:Other:k__Bacteria|p__Firmicutes|c__CFGB14690|o__OFGB14690|f__FGB14690|g__GGB40668|s__GGB40668_SGB47276|t__SGB47276:0.046213182352941175
+uSGB_65120:Genus:k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Clostridiaceae|g__Clostridium|s__Clostridium_SGB65120|t__SGB65120:0.0466842
+uSGB_65121:Genus:k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Clostridiaceae|g__Clostridium|s__Clostridium_SGB65121|t__SGB65121:0.04808085
+uSGB_47277:Other:k__Bacteria|p__Firmicutes|c__CFGB12508|o__OFGB12508|f__FGB12508|g__GGB35505|s__GGB35505_SGB47277|t__SGB47277:0.05498415000000001 
+uSGB_65122:Other:k__Bacteria|p__Firmicutes|c__CFGB12508|o__OFGB12508|f__FGB12508|g__GGB35505|s__GGB35505_SGB65122|t__SGB65122:0.0711182 
+uSGB_47275:Other:k__Bacteria|p__Firmicutes|c__CFGB12151|o__OFGB12151|f__FGB12151|g__GGB34876|s__GGB34876_SGB47275|t__SGB47275:0.17700849999999999
+kSGB_8532:Species:k__Bacteria|p__Firmicutes|c__Clostridia|o__Clostridiales|f__Clostridiaceae|g__Fervidicella|s__Fervidicella_metallireducens|t__SGB8532:0.218593
+
+
+## I think we should script a solution for reformatting this TSV into the above format
+## every tab should be a line break, I think...
+
+tail -n +2 $mbarcPhyl | sed "s/\t/\n/g" > mbarc_phylophan_matches.txt
+
+less mbarc_phylophan_matches.txt
+
+###### humann3 ######
+
+## neat graphic summary of humann pipeline here:
+https://github.com/biobakery/biobakery/wiki/humann3#2-metagenome-functional-profiling
+
+## I am afraid of this program. I assume it will want to 
+## install another 60gig database...
+
+## not sure if I should try this now, but here we go.
+
+## we need some databases:
+
+conda activate mpa
+
+chocodir=/vol/funMicZeroVolume1/chocophlanDB
+
+humann_databases --download chocophlan full $chocodir
+
+## I think we also need:
+humann_databases --download uniref uniref90_diamond $chocodir
+
+## influent humann
+
+conda activate mpa 
+
+infHumannOut=/vol/funMicZeroVolume1/humannWD/infHumann
+infRaw=/vol/funMicZeroVolume1/ChuLibs/chuInfluent_trimmed_interleaved.fq
+cd $infHumannOut
+\time -v humann --threads 7 --input $infRaw --output $infHumannOut
+
+## effluent humann
+conda activate mpa 
+
+effRaw=/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq
+effHumannOut=/vol/funMicZeroVolume1/humannWD/effHumann
+#mkdir -p $effHumannOut
+cd $effHumannOut
+\time -v humann --threads 7 --input $effRaw --output $effHumannOut
+
+## error:
+# No MetaPhlAn BowTie2 database found (--index option)!
+# Expecting location /vol/funMicZeroVolume1/anaconda3/envs/mpa/lib/python3.7/site-packages/metaphlan/metaphlan_databases/mpa_v30_CHOCOPhlAn_201901
+
+ls /vol/funMicZeroVolume1/anaconda3/envs/mpa/lib/python3.7/site-packages/metaphlan/metaphlan_databases/
+## its in there...weird...
+
+ls  -l /vol/funMicZeroVolume1/anaconda3/envs/mpa/lib/python3.7/site-packages/metaphlan/metaphlan_databases/mpa_v30_CHOCOPhlAn_201901*
+
+## issue found here: https://forum.biobakery.org/t/no-metaphlan-bowtie2-database-found-index-option/1688/3
+## let's try updating metaphlan? Hope this doesn't break the environment:
+
+metaphlan --install
+
+humann --help | less
+
+
+
+## test
+
+humann --help
+
+conda activate mpa
+
+## major work to be done:
+## learn about humann, can it be run from our low mem nodes?
+## learn how to log in from windows
+## set up all VMs for student use
+## qiime pipeline
+
+## right now we're getting metaphlan and phylophlan for 
+## mbarc and chu inf/eff
+
+## metaphlan dataset for mbarc:
+/vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/mbarcMPSprofiled_metagenome.txt
+
+## metaphlan dataset for chu
+
+## inf
+/vol/funMicZeroVolume1/metaphlanWD/influentMPA/influentMPSprofiled_metagenome.txt
+
+## eff
+/vol/funMicZeroVolume1/metaphlanWD/effluentMPA/effluentMPSprofiled_metagenome.txt
+
+## phylophlan dataset for mbarc:
+
+## phylophlan dataset for chu
+## inf and eff, needs to be sorted by sample
+
+cd /vol/funMicZeroVolume1/phylophlanWD/maglinks
+
+/vol/funMicZeroVolume1/phylophlanWD/maglinks
+
+## so today
+
+## figure out tables from phlan, metaphlan  
+## and figure out how to graph them? meh
+
+## strategy for metabolic pathways - individual genomes, humann3
+## try humann3 on chu data, on bigger node, assign a new volume to it
+
+## tomorrow
+## trial kegg on one or two genomes
+## learn about humann3 outputs 
+
+## start on amplicon data? 
+
+## need to extend the volume
+sudo umount /dev/vdd
+## extended on cloud. I think we have an ext4 file system. 
+## so...
+sudo e2fsck -f /dev/vdd ## check vol
+sudo resize2fs /dev/vdd ## resize
+## remount with bashrc
+
+#### koala/kegg ####
+
+## we want the students to upload a bin to koala
+## these take amino acid fastas
+
+## so I think we need to do some gene
+## predictions:
+
+conda create --name prodigal_env -c bioconda prodigal
+
+conda activate prodigal_env 
+
+cd /vol/funMicZeroVolume1/koalaWD/das0
+
+## example bin, identified to Corynebacterium glutamicum:
+das_0=/vol/funMicZeroVolume1/dastoolWD/mbarc_DAS_out/DASToolRun1_DASTool_bins/das_0.fa
+
+\time -v prodigal \
+  -a das0.genes.faa \
+  -d das0.genes.fna \
+  -f gff \
+  -o das0.genes.gff \
+  -i $das_0
+
+## we should be able to send das0.genes.faa to blastkoala?
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/koalaWD/das0/das0.genes.faa .
+
+## it still needs to be translated into amino acids...
+## which means we need gene predictions
+## seems odd, for a de novo assembly. 
+## I assume by "metagenome" they mean an assembly, unbinned?
+
+## let's try it. For example, our assembly for chu influx is here:
+
+conda activate prodigal_env 
+infAssembly=/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa
+cd /vol/funMicZeroVolume1/koalaWD/influxGenePred
+
+prodigal \
+  -a inf.genes.faa \
+  -d inf.genes.fna \
+  -f gff \
+  -o inf.genes.gff \
+  -i $infAssembly
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/koalaWD/influxGenePred/inf.genes.faa .
+
+## repeat for effluent
+
+conda activate prodigal_env 
+effAssembly=/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa
+cd /vol/funMicZeroVolume1/koalaWD/effluxGenePred
+
+prodigal \
+  -a eff.genes.faa \
+  -d eff.genes.fna \
+  -f gff \
+  -o eff.genes.gff \
+  -i $effAssembly
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZeroVolume1/koalaWD/effluxGenePred/eff.genes.faa .
+
+## and we should also be able to use ghostkoala for our metagenomes?:
+
+## and maybe don't mess with humann3 for this class
+
+## definitely for my own research, seems the best out there 
+## right now. 
+
+## what else do we need to do for the metagenome side of things?
+
+## somehow to build a krona chart with the metaphlan results
+
+#### krona tools, standalone #######
+
+conda create --name krona_env -c bioconda krona
+
+conda install -c conda-forge make
+
+## we need a taxonomy database:
+/vol/funMicZeroVolume1/anaconda3/envs/krona_env/opt/krona/updateTaxonomy.sh
+
+conda activate krona_env
+
+ls /vol/funMicZeroVolume1/anaconda3/envs/krona_env/opt/krona/taxonomy
+
+updateTaxonomy.sh
+
+ktImportTaxonomy \
+-o infMetaphlanAbundances.
+
+## can we get a tsv of ncbi taxonomy and abundances from our influent outputs?
+
+ktImportTaxonomy
+
+cd /vol/funMicZeroVolume1/metaphlanWD/influentMPA
+
+less influentMPSprofiled_metagenome.txt
+
+head influentMPSprofiled_metagenome.txt
+
+
+## does this work?
+
+grep -E "s__" influentMPSprofiled_metagenome.txt | cut -f 2,3 | cut -d "|" -f 7
+
+## try it on our mbarc results?
+
+cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+
+mbarcMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/mbarcMPSprofiled_metagenome.txt
+grep "s__" $mbarcMetaphlanOut | cut -f 2,3 | cut -d "|" -f 7 > mbarcNCBInumberAbundance.tsv 
+## add some line numbers to this with vim to test:
+paste <(seq 1 1 $(wc -l mbarcNCBInumberAbundance.tsv | cut -f 1 -d " ") ) mbarcNCBInumberAbundance.tsv >  mbarcNCBInumberAbundanceNumbered.tsv
+
+less mbarcNCBInumberAbundanceNumbered.tsv
+
+head mbarcNCBInumberAbundanceNumbered.tsv
+
+
+## looks good, can we use this for krona tools?
+
+cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+ktImportTaxonomy \
+    -o MBARCmetaphlan.krona.html \
+    -q 1 \
+    -t 2 \
+    -m 3 \
+    mbarcNCBInumberAbundanceNumbered.tsv
+
+## get it, look at it
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/MBARCmetaphlan.krona.html .
+
+## repeat for influent metaphlan results:
+
+conda activate krona_env
+cd /vol/funMicZeroVolume1/metaphlanWD/influentMPA
+infMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/influentMPA/influentMPSprofiled_metagenome.txt
+grep "s__" $infMetaphlanOut | cut -f 2,3 | cut -d "|" -f 7 > infNCBInumberAbundance.tsv 
+## add some line numbers to this with vim to test:
+paste <(seq 1 1 $(wc -l infNCBInumberAbundance.tsv | cut -f 1 -d " ") ) infNCBInumberAbundance.tsv >  infNCBInumberAbundanceNumbered.tsv
+
+ktImportTaxonomy \
+    -o influentMetaphlan.krona.html \
+    -q 1 \
+    -t 2 \
+    -m 3 \
+    infNCBInumberAbundanceNumbered.tsv
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/metaphlanWD/influentMPA/influentMetaphlan.krona.html .
+
+## effluent
+less /vol/funMicZeroVolume1/metaphlanWD/effluentMPA/effluentMPSprofiled_metagenome.txt
+infEffPhylOut=/vol/funMicZeroVolume1/phylophlanWD/maglinks/maglinks.tsv
+sed "s/\t/\n/g" $infEffPhylOut 
+
+## ah, I forgot. Metaphlan found very little to work with in the effluent.
+## but binning helped a lot, got us ~20 genomes that we could then work on using phylophlan
+
+## great. that works fine. 
+
+
+
+####### amplicon data ########
+
+## great, so let's run through the SIP data, see if we can get 
+## some get clean results out of this data
+
+## get it onto the machine:
+ 
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ./16S_amps_SIP.zip ubuntu@129.70.51.6:/vol/funMicZeroVolume1/
+
+
+## is qiime going to behave itself? It didn't last time.
+
+## let's try it, in its own env:
+
+wget https://data.qiime2.org/distro/core/qiime2-2022.2-py38-linux-conda.yml
+conda env create -n qiime2_env --file qiime2-2022.2-py38-linux-conda.yml
+
+## so our strategy here is to repeat Felix's pipeline as 
+## much as I can. 
+
+## if necessary we drop off into phyloseq
+
+## so...
+
+conda activate qiime2_env
+
+## how can we get our reads in there:
+
+## start building a sample manifest table
+
+sample-id,forward-absolute-filepath
+12G6,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000480_S60_L001_R1_001_trimmed.fq.gz
+12G7,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000481_S61_L001_R1_001_trimmed.fq.gz
+12G8,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000482_S62_L001_R1_001_trimmed.fq.gz
+12G9,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000483_S63_L001_R1_001_trimmed.fq.gz
+12G10, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000484_S64_L001_R1_001_trimmed.fq.gz
+12G11, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000485_S65_L001_R1_001_trimmed.fq.gz
+13G6,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000486_S77_L001_R1_001_trimmed.fq.gz
+13G7,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000487_S67_L001_R1_001_trimmed.fq.gz
+13G8,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000488_S68_L001_R1_001_trimmed.fq.gz
+13G9,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000489_S69_L001_R1_001_trimmed.fq.gz
+13G10, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000490_S70_L001_R1_001_trimmed.fq.gz
+13G11, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000491_S71_L001_R1_001_trimmed.fq.gz
+12M6,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000492_S72_L001_R1_001_trimmed.fq.gz
+12M7,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000493_S73_L001_R1_001_trimmed.fq.gz
+12M8,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000494_S74_L001_R1_001_trimmed.fq.gz
+12M9,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000495_S75_L001_R1_001_trimmed.fq.gz
+12M10, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000496_S76_L001_R1_001_trimmed.fq.gz
+12M11, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000497_S84_L001_R1_001_trimmed.fq.gz
+13M6,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000498_S78_L001_R1_001_trimmed.fq.gz
+13M7,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000499_S79_L001_R1_001_trimmed.fq.gz
+13M8,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000500_S80_L001_R1_001_trimmed.fq.gz
+13M9,  /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000501_S81_L001_R1_001_trimmed.fq.gz
+13M10, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000502_S82_L001_R1_001_trimmed.fq.gz
+13M11, /vol/funMicZeroVolume1/SIPamps/reads_trimmed/emik-000503_S83_L001_R1_001_trimmed.fq.gz
+
+
+## let's take a look at Alfons' data:
+
+## I think only forward reads. 
+
+## read headers are 
+@FS10000516:31:BPG61607-2528:1:1116:14780:4090 1:N:0:79
+@FS10000516:31:BPG61607-2528:1:1101:3530:1000 1:N:0:79
+
+## the primers that tillmann mentioned:
+
+
+## ilu_515f TCGTCGGCAGCGTCAGATGTGTATAAGAGACAGGTGYCAGCMGCCGCGGTAA
+## ilu_806rN GTCTCGTGGGCTCGGAGATGTGTATAAGAGACAGGGACTACNVGGGTWTCTAAT
+
+## this should be the relevant forward primer:
+GTGYCAGCMGCCGCGGTAA
+## reverse primer:
+GGACTACNVGGGTWTCTAAT
+
+## forward primers = 20 bp long
+echo GTGYCAGCMGCCGCGGTAA | wc -c
+
+## for grep:
+## forward
+GTG.CAGC.GCCGCGGTAA
+
+
+## reverse compliment:
+TTACCGCGGC.GCTG.CAC
+
+
+## reverse
+GGACTAC..GGGT.TCTAAT
+ATTAGA.ACCC..GTAGTCC
+
+
+
+## do we find these? one example file:
+
+exampFastq=/vol/funMicZeroVolume1/ampliconPipe/Oemik-000499_S79_L001_R1_001.fastq
+
+## forward primers
+grep GTG.CAGC.GCCGCGGTAA $exampFastq ## 15111 reads out 109824
+grep ^GTG.CAGC.GCCGCGGTAA $exampFastq | wc -l ## all at the beginning
+grep TTACCGCGGC.GCTG.CAC $exampFastq ## no intact RC forwards
+grep GT............GGTAA $exampFastq | wc -l ## 16114 reads out 109824, 
+
+## 
+grep GGACTAC..GGGT.TCTAAT $exampFastq ## only 2, both at the beginning
+## RC
+grep ATTAGA.ACCC..GTAGTCC $exampFastq | wc -l
+grep ATTAGA.ACCC..GTAGTCC $exampFastq ## 
+grep ATTAGA.ACCC..GTAGTCC$ $exampFastq | wc -l ## 228
+grep ATTAGA.ACCC..GTAGTCC.+$ $exampFastq ## all at the end.
+grep ATT....ACCC.....GTCC$ $exampFastq | wc -l ## 285
+## etc.
+
+## so lots there but not enough to just clip off the length of the primers? 
+## last time Alfons left the primers on there. 
+
+## okay, new strategy. Run this through trim galore, see what it picks up.
+## then feed it to qiime, and grit my teeth. 
+
+conda activate readQC
+
+mv Oemik-000499_S79_L001_R1_001.fastq test.fastq
+
+cd /vol/funMicZeroVolume1/ampliconPipe
+
+trim_galore --help
+
+ls /vol/funMicZeroVolume1/SIPamps/reads/*
+
+trim_galore \
+  --cores 8 \
+  -o /vol/funMicZeroVolume1/SIPamps/trimmed \
+  --clip_R1 20 \
+  --fastqc \
+  --illumina \
+  --length 200 \
+  /vol/funMicZeroVolume1/SIPamps/reads/Oemik-000480_S60_L001_R1_001.fastq.gz
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/SIPamps/trimmed/Oemik-000480_S60_L001_R1_001_trimmed_fastqc.html .
+
+## that somewhat improved the situation. 
+
+## so, run this set of clipping parameters on all of the samples
+
+## try this:
+
+trim_galore \
+  --cores 8 \
+  -o /vol/funMicZeroVolume1/SIPamps/trimmed \
+  --clip_R1 20 \
+  --fastqc \
+  --illumina \
+  --length 200 \
+  /vol/funMicZeroVolume1/SIPamps/reads/*
+
+## and can we feed this qiime now?
+conda activate qiime2_env
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path /vol/funMicZeroVolume1/SIPamps/trimmed \
+  --output-path /vol/funMicZeroVolume1/qiimeWD/test.qza
+
+## and fucked, something about the file names
+## try again tomorrow. I fucking hate qiime. 
+
+cd /vol/funMicZeroVolume1/qiimeWD
+
+conda activate qiime2_env
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path /vol/funMicZeroVolume1/qiimeWD/sample_manifest.tsv \
+  --output-path /vol/funMicZeroVolume1/qiimeWD/SIPreads_qiime \
+  --input-format SingleEndFastqManifestPhred33V2
+
+## okay, can we get onto dada2?
+
+qiime dada2 --help
+
+
+ls /vol/funMicZeroVolume1/SIPamps/trimmed 
+
+## I guess we need some metadata:
+sample_name,Substrate,Label,Fraction
+12G6,gluc,12C,6
+12G7,gluc,12C,7
+12G8,gluc,12C,8
+12G9,gluc,12C,9
+12G10,gluc,12C,10
+12G11,gluc,12C,11
+13G6,gluc,13C,6
+13G7,gluc,13C,7
+13G8,gluc,13C,8
+13G9,gluc,13C,9
+13G10,gluc,13C,10
+13G11,gluc,13C,11
+12M6,meOH,12C,6
+12M7,meOH,12C,7
+12M8,meOH,12C,8
+12M9,meOH,12C,9
+12M10,meOH,12C,10
+12M11,meOH,12C,11
+13M6,meOH,13C,6
+13M7,meOH,13C,7
+13M8,meOH,13C,8
+13M9,meOH,13C,9
+13M10,meOH,13C,10
+13M11,meOH,13C,11
+
+## look at what dada2 did to our reads:
+
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs SIPreads_qiime.qza \
+  --p-trunc-len 0 \
+  --p-n-threads 10 \
+  --o-table dada2_table.qza \
+  --o-representative-sequences dada2_rep_set.qza \
+  --o-denoising-stats dada2_stats.qza
+
+conda activate qiime2_env
+
+qiime metadata tabulate \
+  --m-input-file dada2_stats.qza \
+  --o-visualization dada2_stats_bymetadata.qzv 
+## Saved Visualization to: dada2_stats_bymetadata.qzv
+
+qiime feature-table summarize \
+  --i-table dada2_table.qza \
+  --m-sample-metadata-file metadata.tsv \
+  --o-visualization dada2_featureTableSummary_visualization.qzv
+# Saved Visualization to: dada2_featureTableSummary_visualization.qzv
+
+qiime feature-table tabulate-seqs \
+  --i-data dada2_rep_set.qza \
+  --o-visualization dada2_rep_set.qzv
+## Saved Visualization to: dada2_rep_set.qzv
+
+## get these to check out:
+mkdir dada2visualizations
+mv dada2_stats_bymetadata.qzv dada2_featureTableSummary_visualization.qzv dada2_rep_set.qzv dada2visualizations/
+
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/dada2visualizations .
+
+mkdir dada2OutPut
+mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut
+
+## great, now what?
+## generally, follow Felix's scripts, 
+## but unifrac and bray curtis among samples, ordination, and a multivariate model (Permanova or RDA)
+
+
+## get all of this can be looked at with the qiime view program
+## https://view.qiime2.org/
+
+qiime phylogeny align-to-tree-mafft-fasttree --help | less
+
+repSet=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_rep_set.qza
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences dada2_rep_set.qza \
+  --o-alignment aligned_dada2_rep_set.qza \
+  --o-masked-alignment masked_aligned_dada2_rep_set.qza \
+  --o-tree unrooted_tree.qza \
+  --o-rooted-tree rooted_tree.qza
+  --p-n-threads 10 \
+  --verbose \
+  &> phylogenetic_tree_generation.log
+
+mkdir aligned2Tree
+
+mv \
+aligned_dada2_rep_set.qza \
+masked_aligned_dada2_rep_set.qza \
+unrooted_tree.qza \
+rooted_tree.qza \
+phylogenetic_tree_generation.log \
+aligned2Tree/
+
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/aligned2Tree/rooted_tree.qza .
+
+## okay, where were we...we just built a tree, how do we look at it?
+
+## side note, this person did a great set of slides:
+http://compbio.ucsd.edu/wp-content/uploads/2018/07/20180621_oslo_university_microbiome_analysis_with_qiime2_tutorial.pdf
+
+## don't think we need to look at the tree. Not a phylogenetics class. 
+
+## just use it to get our unifrac distances. 
+
+## onto rarefaction
+
+conda activate qiime2_env
+
+cd /vol/funMicZeroVolume1/qiimeWD
+
+dada2_table=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicZeroVolume1/qiimeWD/metadata.tsv
+rareOutDir=/vol/funMicZeroVolume1/qiimeWD/rarefaction
+rootedTree=/vol/funMicZeroVolume1/qiimeWD/aligned2Tree/rooted_tree.qza
+
+qiime diversity alpha-rarefaction \
+  --i-table $dada2_table \
+  --o-visualization $rareOutDir/alpha_rarefaction_curves.qzv \
+  --m-metadata-file $metadata \
+  --p-max-depth 10000
+
+##Saved Visualization to: /vol/funMicZeroVolume1/qiimeWD/rarefaction/alpha_rarefaction_curves.qzv
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/rarefaction/alpha_rarefaction_curves.qzv .
+
+## looks like maybe 5500 reads is a good compromise...
+qiime diversity core-metrics-phylogenetic \
+  --i-table $dada2_table \
+  --i-phylogeny $rootedTree \
+  --m-metadata-file $metadata \
+  --p-sampling-depth 5500 \
+  --output-dir core-metrics-results
+
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/core-metrics-results .
+
+qiime feature-classifier --help
+
+#mkdir /vol/funMicZeroVolume1/qiimeWD/taxClassification
+
+cd /vol/funMicZeroVolume1/qiimeWD/taxClassification
+
+## because of high demand, there is a naive bayesian classifier 
+## already trained on the v4 16s primer set provided by 
+wget https://data.qiime2.org/2022.2/common/silva-138-99-515-806-nb-classifier.qza
+
+dada2_table=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicZeroVolume1/qiimeWD/metadata.tsv
+ourClassifier=/vol/funMicZeroVolume1/qiimeWD/taxClassification/silva-138-99-515-806-nb-classifier.qza
+dada2Reps=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_rep_set.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier $ourClassifier \
+  --i-reads $dada2Reps \
+  --p-n-jobs 10 \
+  --o-classification dada2_rep_set_classified.qza
+
+
+qiime metadata tabulate \
+  --m-input-file dada2_rep_set_classified.qza \
+  --o-visualization taxonomy.qzv
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/taxClassification/taxonomy.qzv .
+
+## subsetting in qiime
+
+
+qiime feature-table filter-samples \
+  --i-table $dada2_table \
+  --m-metadata-file $metadata \
+  --p-where "Substrate='meOH'" \
+  --o-filtered-table MeOH_table.qza
+
+qiime feature-table filter-samples \
+  --i-table $dada2_table \
+  --m-metadata-file $metadata \
+  --p-where "Substrate='gluc'" \
+  --o-filtered-table Gluc_table.qza
+
+repSetClassified=/vol/funMicZeroVolume1/qiimeWD/taxClassification/dada2_rep_set_classified.qza
+
+qiime taxa barplot \
+  --i-table MeOH_table.qza \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization MeOH_taxa_bar_plots.qzv
+
+qiime taxa barplot \
+  --i-table Gluc_table.qza \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization Gluc_taxa_bar_plots.qzv
+
+mkdir /vol/funMicZeroVolume1/qiimeWD/subsets/
+cd /vol/funMicZeroVolume1/qiimeWD/subsets/
+mv ../Gluc* .
+mv ../MeOH* .
+
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/subsets/ .
+
+## well, that didn't work...why not?
+
+## try the whole dataset, not subsetted:
+
+repSetClassified=/vol/funMicZeroVolume1/qiimeWD/taxClassification/dada2_rep_set_classified.qza
+dada2_table=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicZeroVolume1/qiimeWD/metadata.tsv
+ourClassifier=/vol/funMicZeroVolume1/qiimeWD/taxClassification/silva-138-99-515-806-nb-classifier.qza
+dada2Reps=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_rep_set.qza
+
+qiime taxa barplot \
+  --i-table $dada2_table \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization all_taxa_bar_plots.qzv
+
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/all_taxa_bar_plots.qzv .
+
+## works. Why not the subsets?
+## 
+
+## can we import this somewhow into phyloseq?
+
+## what do we need? Our metadata as sample data, our phylogenetic tree, our rep sequences, our ASV abundances, etc etc
+
+#### jumping to phyloseq ####
+
+## let's see if we can get over to phyloseq easy like.
+
+## first, some exports:
+
+conda activate qiime2_env
+
+#mkdir /vol/funMicZeroVolume1/qiimeWD/exports
+
+cd /vol/funMicZeroVolume1/qiimeWD/exports
+
+$qiimeTaxTable
+qiimeTaxTable=/vol/funMicZeroVolume1/qiimeWD/taxClassification/taxonomy.qzv
+qiimeRepSet=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_rep_set.qza
+qiimetree=/vol/funMicZeroVolume1/qiimeWD/aligned2Tree/rooted_tree.qza
+exportDir=/vol/funMicZeroVolume1/qiimeWD/exports
+dada2_table=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_table.qza
+
+## our rep set:
+qiime tools export \
+  --input-path $qiimeRepSet \
+  --output-path $exportDir/sipDADA2repSet
+
+## tree
+qiime tools export \
+  --input-path $qiimetree \
+  --output-path $exportDir/sipDADA2tree
+
+## ASV abundance table
+qiime tools export \
+  --input-path $dada2_table \
+  --output-path $exportDir/sipDADA2table
+
+## taxonomy
+qiime tools export \
+  --input-path $qiimeTaxTable \
+  --output-path $exportDir/qiimeTaxTable
+
+## sample data should be recoverable from the metadata file?
+
+## try this in phyloseq, local:
+
+## first step, can we make an OTU table from our qiime biome table?
+
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:\
+/vol/funMicZeroVolume1/qiimeWD/exports .
+
+## the taxonomy table is here, I think:
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:\
+/vol/funMicZeroVolume1/qiimeWD/exports/qiimeTaxTable/metadata.tsv ./qiimeTaxTable.tsv
+
+## is the biom table okay?
+
+qiimeBiom="/home/daniel/Documents/teaching/functionalMicrobiomes/exports/feature-table.biom"
+
+qiimeTax="/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeTaxTable.tsv"
+
+
+ls /home/daniel/Documents/teaching/functionalMicrobiomes/qiimeTaxTable.tsv
+
+ls $qiimeBiom
+
+biom validate-table -i $qiimeBiom ## nope
+
+## does this help?
+biom convert -i $qiimeBiom -o exports/qiimeBiom2json.biom --table-type="OTU table" --to-json
+
+biom validate-table -i exports/qiimeBiom2json.biom ## now it says yes...
+
+R
+library(phyloseq)
+
+qiimeRepSeqs="/home/daniel/Documents/teaching/functionalMicrobiomes/exports/dna-sequences.fasta"
+qiimeBiom="/home/daniel/Documents/teaching/functionalMicrobiomes/exports/feature-table.biom"
+qiimeBiomJson="/home/daniel/Documents/teaching/functionalMicrobiomes/exports/qiimeBiom2json.biom"
+qiimeTree="/home/daniel/Documents/teaching/functionalMicrobiomes/exports/tree.nwk"
+qiimeTax="/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeTaxTable_forPhyloseq.csv"
+
+?import_biom
+
+aa <- import_biom(BIOMfilename=qiimeBiom) ## nope
+
+aa <- import_biom(BIOMfilename=qiimeBiomJson) ## works. I guess joey never fixed that. I remember talking to him about that.
+
+aa <- import_biom(BIOMfilename=qiimeBiomJson,
+    treefilename=qiimeTree,  
+    refseqfilename=qiimeRepSeqs,
+    parseFunction=parse_taxonomy_greengenes)
+
+## how do we get taxonomy into place?
+
+bb <- read.csv(qiimeTax, header=FALSE)
+
+bb <- read.csv(qiimeTax, header=FALSE, row.names=0) ##?
+
+colnames(bb) <- c("OTU","Domain", "Phylum", "Class", "Order", "Family", "Genus")
+
+bb$OTU
+
+rownames(bb) <- bb$OTU
+
+rownames(bb) <-"bb$OTU"
+
+cc <- as.matrix(bb)
+TAX = tax_table(cc)
+
+?tax_table
+ 
+## can we merge this?
+
+dd = merge_phyloseq(aa,TAX)
+
+physeq1 = merge_phyloseq(physeq, sampledata, random_tree)
+
+## nope. that's fucked. 
+
+#############################################
+## side note editing the qiime tax_table manually:
+## 
+## Domain, Domain, Phylum, Class, Order, Family, Genus, Species
+## head qiimeTaxTable_reformatted.tsv | cut -f 1,2 
+## 
+## head qiimeTaxTable_reformatted.tsv | cut -f 1,2 | sed "s/\t/; /"
+## 
+## cut -f 1,2 qiimeTaxTable_reformatted.tsv | sed "s/\t/; /" | sed "s/; [dpcofgs]__/,/g" > qiimeTaxTable_forPhyloseq.csv
+##
+## but then didn't work, problems with line breaks
+#############################################
+
+## trying to share a vm with the windows side of things:
+
+## local, put in on VM
+windowPubKey=/home/daniel/Desktop/windowsAccess2Funmic2.pub
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 $windowPubKey ubuntu@129.70.51.6:/vol/funMicZeroVolume1/
+
+## on the funmic2 machine
+
+windowPubKey=/vol/funMicZeroVolume1/windowsAccess2Funmic2.pub
+
+cat $windowPubKey
+
+ssh-copy-id -i $windowPubKey 
+
+vim /home/ubuntu/.ssh/authorized_keys ## copy and paste. 
+
+## check it, did that work?
+
+#############################################
+
+## some notes made on the windows side:
+
+## I followed the following to install the windows/ubuntu vm:
+https://allthings.how/how-to-use-linux-terminal-in-windows-10/
+
+## but this one might be useful, for folks with an wsl2 install:
+https://www.altisconsulting.com/uk/insights/installing-ubuntu-bash-for-windows-10-wsl2-setup/
+
+## the path to my ubuntu file architecture was this:
+
+C:\Users\bt307757\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\LocalState\rootfs\home\danchurch
+
+## I followed the advice of this thread, especially the Eamonn Kenny comment, and search the %LOCALAPPDATA% thing
+
+https://superuser.com/questions/1185033/what-is-the-home-directory-on-windows-subsystem-for-linux
+
+## most of the later answers seem to find the file system in username/AppData/local/Packages/Canon..../LocalState/rootfs
+
+## some other answers that might be useful:
+
+https://www.howtogeek.com/426749/how-to-access-your-linux-wsl-files-in-windows-10/
+
+## whatever happens, pin the location so you don't have to find this file system again.
+
+## to allow copying and pasting, I found this website:
+https://stackoverflow.com/questions/38832230/copy-paste-in-bash-on-ubuntu-on-windows
+
+## basically, right click on title bar of terminal, choose properties menu, click on "Use ctrl+shift+C/V..."
+
+## now, can we get onto a vm with this vm?
+
+## we need to generate a key pair and get the public one to the denbi vm
+
+ssh-keygen -t rsa -f windowsAccess2Funmic2
+
+## this public key has to be shared with "me", the primary user.
+
+## so I need to give this to myself, say in an email
+## then I manually added it to the authorized keys file in .ssh.
+## don't erase old keys when doing this
+
+## should be on there now, try a login?
+
+## from windows machine
+ssh -p 30192  -i /home/danchurch/.ssh/windowsAccess2Funmic2 ubuntu@129.70.51.6
+
+## can we scopy using this also?
+scp -P 30192 -i /home/danchurch/.ssh/windowsAccess2Funmic2 \
+putzingWithWindows.txt \
+ubuntu@129.70.51.6:/vol/funMicZeroVolume1
+
+## works. Great, we have a windows machine that can run a bash shell locally and remotely.
+
+## let's make a github repo for our scripts for the class:
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical2022
+
+echo "# FunctionalMicrobiomePractical2022" >> README.md
+
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com:danchurch/FunctionalMicrobiomePractical2022.git
+git remote set-url origin git@github.com:danchurch/FunctionalMicrobiomePractical2022.git
+git push -u origin main
+
+################# setup an individual machine for imaging ####################
+
+## let's wade back through the above mess and figure out the 
+## barebones setup, the cleanest possible start for one machine that will
+## let them 
+
+## we need 
+
+## anaconda 
+
+## base data - mbarc, chu, Tillmann data
+
+## an environment for all bionf programs used, also bowtie2, krona 
+
+## strategy here - set up one new VM, make image, find students on de.NBI
+
+## they automatically load my funmic pubkey on there
+## our first student computer is here:
+
+ssh -p 30112 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## let's install anaconda on our volume
+
+cd /vol/studentFunMic1Vol
+wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
+bash Anaconda3-2021.11-Linux-x86_64.sh
+
+## installing to 
+/vol/studentFunMic1Vol/anaconda3
+
+## conda is not initializing, try again
+/vol/studentFunMic1Vol/anaconda3/bin/conda init bash
+
+cd /vol/studentFunMic1Vol
+
+## seems fixed
+
+## great. base data: chu, mbarc, luders data. 
+## I think we should get these straight off
+## our funmic machine. 
+
+## make a key, see if we can get it right off 
+## our old vm?
+  
+## on funmic1
+
+ssh-keygen -t rsa -f student1_funmic1
+## student1
+
+## copy paste the private to student1 machine
+
+## can we log in from funmicone?
+
+ssh -p 30112 -i /home/ubuntu/.ssh/student1_funmic1 ubuntu@129.70.51.6
+
+## works. SCP, to put our data in the model student machine
+
+## transfers, from funmicone 
+
+## the mbarc data:
+mbarcData=/vol/funMicZeroVolume1/MBARC-26-illumina/reads/smallerMBARC_trimmed.fq
+
+scp -P 30112 -i /home/ubuntu/.ssh/student1_funmic1 \
+$mbarcData \
+ubuntu@129.70.51.6:/vol/studentFunMic1Vol/
+
+## the Chu data 
+cd /vol/funMicZeroVolume1/ChuLibs/rawreads/
+## oops, its in sra compression. Can we do the decompression?
+
+for i in ./*.sra; do
+    fastq-dump $i
+done
+
+## put in a few aliases?:
+
+## Influent files are:
+cat \
+  SRR5571002.fastq \
+  SRR5571006.fastq \
+  SRR5571001.fastq \
+  > chuInfluent.fastq
+
+## effluent files are:
+cat \
+  SRR5571004.fastq \
+  SRR5571005.fastq \
+  SRR5571010.fastq \
+  > chuEffluent.fastq &
+
+## transfer them
+chuInf=/vol/funMicZeroVolume1/ChuLibs/rawreads/chuInfluent.fastq
+scp -P 30112 -i /home/ubuntu/.ssh/student1_funmic1 \
+$chuInf \
+ubuntu@129.70.51.6:/vol/studentFunMic1Vol/sequenceData/Chu
+
+chuEff=/vol/funMicZeroVolume1/ChuLibs/rawreads/chuEffluent.fastq
+scp -P 30112 -i /home/ubuntu/.ssh/student1_funmic1 \
+$chuEff \
+ubuntu@129.70.51.6:/vol/studentFunMic1Vol/sequenceData/Chu
+
+## we also want tillmann's sequence data:
+SIPreadDir=/vol/funMicZeroVolume1/SIPamps/reads
+scp -r -P 30112 -i /home/ubuntu/.ssh/student1_funmic1 \
+$SIPreadDir \
+ubuntu@129.70.51.6:/vol/studentFunMic1Vol/sequenceData/SIPreads/
+
+## back to talking to student1 through local comp
+ssh -p 30112 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+## easy conda installations
+conda create -n readQC_env -c bioconda trim-galore fastqc bbmap
+conda create -n assembly_env -c bioconda megahit
+conda create -n quast_env -c bioconda quast ## says db dependencies like silva are missing.
+conda create -n alignment_env -c bioconda bowtie2 samtools 
+conda create -n concoct_env python=3 concoct mkl samtools 
+conda create -n metabat2_env -c bioconda metabat2 
+conda create -n dastool_env -c bioconda das_tool
+conda create --name prodigal_env -c bioconda prodigal
+
+## trickier installations:
+
+## maxbin2 takes forever to solve environment - why?
+conda create -n maxbin2_env -c bioconda maxbin2 
+
+## checkm a bit tricky
+conda create -n checkm_env python=3.9
+conda activate checkm_env
+conda install numpy matplotlib pysam 
+conda install hmmer prodigal pplacer
+pip3 install checkm-genome
+
+## also need the database with markers
+checkm_data_dir=/vol/studentFunMic1Vol/checkm/checkm_data_dir/
+mkdir -p $checkm_data_dir
+cd $checkm_data_dir
+#wget 'https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz'
+tar -xvf checkm_data_2015_01_16.tar.gz
+rm checkm_data_2015_01_16.tar.gz
+checkm data setRoot $checkm_data_dir
+
+## metaphan needs an outside library, tbb
+sudo apt install libtbb2
+conda create --name metaphlan_env -c bioconda python=3.7 metaphlan
+conda activate metaphlan_env
+metaphlan --install --bowtie2db /vol/studentFunMic1Vol/metaphlanMarkerDB
+## phylophlan ships with metaphlan
+
+## krona needs make, and for us to fetch taxonomy from ncbi using a script
+conda create --name krona_env -c bioconda krona
+conda activate krona_env
+conda install -c conda-forge make
+/vol/studentFunMic1Vol/anaconda3/envs/krona_env/opt/krona/updateTaxonomy.sh
+
+## qiime uses conda but keeps a lot of its packages on its own server
+## use their yaml to make it
+wget https://data.qiime2.org/distro/core/qiime2-2022.2-py38-linux-conda.yml
+conda env create -n qiime2_env --file qiime2-2022.2-py38-linux-conda.yml
+
+## phyloseq
+## be very careful with versions here, phyloseq is super picky
+conda create -n R_env -c conda-forge r-base=4.1.2
+activate R_env
+R
+## inside R
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("phyloseq")
+## this ships with vegan, I think
+## if not, vegan is an easy install
+
+## that should be most of what we need. Let's try making an image.
+#########################################################################
+
+## for FunMic22ThueringerKai-ef393
+
+ssh -p 30089 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## as suspected, the images did not include any information about the volumes
+
+## let's try dd
+## we'll need to detach the volume from our model, attach it to the 
+## new vm, and attach another volume, :
+
+
