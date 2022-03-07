@@ -10,92 +10,177 @@
 
 
 #### pwd ####
-
+pwd
 
 #### ls ####
 
+ls 
+
+ls -la
 
 #### cd ####
 
+cd .zotero 
+
+cd ..
+
+cd -
 
 #### cp ####
 
+touch zoop.file 
+
+cp zoop.file zoop2.file
+
+cp zoop.file zoops/zoop3.file
 
 #### mkdir ####
+
+mkdir zoops
+
+cd zoops
+
+cd /home/daniel/zoops
 
 
 #### echo ####
 
+echo zoop
+
+echo "peep!" > ourSecondTextfile.txt
+
+echo "zoop" > toop.txt
+
+echo "beep!" > ourThirdTextFile.txt
 
 #### cat ####
 
+cat ourSecondTextfile.txt
+
+ cat ourSecondTextfile.txt ourThirdTextFile.txt
+
+ cat ourSecondTextfile.txt ourThirdTextFile.txt > ourFourthTextFile.txt
 
 #### rm ####
 
+rm zoop3.file
 
 #### sudo ####
 
+cd /dev
+
+touch test.txt ## results in error
+
+sudo touch test.file
 
 #### apt ####
+
+sudo apt update
+
+sudo apt upgrade
+
+apt search qgis
 
 
 #### top ####
 
+#top
+
+top
 
 #### man ####
 
+man top ## etc
 
 #### head ####
 
+head fionaASVs.phy_phyml_boot_stats.txt
 
 #### tail ####
 
+tail fionaASVs.phy_phyml_boot_stats.txt
+
+tail -n 3 fionaASVs.phy_phyml_boot_stats.txt
 
 #### less ####
+
+less fionaASVs.phy_phyml_stats.txt
 
 
 ######## special characters and variables ########
 
 ####  ~  ####
 
+cd ~
+
+cd /home/daniel/Desktop
+
+cd ~/Desktop
 
 ####  .  ####
 
+cd . 
 
-####  .  ####.
+ls . 
 
+####  ..  ####
+
+cd ..
 
 ####  >  ####
 
+echo "beep!" > ourThirdTextFile.txt
+
+echo "yeah" > ourThirdTextFile.txt
+
+echo "beepbeep!" >> ourThirdTextFile.txt
 
 ####  $  ####
 
+echo $PWD
+
+wakeup="HeyWakeUP"
+
+echo $wakeup
 
 ####  |  ####
 
+ls -l | wc -l
 
 ####  ;  ####
 
+ls -l; pwd
 
 ####  /  ####
 
 
 ####  \  ####
 
+echo $wakeup
+
+echo \$wakeup
+
 
 ####  &  ####
 
-
-####  =  ####
-
+firefox & ## background process
 
 ####  *  ####
 
+cd zoops
+
+touch test.fasta
+
+ls *Second*
+
+ls *fasta 
 
 ####  ?  ####
 
 
 ####  #  ####
+
+
 
 #### other commands and characters #####
 ## here we add other commands that we used during our session,
