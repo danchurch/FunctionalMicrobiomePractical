@@ -1,1 +1,5 @@
 ## here we will keep our script of our metagenomic project
+
+#### quality control #### of reads 
+
+

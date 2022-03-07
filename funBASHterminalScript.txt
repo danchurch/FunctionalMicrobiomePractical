@@ -2,7 +2,6 @@
 
 ## first step is get your WSL setup working! 
 
-## also, let's check logins at cloud.denbi.de/portal/ 
 
 ## After that, let's look at the following:
 
@@ -71,40 +70,41 @@ cd /dev
 
 touch test.txt ## results in error
 
-sudo touch test.file
+sudo touch test.file ## works! you are root
 
 #### apt ####
 
-sudo apt update
+## apt updates our computer's software
 
+sudo apt update
 sudo apt upgrade
 
-apt search qgis
+## we can also look for new software
+apt search qgis 
+apt install qgis
 
 
 #### top ####
-
-#top
 
 top
 
 #### man ####
 
-man top ## etc
+man ls
+man top 
+## etc
 
 #### head ####
 
-head fionaASVs.phy_phyml_boot_stats.txt
+head /etc/sysctl.conf
 
 #### tail ####
 
-tail fionaASVs.phy_phyml_boot_stats.txt
-
-tail -n 3 fionaASVs.phy_phyml_boot_stats.txt
+tail /etc/sysctl.conf
 
 #### less ####
 
-less fionaASVs.phy_phyml_stats.txt
+less /etc/sysctl.conf
 
 
 ######## special characters and variables ########
@@ -176,16 +176,29 @@ ls *fasta
 
 ####  ?  ####
 
+## like *, but for one character!
 
 ####  #  ####
 
+## run both of these:
 
+ls
+# ls
+
+#top
+top
+
+## with the hash tag, the command is not run.  
 
 #### other commands and characters #####
 ## here we add other commands that we used during our session,
 ## that are not listed above:
 
+
+
 ######## generating key pairs ########
+
+## first, let's check logins at cloud.denbi.de/portal/ 
 
 ## let's make a key, to put on your virtual machine
 
@@ -202,12 +215,6 @@ ssh-keygen -t rsa -f ##enter keynamehere
 
 chmod 700 .ssh
 chmod 600 id_rsa
-
-
-
-
-
-
 
 ## copy and paste the public key, send it to me at:
 
