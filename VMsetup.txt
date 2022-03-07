@@ -4387,9 +4387,154 @@ ssh -p 30089 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
 ## we'll need to detach the volume from our model, attach it to the 
 ## new vm, and attach another volume
 
-## and de.NBI saved us there.  
+## oh dd, we plead to you for mercy.
+
+## we'll need to detach the volume from our model, attach it to the
+## new vm, and attach another volume, and use dd to create an
+## exact copy.
+
+## let's try it with ubuntu@funmic22thueringerkai-ef393
+
+## that leaves us with two blk devices: vdd and vde
+
+## the latter is likely our empty one.
+
+sudo mkdir -p /vol/Volume1
+sudo mount /dev/vdd /vol/Volume1
+ls -lr /vol/Volume1
+sudo umount /dev/vdd
+
+## that's it.
+## we'll need to be careful with our mountpoint
+## so we don't disappoint anaconda...
+
+## checking, the other should be empty? maybe even unformatted..
+sudo mkdir -p /vol/Volume2
+sudo mount /dev/vde /vol/Volume2
+## won't mount. I guess its unformatted.
+
+## do to the volumes have to be mounted for dd? formatted?
+## hope the answer to both is no...
+
+sudo dd if=/dev/vdd of=/dev/vde
+
+## that takes a really long time.
+
+## if this actually works, we will need to
+## start as many processes as we can
+## as in, detach these and duplicate them
+## onto other volumes, etc.
+
+## the most efficient solution here?
+
+## I think we need get a keypair for use so I can do this
+## at home.
+
+## also, it looks like dd actually uses very little
+## memory and processor power.
+
+## so we can theoretically load up these two computers
+## with volumes and work on multiple volumes on each.
+
+## not sure if the input file can be used simultaneously
+## to copy to multiple other devices? It looks like it
+## could handle at least 4 other devices...
+
+## let's try attaching a couple and getting the dd started on them...
+
+## for reference this is lsblk before doing this:
+
+NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+loop0     7:0    0 61.9M  1 loop /snap/core20/1242
+loop1     7:1    0 67.2M  1 loop /snap/lxd/21835
+loop2     7:2    0 61.9M  1 loop /snap/core20/1361
+loop3     7:3    0 67.9M  1 loop /snap/lxd/22526
+loop4     7:4    0 43.6M  1 loop /snap/snapd/14978
+vda     252:0    0   20G  0 disk
+├─vda1  252:1    0 19.9G  0 part /
+├─vda14 252:14   0    4M  0 part
+└─vda15 252:15   0  106M  0 part /boot/efi
+vdb     252:16   0 1000G  0 disk /mnt
+vdc     252:32   0    1G  0 disk [SWAP]
+vdd     252:48   0  700G  0 disk
+vde     252:64   0  700G  0 disk
+
+## I assume the next volumes will be vdf, vdg, etc...
+
+## here we go...
+
+## the list of volumenames should be
+thueringerkai
+malterjonas
+liberadenise
+heintzeulrike
+grubmuellereric
+nuskechristoph
+pfafffelix
+
+## the template is currently on kai's computer...
+## let's try creating three more volumes, attaching them to kai's computer
+## and starting dd.
+## once dd spawns one of its unholy offspring, we attach this one elsewhere
+## and start using that machine to make copies.
+
+## then deal with keys for home use.
+
+## these are the three we just attached:
+liberadenise
+heintzeulrike
+grubmuellereric
+
+## can we find these?
+
+## should be as simple as:
+
+#sudo dd if=/dev/vdd of=/dev/vdf &
+#sudo dd if=/dev/vdd of=/dev/vdg &
+#sudo dd if=/dev/vdd of=/dev/vdh &
+
+## that will run forever, I assume.
+
+## how can we set this up so I can tend to this at home?
+
+## I need to add a public key from my other computer...
+
+## where do we need this? at least on the template computer
+## and the original funmic machine
+## and for the moment on the kai computer, since that is where all the action is.
+
+## hell, I guess we need it on all the computers, to tweak them from
+## home. ugh
+## and de.NBI saved us there.
+
 
 ## first day is only linux and login
+
+## Kai
+ssh -p 30089 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## jonas
+ssh -p 30064 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## denise
+ssh -p 30132 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## ulrike
+ssh -p 30014 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## eric
+ssh -p 30032 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## christoph
+ssh -p 30009 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+## felix
+ssh -p 30035 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
+
+
+
+
+
 
 ## our try one machine (say Kai's machine)
 
