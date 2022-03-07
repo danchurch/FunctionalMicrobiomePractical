@@ -160,7 +160,6 @@ echo $wakeup
 
 echo \$wakeup
 
-
 ####  &  ####
 
 firefox & ## background process
@@ -198,6 +197,17 @@ ssh-keygen -t rsa -f ##keynamehere
 cd ~/.ssh
 
 ssh-keygen -t rsa -f ##enter keynamehere
+
+## it may be necessary to change your permissions:
+
+chmod 700 .ssh
+chmod 600 id_rsa
+
+
+
+
+
+
 
 ## copy and paste the public key, send it to me at:
 
@@ -249,7 +259,6 @@ wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical20
 scp -P 30089 -i $prvKey ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
 
 ## now, can we get this onto windows, and into excel?
-
 
 ####### use of text editors and keeping notes/scripts ###############
 

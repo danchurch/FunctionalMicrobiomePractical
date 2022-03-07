@@ -4580,5 +4580,34 @@ scp -P 30089 -i $prvKey ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
 
 ## for now - update pdf/docx, put a copy of each command on script and each special 
 ## character that we have in the syllabus
-
  
+############## create a new user account for Kai? #############3
+
+## see here: https://linuxize.com/post/how-to-create-users-in-linux-using-the-useradd-command/
+
+## should be as simple as:
+
+sudo useradd -m kai
+sudo passwd kai
+sudo login kai
+
+sudo userdel -r kai 
+## or
+sudo su
+rm -r kai
+
+#######################################
+
+## logins from WSL
+
+## let's try to resolve this
+
+## this website might be useful:
+https://superuser.com/questions/215504/permissions-on-private-key-in-ssh-folder
+
+## I suspect that the issue with Jonas' login was file permissions
+
+chmod 700 .ssh/
+chmod 600 privatekey
+chmod 755 home
+
