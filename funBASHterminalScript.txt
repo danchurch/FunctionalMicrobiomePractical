@@ -217,8 +217,15 @@ daniel.thomas@uni-bayreuth.de
 
 ######## remote logins with SSH  ########
 
+## we may need to change file permissions on your
+## linux machine for SSH to work:
+
+chmod 700 .ssh/
+chmod 600 privateKeyFile
+chmod 755 home
+
 ## here are everyone's logins. These should work even
-## if the de.NBI cloud portal isn't working:
+## if the de.NBI cloud portal isn't working
 
 ## example, my key is here: 
 pathToKey=/home/daniel/.ssh/denbiTestVM
