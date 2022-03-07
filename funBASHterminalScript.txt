@@ -2,7 +2,12 @@
 
 ## first step is get your WSL setup working! 
 
+## also, let's check logins at cloud.denbi.de/portal/ 
+
 ## After that, let's look at the following:
+
+######## common/important BASH commands ########
+
 
 #### pwd ####
 
@@ -43,13 +48,13 @@
 #### head ####
 
 
-## tail ##
+#### tail ####
 
 
-## less ##
+#### less ####
 
 
-#### special characters and variables ####
+######## special characters and variables ########
 
 ####  ~  ####
 
@@ -92,16 +97,65 @@
 
 ####  #  ####
 
+#### other commands and characters #####
+## here we add other commands that we used during our session,
+## that are not listed above:
 
-#### remote logins with SSH  ####
+######## generating key pairs ########
 
+## let's make a key, to put on your virtual machine
 
+ssh-keygen -t rsa -f ##keynamehere
+
+## if your not already there...
+
+## mkdir ~/.ssh
+cd ~/.ssh
+
+ssh-keygen -t rsa -f ##enter keynamehere
+
+## copy and paste the public key, send it to me at:
+
+daniel.thomas@uni-bayreuth.de
+
+## then let's pause while dan enters these into your de.NBI machines!
+
+######## remote logins with SSH  ########
+
+## here are everyone's logins. These should work even
+## if the de.NBI cloud portal isn't working:
+
+## example, my key is here: 
+pathToKey=/home/daniel/.ssh/denbiTestVM
+
+## Kai
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
+
+## Jonas
+ssh -p 30064 -i $pathToKey ubuntu@129.70.51.6
+
+## Denise
+ssh -p 30132 -i $pathToKey ubuntu@129.70.51.6
+
+## Ulrike
+ssh -p 30014 -i $pathToKey ubuntu@129.70.51.6
+
+## Eric
+ssh -p 30032 -i $pathToKey ubuntu@129.70.51.6
+
+## Christoph
+ssh -p 30009 -i $pathToKey ubuntu@129.70.51.6
+
+## Felix
+ssh -p 30035 -i $pathToKey ubuntu@129.70.51.6
 
 #### file transfers  ####
 
 ## do this from a computer (this is Kai's computer, just for example)
-prvKey=/media/daniel/1830bdb2-352f-4183-ab70-2519b79d7f0f/keys/danHomekey4denbi
-ssh -p 30089 -i $prvKey ubuntu@129.70.51.6
+
+pathToKey=/home/daniel/.ssh/denbiTestVM
+
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
 
 ## get from internet
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/frogJumpResults.csv
@@ -109,4 +163,10 @@ wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical20
 ## get this onto local machine
 scp -P 30089 -i $prvKey ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
 
+## now, can we get this onto windows, and into excel?
 
+
+####### use of text editors and keeping notes/scripts ###############
+
+## let's finish with a quick discussion of the importance of 
+## text editors and notetaking while computing. 

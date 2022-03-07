@@ -3727,7 +3727,7 @@ qiime tools import \
   --output-path /vol/funMicZeroVolume1/qiimeWD/test.qza
 
 ## and fucked, something about the file names
-## try again tomorrow. I fucking hate qiime. 
+## try again tomorrow. I hate qiime. 
 
 cd /vol/funMicZeroVolume1/qiimeWD
 
@@ -4096,7 +4096,7 @@ dd = merge_phyloseq(aa,TAX)
 
 physeq1 = merge_phyloseq(physeq, sampledata, random_tree)
 
-## nope. that's fucked. 
+## nope. that's f---ed. 
 
 #############################################
 ## side note editing the qiime tax_table manually:
