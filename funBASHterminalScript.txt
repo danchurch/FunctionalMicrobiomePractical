@@ -190,9 +190,32 @@ top
 
 ## with the hash tag, the command is not run.  
 
-#### other commands and characters #####
-## here we add other commands that we used during our session,
-## that are not listed above:
+
+
+
+
+
+
+
+
+####### use of text editors and keeping notes/scripts ###############
+
+## let's start with a quick discussion of the importance of 
+## text editors and notetaking while computing. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -206,8 +229,12 @@ ssh-keygen -t rsa -f ##keynamehere
 
 ## if your not already there...
 
-## mkdir ~/.ssh
+mkdir ~/.ssh
+
 cd ~/.ssh
+
+
+ssh-keygen -t rsa
 
 ssh-keygen -t rsa -f ##enter keynamehere
 
@@ -230,6 +257,14 @@ daniel.thomas@uni-bayreuth.de
 chmod 700 .ssh/
 chmod 600 privateKeyFile
 chmod 755 home
+
+cd 
+
+cd .ssh
+
+pwd
+
+/home/ubuntu/.ssh/privatekey
 
 ## here are everyone's logins. These should work even
 ## if the de.NBI cloud portal isn't working
@@ -266,15 +301,49 @@ pathToKey=/home/daniel/.ssh/denbiTestVM
 
 ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
 
+
+
+
+
+
+
+
 ## get from internet
+
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/frogJumpResults.csv
 
+
+
+
+
 ## get this onto local machine
-scp -P 30089 -i $prvKey ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
+
+pathToKey=/home/daniel/.ssh/denbiTestVM
+scp -P 30089 -i $pathToKey ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
+
+
+scp ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
 
 ## now, can we get this onto windows, and into excel?
 
-####### use of text editors and keeping notes/scripts ###############
 
-## let's finish with a quick discussion of the importance of 
-## text editors and notetaking while computing. 
+cd 
+
+cd /mnt/c/users/default 
+
+
+cd /home/daniel/Desktop
+
+
+cp frogJumpResults.csv /mnt/c/users/default/
+
+
+cp frogJumpResults.csv /mnt/c/
+
+mv frogJumpResults.csv /mnt/c/
+
+
+
+
+
+

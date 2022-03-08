@@ -4608,6 +4608,13 @@ https://superuser.com/questions/215504/permissions-on-private-key-in-ssh-folder
 ## I suspect that the issue with Jonas' login was file permissions
 
 chmod 700 .ssh/
-chmod 600 privatekey
+
+
+
+sudo chmod 600 privatekey
+
+
+
+
 chmod 755 home
 
