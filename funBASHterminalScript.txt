@@ -8,6 +8,7 @@
 ######## common/important BASH commands ########
 
 
+
 #### pwd ####
 pwd
 
@@ -19,19 +20,27 @@ ls -la
 
 #### cd ####
 
-cd .zotero 
+cd ## just cd  ## where does this take you? try it from different places
+
+cd .ssh 
 
 cd ..
 
-cd -
+cd - 
 
 #### cp ####
 
-touch zoop.file 
+touch zoop.file ## makes an empty file
 
 cp zoop.file zoop2.file
 
 cp zoop.file zoops/zoop3.file
+
+#### mv ####
+
+mv zoop.file doop.file ## renames the file from zoop.file to doop.file
+
+mv zoop.file doop.file ## renames the file from zoop.file to doop.file
 
 #### mkdir ####
 
@@ -56,9 +65,9 @@ echo "beep!" > ourThirdTextFile.txt
 
 cat ourSecondTextfile.txt
 
- cat ourSecondTextfile.txt ourThirdTextFile.txt
+cat ourSecondTextfile.txt ourThirdTextFile.txt
 
- cat ourSecondTextfile.txt ourThirdTextFile.txt > ourFourthTextFile.txt
+cat ourSecondTextfile.txt ourThirdTextFile.txt > ourFourthTextFile.txt
 
 #### rm ####
 
@@ -81,7 +90,7 @@ sudo apt upgrade
 
 ## we can also look for new software
 apt search qgis 
-apt install qgis
+apt install qgis ## only run this if you want new GIS software :)
 
 
 #### top ####
@@ -145,7 +154,11 @@ echo $wakeup
 
 ####  |  ####
 
-ls -l | wc -l
+## pipe outputs from one command to another:
+
+ls -l | wc -l    
+
+man ls | less 
 
 ####  ;  ####
 
@@ -153,8 +166,11 @@ ls -l; pwd
 
 ####  /  ####
 
+## this is how BASH separates directories, like \ in windows
 
 ####  \  ####
+
+## this makes special characters back into regular characters 
 
 echo $wakeup
 
@@ -162,21 +178,22 @@ echo \$wakeup
 
 ####  &  ####
 
+## puts in a process into the background
 firefox & ## background process
 
 ####  *  ####
 
-cd zoops
+## this is a "wildcard", use it to match anything...
+## so use it select just certain files
 
-touch test.fasta
-
-ls *Second*
-
-ls *fasta 
+ls /dev/    ## all files, same as:
+ls /dev/*    ## all files
+ls /dev/tty*  ## find just files with tty in them 
 
 ####  ?  ####
 
 ## like *, but for one character!
+
 
 ####  #  ####
 
@@ -191,48 +208,23 @@ top
 ## with the hash tag, the command is not run.  
 
 
-
-
-
-
-
-
-
 ####### use of text editors and keeping notes/scripts ###############
 
 ## let's start with a quick discussion of the importance of 
 ## text editors and notetaking while computing. 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ######## generating key pairs ########
-
-## first, let's check logins at cloud.denbi.de/portal/ 
-
-## let's make a key, to put on your virtual machine
-
-ssh-keygen -t rsa -f ##keynamehere
 
 ## if your not already there...
 
-mkdir ~/.ssh
+mkdir ~/.ssh ## probably already exists
 
 cd ~/.ssh
 
+## let's make a key, to put on your virtual machine
+
+ssh-keygen -t rsa -f ##key file name here
 
 ssh-keygen -t rsa
 
@@ -255,8 +247,8 @@ daniel.thomas@uni-bayreuth.de
 ## linux machine for SSH to work:
 
 chmod 700 .ssh/
-chmod 600 privateKeyFile
-chmod 755 home
+chmod 600 {privateKeyFile}
+chmod 755 {homeDirectory}
 
 cd 
 
@@ -297,53 +289,54 @@ ssh -p 30035 -i $pathToKey ubuntu@129.70.51.6
 
 ## do this from a computer (this is Kai's computer, just for example)
 
-pathToKey=/home/daniel/.ssh/denbiTestVM
+pathToKey=/home/daniel/.ssh/denbiTestVM    ## this is my key, will be different for you
 
-ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
-
-
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6 ## the port will different for you, see your login above
 
 
-
-
-
-
-## get from internet
-
+## you should now be in your de.NBI machine
+## get file from the from internet, using wget
+cd
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/frogJumpResults.csv
+## this will put that file right into the directory that you are in, in your de.NBI machine
 
+## so how do we get this onto your local computer?
 
+## logout from your de.NBI machine:
 
+logout
 
+## now you should be back on your home machine, still in linux/BASH
 
-## get this onto local machine
+## you can fetch your file from your de.NBI machine using scp
 
 pathToKey=/home/daniel/.ssh/denbiTestVM
 scp -P 30089 -i $pathToKey ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
 
+## go to home directory, put 
 
+cd 
 scp ubuntu@129.70.51.6:/home/ubuntu/frogJumpResults.csv .
 
 ## now, can we get this onto windows, and into excel?
 
+## first, let's make a directory that windows and linux can 
+## "share"
 
-cd 
+## there are only a few places we can do this. The following
+## are recommendation
 
-cd /mnt/c/users/default 
+mkdir /mnt/c/PUTLINUXFILESHERE
 
+cp frogJumpResults.csv /mnt/c/PUTLINUXFILESHERE
 
-cd /home/daniel/Desktop
+## you should be able to find this with windows file explorer
 
+## to find it, look in your "C:\" drive. You can type it directly into the
+## top of the explorer program
 
-cp frogJumpResults.csv /mnt/c/users/default/
-
-
-cp frogJumpResults.csv /mnt/c/
-
-mv frogJumpResults.csv /mnt/c/
-
-
-
-
+## when you find this folder, don't forget to pin it, so 
+## you can find it again easily. Do this by right clicking on 
+## the "PUTLINUXFILESHERE" folder, and pin to "easy-access".
 
 
