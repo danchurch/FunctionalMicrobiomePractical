@@ -1,21 +1,49 @@
-## here we will keep our script of our metagenomic project
+#### here we will keep our script of our metagenomic project ####
+
+## let's look at our mock community reads with fastqc  
+
+## first we have to log in again to your de.NBI machine with ssh
+
+## your login info is in the funBASHterminalScript.txt
+
+## that script is at https://github.com/danchurch/FunctionalMicrobiomePractical2022
+
+## you can download it by going to 
+
+## https://github.com/danchurch/FunctionalMicrobiomePractical2022/blob/main/funBASHterminalScript.txt
+
+## and right-clicking on "Raw" and saving it.
+
+## this is my key, that I use for logins
+pathToKey=/home/daniel/.ssh/denbiTestVM
+ssh -p 30009 -i $pathToKey ubuntu@129.70.51.6
+## your port will be different, I think this is Kai's de.NBI machine
+
+## now that you are on your machine...
 
 #### quality control of reads #### 
 
-pathToKey=/home/daniel/.ssh/denbiTestVM
-ssh -p 30009 -i $pathToKey ubuntu@129.70.51.6
-
+## activate conda
 conda env list 
 
 conda activate readQC_env
 
+## your reads for the mock community should be here:
 cd /vol/studentFunMic1Vol/sequenceData/mbarc
 
+## look at the file - how big is it?
 ls -lh smallerMBARC_trimmed.fq
 
+## what does a fastq file look like in real life?:
 head smallerMBARC_trimmed.fq
 
-## let's get the file from de.NBI to our local computers 
+## let's run fastqc to get a quality report
+## -o tells fastqc where to put its output 
+## --threads 8 tells fastqc to use 8 processors  
+
+fastqc -o /home/ubuntu/danFastQCout --threads 8 smallerMBARC_trimmed.fq
+
+## let's get the file from de.NBI to our local computers, with scp
 
 pathToKey=/home/daniel/.ssh/denbiTestVM
 
@@ -24,32 +52,11 @@ ubuntu@129.70.51.6:/home/ubuntu/danFastQCout/smallerMBARC_trimmed_fastqc.html .
  
 ## put this somewhere where both windows and linux can read it:
 
-pathToKey=/home/daniel/.ssh/denbiTestVM
-
-cd 
-
 cp smallerMBARC_trimmed_fastqc.html /mnt/c/PUTLINUXFILESHERE/
 
-
-
-cd /vol/studentFunMic1Vol/sequenceData/mbarc
-
-conda activate readQC_env
-
-fastqc -o /home/ubuntu/danFastQCout --threads 8 smallerMBARC_trimmed.fq
-
-
-
-fastqc -o /home/ubuntu/danFastQCout \
-  --threads 8 \
-  smallerMBARC_trimmed.fq
-
-touch testfile1
-
-mv testfile1 testfile2
-
-
 ######### start assembly ############
+
+## let's start the job of making an assembly with megahit
 
 conda env list
 
@@ -57,6 +64,7 @@ conda activate assembly_env
 
 MBARCreads=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq
 
-megahit -r $MBARCreads -o ~/megahitMBARCOut -t 2
+megahit -r $MBARCreads -o ~/megahitMBARCOut -t 8
 
+## this will run for a while!
 
