@@ -68,3 +68,59 @@ megahit -r $MBARCreads -o ~/megahitMBARCOut -t 8
 
 ## this will run for a while!
 
+
+
+######### check assembly with metaquast #############
+
+## let's run a quick check on our assembly with metaquast
+
+## get on your denbi machine
+pathToKey=~/.ssh/denbiTestVM
+ssh -p 30112 -i $pathToKey ubuntu@129.70.51.6
+
+## activate the correct conda environment 
+conda activate quast_env
+
+
+
+
+## where is our assembly from megahit?
+
+## it will be where you asked megahit to build its output directory above
+
+## if you can't find it, this might work:
+
+cd /vol/studentFunMic1Vol
+
+## find command!!!
+
+find . -name "final.contigs.fa"
+
+## once you find it, look around in that directory. What do you see?
+
+
+## make a working directory for metaquast
+mkdir -p /vol/studentFunMic1Vol/metaquast/mbarc
+
+cd /vol/studentFunMic1Vol/metaquast/mbarc
+
+## now run metaquast on your reads
+
+pathToAssembly="/vol/studentFunMic1Vol/final.contigs.fa"
+
+metaquast --threads 6 $pathToAssembly
+
+#### metaphlan ####
+
+metaphlanMarkerDB=/vol/studentFunMic1Vol/metaphlanMarkerDB
+MBARCraw=/vol/studentFunMic1Vol/sequenceData/mbarc/reads/smallerMBARC_trimmed.fq
+
+#mkdir -p /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+
+metaphlan $MBARCraw \
+    --bowtie2db $metaphlanMarkerDB \
+    --nproc 6 \
+    --input_type fastq \
+    -o mbarcMetaPhlanProfiled_metagenome.txt
+
