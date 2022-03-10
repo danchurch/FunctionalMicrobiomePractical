@@ -165,4 +165,45 @@ grep -E "s__|clade" mbarcMetaPhlanProfiled_metagenome.txt | sed 's/^.*s__//g' | 
 
 ######### binning ###############
 
+## time to bin our contigs from our assembly into possible genomes
 
+## we'll try three different binning software, concoct, MetaBAT2, and Maxbin
+
+## some of these binning algorithms require that we align our raw reads
+## back onto the assembly, to get an idea of relative abundances. 
+
+##### aligning raw reads to our assembly #####
+
+## use bowtie for this:
+conda activate alignment_env
+
+mkdir -p /vol/studentFunMic1Vol/mbarcAligned2assembly/
+
+
+rawReads=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq 
+readsAligned2assembly=/vol/studentFunMic1Vol/mbarcAligned2assembly/
+assembly="/vol/studentFunMic1Vol/final.contigs.fa"
+
+
+## we need to build an index
+bowtie2-build --threads 8 $assembly $readsAligned2assembly/mbarcAssemblyIndex &> bowtie.log &
+
+## now use this index to make our alignment:
+
+cd $readsAligned2assembly
+
+bowtie2 -x $readsAligned2assembly/mbarcAssemblyIndex \
+    -U $rawReads \
+    --threads 10 \
+    -S mbarcReads2Assembly.sam
+
+### I think we need to sort these?
+
+cd $readsAligned2assembly
+
+samtools sort -@7 -o mbarcAlignedSorted.bam -O BAM mbarcReads2Assembly.sam &> bowtie.log &
+
+## and index them 
+samtools index -@7 influentReads2ContigSorted.bam &
+
+## these should be ready for our binning software
