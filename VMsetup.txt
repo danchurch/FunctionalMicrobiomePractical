@@ -4623,8 +4623,12 @@ chmod 755 home
 ## volume studentFunMic1Vol_snapshot_7 
 
 ## login 
-prvKey=~/.ssh/denbiTestVM
-ssh -p 30112 -i $prvKey ubuntu@129.70.51.6 
+
+pathToKey=~/.ssh/denbiTestVM
+ssh -p 30112 -i $pathToKey ubuntu@129.70.51.6 
+
+sudo mount /dev/vdd /vol/studentFunMic1Vol
+
 ## but the volume is not attaching. 
 
 ## oh well, rerun things on funmicone and hope it 
@@ -4641,7 +4645,47 @@ ssh -p 30112 -i $prvKey ubuntu@129.70.51.6
 
 ## also we promised a metaquast quality control step
 
+## and so today:
 
-## a
+## check on assemblies. 
 
+## for those that worked: metaphlan and metaquast
+
+## for those that didn't, debug
+
+## folks blow through all that, start the binning 
+
+##### metaquast ###
+
+## let's get our assembly from funmicone, don't want to start over,
+## and students might want to file share
+
+prvKey=~/.ssh/denbiTestVM
+#scp -P 30192 -i $prvKey ubuntu@129.70.51.6:/vol/funMicZeroVolume1/megahitMBARCOut/final.contigs.fa .
+
+## put it on our student computer
+
+pathToKey=~/.ssh/denbiTestVM
+scp -P 30112 -i $pathToKey final.contigs.fa ubuntu@129.70.51.6:/vol/studentFunMic1Vol/
+
+
+
+infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+metaquast --threads 10 $effCont &
+
+## rerunning metaphlan on student comp
+
+metaphlanMarkerDB=/vol/studentFunMic1Vol/metaphlanMarkerDB
+MBARCraw=/vol/studentFunMic1Vol/sequenceData/mbarc/reads/smallerMBARC_trimmed.fq
+#mkdir -p /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
+
+metaphlan $MBARCraw \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out mbarcMPA.bowtie2.bz2 \
+    --nproc 5 \
+    --input_type fastq \
+    -o mbarcMPSprofiled_metagenome.txt 
+
+## get these to metaquast to Eric
 
