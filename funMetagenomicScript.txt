@@ -125,15 +125,4 @@ metaphlan $MBARCraw \
 
 #########
 
-## transfer some files to eric
-## get off studentcomputer 
-pathToKey=~/.ssh/denbiTestVM
-metaquastResults=/vol/studentFunMic1Vol/metaquast/mbarc/quast_results/results_2022_03_09_14_58_59
-scp -P 30112 -r -i $pathToKey ubuntu@129.70.51.6:$metaquastResults .
-
-## dan 
-
-## put on eric's computer
-scp -P 30032 -i $pathToKey -r results_2022_03_09_14_58_59 ubuntu@129.70.51.6:/vol/studentFunMic1Vol/metaquast/mbarc/dan_quast
-ssh -p 30032 -i $pathToKey ubuntu@129.70.51.6
 
