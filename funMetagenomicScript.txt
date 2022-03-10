@@ -121,6 +121,10 @@ pathToKey=~/.ssh/denbiTestVM
 ## get the directory! note that we have to use "-r" option, because it is a folder
 scp -r -P 30112 -i $pathToKey ubuntu@129.70.51.6:$quastOutputs .
 
+mv quastResults/ /mnt/c/PUTLINUXFILESHERE/
+
+cp -r quastResults/ /mnt/c/PUTLINUXFILESHERE/
+
 ## this has numerous icarus and krona charts, with comparisons to established 
 ## genomes that blasted close the 16s sequences that were extracted from our 
 ## assembly. Let's look through them!
@@ -144,6 +148,9 @@ metaphlan $MBARCraw \
     --input_type fastq \
     -o mbarcMetaPhlanProfiled_metagenome.txt \
 
+
+find . -name mbarcMetaPhlanProfiled_metagenome.txt
+
 ## this should have produced a single text file, mine is here:
 
 cd /vol/studentFunMic1Vol/metaphlanWD/mbarcMPA
@@ -155,6 +162,14 @@ less mbarcMetaPhlanProfiled_metagenome.txt
 ## that's a lot. Let's look at the lowest level, let's do some BASH magic on it:
 
 grep -E "s__|clade" mbarcMetaPhlanProfiled_metagenome.txt | sed 's/^.*s__//g' | cut -f1,3 > mbarcMetaPhlanAbundances.tsv
+
+grep -E "s__|clade" mbarcMetaPhlanProfiled_metagenome.txt | \
+sed 's/^.*s__//g' | \
+
+wc -l mbarcMetaPhlanAbundances.tsv
+
+cut -f1,3 > mbarcMetaPhlanAbundances.tsv
+
 
 ## you can look at that with your de.NBI machine using less, or you can 
 ## get it locally with the usual methods, maybe to make some nice graphs. 
@@ -179,17 +194,19 @@ conda activate alignment_env
 
 mkdir -p /vol/studentFunMic1Vol/mbarcAligned2assembly/
 
-
 rawReads=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq 
 readsAligned2assembly=/vol/studentFunMic1Vol/mbarcAligned2assembly/
 assembly="/vol/studentFunMic1Vol/final.contigs.fa"
+## or more likely here:
+assembly="/vol/studentFunMic1Vol/megahitMBARCOut/final.contigs.fa"
 
+cd /vol/studentFunMic1Vol/
+find . -name "final.contigs.fa"
 
 ## we need to build an index
-bowtie2-build --threads 8 $assembly $readsAligned2assembly/mbarcAssemblyIndex &> bowtie.log &
+bowtie2-build --threads 8 $assembly $readsAligned2assembly/mbarcAssemblyIndex 
 
 ## now use this index to make our alignment:
-
 cd $readsAligned2assembly
 
 bowtie2 -x $readsAligned2assembly/mbarcAssemblyIndex \
@@ -201,9 +218,82 @@ bowtie2 -x $readsAligned2assembly/mbarcAssemblyIndex \
 
 cd $readsAligned2assembly
 
-samtools sort -@7 -o mbarcAlignedSorted.bam -O BAM mbarcReads2Assembly.sam &> bowtie.log &
+samtools sort -@7 -o mbarcAlignedSorted.bam -O BAM mbarcReads2Assembly.sam 
 
 ## and index them 
-samtools index -@7 influentReads2ContigSorted.bam &
+samtools index -@7 mbarcAlignedSorted.bam 
 
 ## these should be ready for our binning software
+
+##### concoct ######
+
+## first binner is concoct
+
+conda activate concoct_env
+
+assembly="/vol/studentFunMic1Vol/final.contigs.fa" ## your path will probably be different
+mbarcAlignedSorted=/vol/studentFunMic1Vol/mbarcAligned2assembly/mbarcAlignedSorted.bam
+
+mkdir /vol/studentFunMic1Vol/concoctWD
+
+cd /vol/studentFunMic1Vol/concoctWD
+
+##1
+cut_up_fasta.py $assembly -c 10000 -o 0 --merge_last -b mbarcConcoctContigs_10K.bed > mbarcConcoctContigs_10K.fa
+
+##2
+concoct_coverage_table.py mbarcConcoctContigs_10K.bed $mbarcAlignedSorted > mbarcConcoctCoverage_table.tsv
+
+## 3
+concoct \
+  --composition_file mbarcConcoctContigs_10K.fa \
+  --coverage_file mbarcConcoctCoverage_table.tsv \
+  -t 7 \
+  -b concoct_output/ 
+
+## 4
+
+merge_cutup_clustering.py \
+  concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+
+## 5
+mkdir concoct_output/fasta_bins
+
+extract_fasta_bins.py $assembly concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+
+
+
+####### metabat #########
+
+conda activate metabat2_env
+
+vol
+
+mkdir /vol/studentFunMic1Vol/metabat2WD
+
+cd /vol/studentFunMic1Vol/metabat2WD
+
+## influent metabat2 binning:
+
+assembly="/vol/studentFunMic1Vol/final.contigs.fa" ## your path will probably be different
+mbarcAlignedSorted=/vol/studentFunMic1Vol/mbarcAligned2assembly/mbarcAlignedSorted.bam
+
+runMetaBat.sh $assembly $mbarcAlignedSorted
+
+## I didn't change threads, check out help file 
+
+
+########### maxbin2 ############
+
+conda activate maxbin2_env
+
+mkdir /vol/studentFunMic1Vol/maxbin2WD
+
+cd /vol/studentFunMic1Vol/maxbin2WD
+
+assembly="/vol/studentFunMic1Vol/final.contigs.fa" ## your path will probably be different
+rawReads=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq 
+
+
+run_MaxBin.pl -contig $assembly -reads $rawReads -out influentMaxBinOut
+

@@ -2655,6 +2655,8 @@ ls $infAlignments
 
 echo $infAlignments
 
+ls $infCont
+
 ## do we need this?
 conda install mkl
 
@@ -2665,6 +2667,7 @@ conda install mkl
 ## concoct influent
 
 cd $infAlignments
+
 cut_up_fasta.py $infCont -c 10000 -o 0 --merge_last -b infConcoctContigs_10K.bed > infConcoctContigs_10K.fa
 concoct_coverage_table.py infConcoctContigs_10K.bed \
   $infAlignments/influentReads2ContigSorted.bam > infConcoctCoverage_table.tsv
