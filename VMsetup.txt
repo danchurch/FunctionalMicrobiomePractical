@@ -1,5 +1,6 @@
 ############## non-conda installs #############
 
+
 ## these will need to be added to some environments
 ## sudo apt-get install libtbb2 ## sometimes bowtie2 asks for this
 ## pip3 install checkm-genome ## checkM not really on conda
@@ -1453,7 +1454,6 @@ DAS_Tool \
 
 ## DAS_tool needs a scaffold (contig?) to bin map for each of our metagenomes
 
-
 cont="/vol/funMicZeroVolume1/megahitOut/final.contigs.fa"
 
 head -n 3 $cont
@@ -2669,8 +2669,10 @@ conda install mkl
 cd $infAlignments
 
 cut_up_fasta.py $infCont -c 10000 -o 0 --merge_last -b infConcoctContigs_10K.bed > infConcoctContigs_10K.fa
+
 concoct_coverage_table.py infConcoctContigs_10K.bed \
   $infAlignments/influentReads2ContigSorted.bam > infConcoctCoverage_table.tsv
+
 ## the meat of it is here:
 cvgTable=/vol/funMicZeroVolume1/alignment2contigs/influentAlignments/infConcoctCoverage_table.tsv
 concoct \
@@ -2678,10 +2680,13 @@ concoct \
   --coverage_file $cvgTable \
   -t 7 \
   -b concoct_output/ &
+
 merge_cutup_clustering.py \
   concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+
 mkdir concoct_output/fasta_bins
 extract_fasta_bins.py $infCont concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+
 ## check this...
 ls /vol/funMicZeroVolume1/alignment2contigs/influentAlignments/concoct_output/fasta_bins | wc -l
 ## jeezus, 43 bins?
@@ -2705,6 +2710,7 @@ merge_cutup_clustering.py \
 
 mkdir concoct_output/fasta_bins
 extract_fasta_bins.py $effCont concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+
 ## oh even more jeezus, 134 bins! This be fucked. 
 
 ## move these bins to be somewhere more accessible
@@ -2729,6 +2735,7 @@ mv /vol/funMicZeroVolume1/alignment2contigs/effluentAlignments/*Conc* \
 conda create --name metabat2 -c bioconda metabat2 
 
 conda activate metabat2
+metabat2_env
 
 vol
 
@@ -4691,4 +4698,19 @@ metaphlan $MBARCraw \
     -o mbarcMPSprofiled_metagenome.txt 
 
 ## get these to metaquast to Eric
+
+##### get denise assembly 
+
+## Denise needs an assembly
+
+pathToKey=~/.ssh/denbiTestVM
+ssh -p 30132 -i $pathToKey ubuntu@129.70.51.6
+
+scp -P 30132 -i $pathToKey final.contigs.fa ubuntu@129.70.51.6:/vol/studentFunMic1Vol &
+
+
+
+##  
+
+
 
