@@ -74,6 +74,7 @@ megahit -r $MBARCreads -o ~/megahitMBARCOut -t 8
 ## let's run a quick check on our assembly with metaquast
 
 ## get on your denbi machine, your port and key will be different
+
 pathToKey=~/.ssh/denbiTestVM
 ssh -p 30112 -i $pathToKey ubuntu@129.70.51.6
 
@@ -301,8 +302,6 @@ run_MaxBin.pl -contig $assembly \
 
 
 
-
-
 ####### DAS tools ##########
 
 conda activate dastool_env
@@ -311,39 +310,58 @@ mkdir /vol/studentFunMic1Vol/DAS_tool
 
 cd /vol/studentFunMic1Vol/DAS_tool 
 
-## we needs a scaffold-to-bin map for each of our 
+## we needs a contig(scaffold)-to-bin map for each of our 
 ## binning softwares
 
 ## maxbin contigs/bin 
+
+maxBins=/vol/studentFunMic1Vol/maxbin2WD
+
 Fasta_to_Scaffolds2Bin.sh \
     -e fasta \
-    -i /vol/studentFunMic1Vol/maxbin_out \
-        > /vol/funMicZeroVolume1/maxbin_out/maxbin_scaffolds2bin.tsv
+    -i $maxBins \
+        > /vol/studentFunMic1Vol/maxbin2WD/maxbin_scaffolds2bin.tsv
 
 
-## metabat contigs/bin 
-
+## metabat contigs/bin. The exact name will be different for you!
 metabatBins=/vol/studentFunMic1Vol/metabat2WD/final.contigs.fa.metabat-bins-20220310_132455
 
 Fasta_to_Scaffolds2Bin.sh \
     -e fa \
     -i $metabatBins \
-        > metabat_scaffolds2bin.tsv
+        > /vol/studentFunMic1Vol/metabat2WD/metabat_scaffolds2bin.tsv
 
+## concoct contigs/bin. 
 
-maxbin_scaffolds2bin=
-metabat_scaffolds2bin=
-concoct_scaffolds2bin=
+concoctBins=/vol/studentFunMic1Vol/concoctWD/concoct_output/fasta_bins
+
+Fasta_to_Scaffolds2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+        > /vol/studentFunMic1Vol/concoctWD/concoct_output/concoct_scaffolds2bin.tsv
+
+## so we have the following 
+
+maxbin_scaffolds2bin=/vol/studentFunMic1Vol/maxbin2WD/maxbin_scaffolds2bin.tsv
+metabat_scaffolds2bin=/vol/studentFunMic1Vol/metabat2WD/metabat_scaffolds2bin.tsv
+concoct_scaffolds2bin=/vol/studentFunMic1Vol/concoctWD/concoct_output/concoct_scaffolds2bin.tsv
+## still need the original assembly: 
+assembly=/vol/studentFunMic1Vol/sequenceData/mbarc/megahitMBARCOut/final.contigs.fa
 
 DAS_Tool \
     -i $maxbin_scaffolds2bin,$metabat_scaffolds2bin,$concoct_scaffolds2bin \
     -l maxbin,metabat,concoct \
-    -t 20 \
+    -t 10 \
     --search_engine diamond \
-    -c $finalContigs \
-    --create_plots 1 \
+    -c $assembly \
     --write_bin_evals 1 \
     --write_bins 1 \
     -o DASToolRun1
 
 
+find . -newermt "2 hours ago"
+
+pathToKey=/media/daniel/1830bdb2-352f-4183-ab70-2519b79d7f0f/keys/danHomekey4denbi
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
+
+~

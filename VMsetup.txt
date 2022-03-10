@@ -4544,8 +4544,6 @@ ssh -p 30035 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6
 
 
 
-
-
 ## our try one machine (say Kai's machine)
 
 ## find our keys, got them on our 
@@ -4701,16 +4699,16 @@ metaphlan $MBARCraw \
 
 ##### get denise assembly 
 
-## Denise needs an assembly
-
 pathToKey=~/.ssh/denbiTestVM
-ssh -p 30132 -i $pathToKey ubuntu@129.70.51.6
+ssh -p 30064 -i $pathToKey ubuntu@129.70.51.6
 
 scp -P 30132 -i $pathToKey final.contigs.fa ubuntu@129.70.51.6:/vol/studentFunMic1Vol &
 
+#### can we add our home key to the student computer? ####
 
 
-##  
 
 
 
+pathToKey=/media/daniel/1830bdb2-352f-4183-ab70-2519b79d7f0f/keys/danHomekey4denbi
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6 
