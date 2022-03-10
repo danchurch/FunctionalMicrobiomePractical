@@ -69,7 +69,6 @@ megahit -r $MBARCreads -o ~/megahitMBARCOut -t 8
 ## this will run for a while!
 
 
-
 ######### check assembly with metaquast #############
 
 ## let's run a quick check on our assembly with metaquast
@@ -77,6 +76,9 @@ megahit -r $MBARCreads -o ~/megahitMBARCOut -t 8
 ## get on your denbi machine, your port and key will be different
 pathToKey=~/.ssh/denbiTestVM
 ssh -p 30112 -i $pathToKey ubuntu@129.70.51.6
+
+## remember that for us, most of the interesting files are here:
+cd /vol/studentFunMic1Vol
 
 ## activate the correct conda environment 
 conda activate quast_env
@@ -89,7 +91,6 @@ conda activate quast_env
 
 ## the find command!!!
 
-cd /vol/studentFunMic1Vol
 find . -name "final.contigs.fa"
 
 ## once you find it, look around in that directory. What do you see?
@@ -104,6 +105,26 @@ cd /vol/studentFunMic1Vol/metaquast/mbarc
 
 pathToAssembly="/vol/studentFunMic1Vol/final.contigs.fa" ## yours will be different!
 metaquast --threads 6 $pathToAssembly 
+
+## metaquast ships with some visualizations... 
+
+## remember the process of getting files into windows from de.NBI?
+
+## leave de.NBI 
+logout
+
+## my quast outputs are here, set a variable to there
+quastOutputs=/vol/studentFunMic1Vol/metaquast/mbarc/quast_results
+## use scp to get the file, as usual your port and key will be different
+pathToKey=~/.ssh/denbiTestVM
+
+## get the directory! note that we have to use "-r" option, because it is a folder
+scp -r -P 30112 -i $pathToKey ubuntu@129.70.51.6:$quastOutputs .
+
+## this has numerous icarus and krona charts, with comparisons to established 
+## genomes that blasted close the 16s sequences that were extracted from our 
+## assembly. Let's look through them!
+
 
 #### metaphlan ####
 
@@ -123,6 +144,25 @@ metaphlan $MBARCraw \
     --input_type fastq \
     -o mbarcMetaPhlanProfiled_metagenome.txt \
 
-#########
+## this should have produced a single text file, mine is here:
+
+cd /vol/studentFunMic1Vol/metaphlanWD/mbarcMPA
+
+## let's look at it:
+
+less mbarcMetaPhlanProfiled_metagenome.txt
+
+## that's a lot. Let's look at the lowest level, let's do some BASH magic on it:
+
+grep -E "s__|clade" mbarcMetaPhlanProfiled_metagenome.txt | sed 's/^.*s__//g' | cut -f1,3 > mbarcMetaPhlanAbundances.tsv
+
+## you can look at that with your de.NBI machine using less, or you can 
+## get it locally with the usual methods, maybe to make some nice graphs. 
+
+## how do these abundances compare to metaquast, and to the paper itself 
+
+## are there any differences? Why would they be different?
+
+######### binning ###############
 
 
