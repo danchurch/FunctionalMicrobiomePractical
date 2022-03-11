@@ -3517,7 +3517,7 @@ cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
 
 mbarcMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/mbarcMPSprofiled_metagenome.txt
 grep "s__" $mbarcMetaphlanOut | cut -f 2,3 | cut -d "|" -f 7 > mbarcNCBInumberAbundance.tsv 
-## add some line numbers to this with vim to test:
+## add some line numbers to this
 paste <(seq 1 1 $(wc -l mbarcNCBInumberAbundance.tsv | cut -f 1 -d " ") ) mbarcNCBInumberAbundance.tsv >  mbarcNCBInumberAbundanceNumbered.tsv
 
 less mbarcNCBInumberAbundanceNumbered.tsv
@@ -4706,9 +4706,35 @@ scp -P 30132 -i $pathToKey final.contigs.fa ubuntu@129.70.51.6:/vol/studentFunMi
 
 #### can we add our home key to the student computer? ####
 
+## sdb1
 
+mkdir ~/flashdrive
+sudo mount /dev/sdb1 /home/daniel/flashdrive/ 
 
+## put it on the two machines 
 
+pathToKey=~/.ssh/denbiTestVM
+danHomekey4denbi=/home/daniel/flashdrive/keys/danHomekey4denbi.pub
 
-pathToKey=/media/daniel/1830bdb2-352f-4183-ab70-2519b79d7f0f/keys/danHomekey4denbi
-ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6 
+## put the keys on there
+pathToKey=~/.ssh/denbiTestVM
+## student comp
+scp -P 30112 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/home/ubuntu/.ssh
+## funmicone comp
+scp -P 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/home/ubuntu/.ssh
+
+## on each:
+cd .ssh
+cp authorized_keys authorized_keys.bk
+cat danHomekey4denbi.pub >> authorized_keys
+
+## test it out:
+pathToKey=/home/daniel/flashdrive/keys/danHomekey4denbi
+ssh -p 30112 -i $pathToKey ubuntu@129.70.51.6
+ssh -p 30192 -i $pathToKey ubuntu@129.70.51.6
+## looks good, should be able to get to there from home.
+
+## reset
+pathToKey=~/.ssh/denbiTestVM
+
+sudo umount /dev/sdb1

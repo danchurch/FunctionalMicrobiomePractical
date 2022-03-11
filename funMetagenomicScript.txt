@@ -297,9 +297,7 @@ rawReads=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq
 run_MaxBin.pl -contig $assembly \
     -reads $rawReads \
     -thread 13 \
-    -out mbarcMaxBinOut2
-
-
+    -out mbarcMaxBinOut2 &> maxbin.log &
 
 
 ####### DAS tools ##########
@@ -345,8 +343,12 @@ Fasta_to_Scaffolds2Bin.sh \
 maxbin_scaffolds2bin=/vol/studentFunMic1Vol/maxbin2WD/maxbin_scaffolds2bin.tsv
 metabat_scaffolds2bin=/vol/studentFunMic1Vol/metabat2WD/metabat_scaffolds2bin.tsv
 concoct_scaffolds2bin=/vol/studentFunMic1Vol/concoctWD/concoct_output/concoct_scaffolds2bin.tsv
-## still need the original assembly: 
-assembly=/vol/studentFunMic1Vol/sequenceData/mbarc/megahitMBARCOut/final.contigs.fa
+
+## still need the original assembly, might be in a different place for you! find it
+assembly=/vol/studentFunMic1Vol/final.contigs.fa
+
+## get back in your working directory for DAS tools:
+cd /vol/studentFunMic1Vol/DAS_tool 
 
 DAS_Tool \
     -i $maxbin_scaffolds2bin,$metabat_scaffolds2bin,$concoct_scaffolds2bin \
@@ -356,12 +358,139 @@ DAS_Tool \
     -c $assembly \
     --write_bin_evals 1 \
     --write_bins 1 \
-    -o DASToolRun1
+    -o mbarcDASToolRun1 &> dastooldan.log &
+
+### you should now have some higher quality bins to work with! 
+## (where are they? find them)
 
 
-find . -newermt "2 hours ago"
+####### evaluating potential MAGs with checkM #######
 
-pathToKey=/media/daniel/1830bdb2-352f-4183-ab70-2519b79d7f0f/keys/danHomekey4denbi
-ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
+## let's look at our new bins from DAS tool
 
-~
+mkdir /vol/studentFunMic1Vol/checkm/mbarc
+
+cd /vol/studentFunMic1Vol/checkm/mbarc
+
+## checkm influent
+conda activate checkm_env
+
+mbarcBins=/vol/studentFunMic1Vol/DAS_tool/mbarcDASToolRun1_DASTool_bins
+
+## let check find where our bins belong in the phylogeny of life!!
+checkm lineage_wf -t 10 -x fa $mbarcBins checkmMbarcOut &> checkmMBARC.log &
+
+## this also generated the markers we need to do some quality analyses.
+## we can look at this with checkm's qa function:
+mbarcMarkers=/vol/studentFunMic1Vol/checkm/mbarc/checkmMbarcOut/lineage.ms
+checkm qa $mbarcMarkers checkmMbarcOut 
+
+## let's put these somewhere as a file so we have it for later
+checkm qa $mbarcMarkers checkmMbarcOut > /vol/studentFunMic1Vol/checkm/mbarc/checkmInfluentResults.txt
+
+less /vol/studentFunMic1Vol/checkm/mbarc/checkmInfluentResults.txt
+
+## talk about this table with Dan and your other colleagues - can you make sense of it?
+
+
+######## taxonomy of MAGs with phylophlan ########
+
+## now that we have several metagenome assembled genomes,
+## it would be great to get an idea of their taxonomic 
+## status - who are these organisms???
+
+conda activate metaphlan_env
+
+
+mkdir /vol/studentFunMic1Vol/phylophlanWD
+cd /vol/studentFunMic1Vol/phylophlanWD
+
+
+## check out how this command works
+phylophlan_metagenomic --help
+
+MAGs=/vol/studentFunMic1Vol/DAS_tool/mbarcDASToolRun1_DASTool_bins 
+## that ^ might be different for you!!! do you know where your final bins are right now??
+
+phylophlan_metagenomic \
+    -i $MAGs \
+    -d SGB.Jul20 \
+    -o mbarc_phylophlanOut \
+    --nproc 10 \
+    -n 1 \
+    --verbose &> phylophlan_metagenomic.log &
+
+## if you want to see other closely related genomes, change "-n" option
+
+## let's look at the results:
+
+mbarcPhyl=/vol/studentFunMic1Vol/phylophlanWD/mbarc_phylophlanOut.tsv
+
+less mbarc_phylophlanOut.tsv
+
+## clean it up a little with some BASH string manipulations:
+
+tail -n +2 $mbarcPhyl | sed "s/\t/\n/g" > mbarc_phylophlan_matches.txt
+
+less mbarc_phylophlan_matches.txt
+
+## do you understand this table? What are the numbers??? 
+
+
+
+###### metabolic pathways  ########
+
+## let's ship off one of these bins to be annotated by 
+## the good folks working on KEGG (Kyoto Encyclopedia of Genes and Genomes)
+
+## the research groups responsible for KEGG have some
+## an automated annotation services, we just need to ship
+## them a genome with gene predictions, in the form of amino acid sequences
+
+## for this, we use prodigal:
+
+
+conda activate prodigal_env
+
+mkdir /vol/studentFunMic1Vol/blastkoalaWD
+cd /vol/studentFunMic1Vol/blastkoalaWD
+
+## put a genome of interest in
+
+## find one by looking at your phylophlan taxonomic data:
+less /vol/studentFunMic1Vol/phylophlanWD/mbarc_phylophlan_matches.txt
+
+## I'll take number 41, identified by phylophlan as Natronococcus occultus:
+
+## my final bins are here:
+dasToolBins=/vol/studentFunMic1Vol/DAS_tool/mbarcDASToolRun1_DASTool_bins
+
+## if you are still your blastKOALA directory:
+cp $dasToolBins/41.fa . 
+
+## predict genes with prodigal:
+
+prodigal \
+  -a 41.genes.faa \
+  -d 41.genes.fna \
+  -f gff \
+  -o 41.genes.gff \
+  -i 41.fa
+
+## get the amino acid sequences and give this BlastKOALA:
+
+## go local
+logout
+
+## get file
+
+pathToKey=~/.ssh/denbiTestVM
+
+scp -i $pathToKey -P 30112 ubuntu@129.70.51.6:/vol/studentFunMic1Vol/blastkoalaWD/41.genes.faa .
+
+
+## now give that file to:
+
+https://www.kegg.jp/blastkoala/
+
+
