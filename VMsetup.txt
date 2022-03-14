@@ -3799,30 +3799,30 @@ conda activate qiime2_env
 qiime metadata tabulate \
   --m-input-file dada2_stats.qza \
   --o-visualization dada2_stats_bymetadata.qzv 
-## Saved Visualization to: dada2_stats_bymetadata.qzv
 
 qiime feature-table summarize \
   --i-table dada2_table.qza \
   --m-sample-metadata-file metadata.tsv \
   --o-visualization dada2_featureTableSummary_visualization.qzv
-# Saved Visualization to: dada2_featureTableSummary_visualization.qzv
 
 qiime feature-table tabulate-seqs \
   --i-data dada2_rep_set.qza \
   --o-visualization dada2_rep_set.qzv
-## Saved Visualization to: dada2_rep_set.qzv
 
 ## get these to check out:
 mkdir dada2visualizations
 mv dada2_stats_bymetadata.qzv dada2_featureTableSummary_visualization.qzv dada2_rep_set.qzv dada2visualizations/
 
-scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
-  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/dada2visualizations .
-
 mkdir dada2OutPut
 mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut
 
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30112 \
+  ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/dada2visualizations .
+
 ## great, now what?
+
+
+
 ## generally, follow Felix's scripts, 
 ## but unifrac and bray curtis among samples, ordination, and a multivariate model (Permanova or RDA)
 
@@ -4758,3 +4758,12 @@ pathToKey=~/.ssh/id_rsa
 ssh -p 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6
 
 ## bah, no remote access, I left my drive in the bikebag. ugh.
+
+## at work
+
+## need to get teh sample manifest and metadata files:
+
+pathToKey=~/.ssh/denbiTestVM
+scp -P 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/metadata.tsv .
+scp -P 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/SIP_manifest.tsv .
+

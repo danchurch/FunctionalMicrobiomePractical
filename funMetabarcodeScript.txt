@@ -1,7 +1,8 @@
 ## here we will keep our script of our metabarcoding project
 
-conda activate qiime2_env
+######## read quality #############
 
+conda activate readQC_env
 ## our reads are here:
 
 sipRawReads=/vol/studentFunMic1Vol/sequenceData/SIPreads
@@ -18,11 +19,17 @@ cd  /vol/studentFunMic1Vol/sipMetabarcode
 mkdir sipReadQC
 cd sipReadQC
 
+## (just to some up if you got lost, we are here:)
+cd /vol/studentFunMic1Vol/sipMetabarcode/sipReadQC
+
 ## check these reads with fastqc
+## outputs go here:
+mkdir rawFASTQCreports
 
-mkdir -p reports/raw
 
-fastqc -o reports/raw $sipRawReads/*fastq
+## look at them with fastqc 
+
+fastqc -o rawFASTQCreports -t 10 $sipRawReads/*fastq.gz
 
 ## get these locally and look at them with your web browser
 ## do you remember how to do this?
@@ -30,21 +37,28 @@ fastqc -o reports/raw $sipRawReads/*fastq
 ## how do they look? How long are they? Do you think
 ## we still have non-biological regions, like 16s primers?
 
+## do the trimming, with trim galore 
 
+## (make sure you're back in a directory you want to be in:)
+cd /vol/studentFunMic1Vol/sipMetabarcode/sipReadQC
 
+mkdir trimmedSIPreads
 
 trim_galore \
   --cores 8 \
-  -o /vol/funMicZeroVolume1/SIPamps/trimmed \
+  -o /vol/studentFunMic1Vol/sipMetabarcode/sipReadQC/trimmedSIPreads \
   --clip_R1 20 \
   --fastqc \
   --illumina \
   --length 200 \
-  /vol/funMicZeroVolume1/SIPamps/reads/*
+  $sipRawReads/*fastq.gz
+
+
+cd vol/studentFunMic1Vol/sipMetabarcode/sipReadQC/trimmedSIPreads
 
 ## this autoatically generated a fastqc report for these
 ## trimmed reads - get it onto your local machine and 
-## compare.
+## compare. notice the differences?
 
 ## amplicon data depend on examining very fine scale 
 ## differences among very short read sequences...
@@ -54,3 +68,73 @@ trim_galore \
 
 ## let's get these into reads into qiime and learn about
 ## denoising 
+
+conda activate qiime2_env
+
+mkdir /vol/studentFunMic1Vol/qiime2WD
+
+cd /vol/studentFunMic1Vol/qiime2WD
+
+## let's get some extra files from the class repository:
+
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/SIP_manifest.tsv"
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/SIP_metadata.tsv" 
+
+## now import this into qiime2
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path /vol/studentFunMic1Vol/qiime2WD/SIP_manifest.tsv \
+  --output-path /vol/studentFunMic1Vol/qiime2WD/SIPreads_qiime \
+  --input-format SingleEndFastqManifestPhred33V2
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs SIPreads_qiime.qza \
+  --p-trunc-len 0 \
+  --p-n-threads 10 \
+  --o-table dada2_table.qza \
+  --o-representative-sequences dada2_rep_set.qza \
+  --o-denoising-stats dada2_stats.qza
+
+
+
+## qiime can make some tables and graphics for us to use
+## to understand what just happened:
+
+qiime metadata tabulate \
+  --m-input-file dada2_stats.qza \
+  --o-visualization dada2_stats_bymetadata.qzv
+
+
+
+qiime feature-table summarize \
+  --i-table dada2_table.qza \
+  --m-sample-metadata-file SIP_metadata.tsv \
+  --o-visualization dada2_featureTableSummary_visualization.qzv
+
+
+qiime feature-table tabulate-seqs \
+  --i-data dada2_rep_set.qza \
+  --o-visualization dada2_rep_set.qzv
+
+
+## let's organize these outputs a bit:
+
+mkdir dada2visualizations
+mv dada2_stats_bymetadata.qzv dada2_featureTableSummary_visualization.qzv dada2_rep_set.qzv dada2visualizations/
+
+mkdir dada2OutPut
+mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut
+
+## get these to check out, get them locally
+
+pathToKey= ~/.ssh/denbiTestVM ## that's mine, yours is different
+scp -r -i pathToKey  -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/dada2visualizations .
+
+## and drop the visualizations here:
+https://view.qiime2.org/
+
+#### take a break! ########
+
+
