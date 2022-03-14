@@ -266,8 +266,6 @@ extract_fasta_bins.py $assembly concoct_output/clustering_merged.csv --output_pa
 
 conda activate metabat2_env
 
-vol
-
 mkdir /vol/studentFunMic1Vol/metabat2WD
 
 cd /vol/studentFunMic1Vol/metabat2WD
@@ -297,7 +295,12 @@ rawReads=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq
 run_MaxBin.pl -contig $assembly \
     -reads $rawReads \
     -thread 13 \
-    -out mbarcMaxBinOut2 &> maxbin.log &
+    -out mbarcMaxBinOut2 
+
+
+
+
+
 
 
 ####### DAS tools ##########
@@ -321,6 +324,9 @@ Fasta_to_Scaffolds2Bin.sh \
         > /vol/studentFunMic1Vol/maxbin2WD/maxbin_scaffolds2bin.tsv
 
 
+
+
+
 ## metabat contigs/bin. The exact name will be different for you!
 metabatBins=/vol/studentFunMic1Vol/metabat2WD/final.contigs.fa.metabat-bins-20220310_132455
 
@@ -328,6 +334,13 @@ Fasta_to_Scaffolds2Bin.sh \
     -e fa \
     -i $metabatBins \
         > /vol/studentFunMic1Vol/metabat2WD/metabat_scaffolds2bin.tsv
+
+
+
+
+
+
+
 
 ## concoct contigs/bin. 
 
@@ -358,9 +371,10 @@ DAS_Tool \
     -c $assembly \
     --write_bin_evals 1 \
     --write_bins 1 \
-    -o mbarcDASToolRun1 &> dastooldan.log &
+    -o mbarcDASToolRun1 
 
 ### you should now have some higher quality bins to work with! 
+
 ## (where are they? find them)
 
 
@@ -378,17 +392,18 @@ conda activate checkm_env
 mbarcBins=/vol/studentFunMic1Vol/DAS_tool/mbarcDASToolRun1_DASTool_bins
 
 ## let check find where our bins belong in the phylogeny of life!!
-checkm lineage_wf -t 10 -x fa $mbarcBins checkmMbarcOut &> checkmMBARC.log &
+checkm lineage_wf -t 10 -x fa $mbarcBins checkmMbarcOut
 
 ## this also generated the markers we need to do some quality analyses.
 ## we can look at this with checkm's qa function:
 mbarcMarkers=/vol/studentFunMic1Vol/checkm/mbarc/checkmMbarcOut/lineage.ms
+
 checkm qa $mbarcMarkers checkmMbarcOut 
 
 ## let's put these somewhere as a file so we have it for later
-checkm qa $mbarcMarkers checkmMbarcOut > /vol/studentFunMic1Vol/checkm/mbarc/checkmInfluentResults.txt
+checkm qa $mbarcMarkers checkmMbarcOut > /vol/studentFunMic1Vol/checkm/mbarc/checkmMBARCResults.txt
 
-less /vol/studentFunMic1Vol/checkm/mbarc/checkmInfluentResults.txt
+less /vol/studentFunMic1Vol/checkm/mbarc/checkmMBARCResults.txt
 
 ## talk about this table with Dan and your other colleagues - can you make sense of it?
 
@@ -405,7 +420,6 @@ conda activate metaphlan_env
 mkdir /vol/studentFunMic1Vol/phylophlanWD
 cd /vol/studentFunMic1Vol/phylophlanWD
 
-
 ## check out how this command works
 phylophlan_metagenomic --help
 
@@ -418,7 +432,7 @@ phylophlan_metagenomic \
     -o mbarc_phylophlanOut \
     --nproc 10 \
     -n 1 \
-    --verbose &> phylophlan_metagenomic.log &
+    --verbose 
 
 ## if you want to see other closely related genomes, change "-n" option
 
@@ -455,8 +469,6 @@ conda activate prodigal_env
 mkdir /vol/studentFunMic1Vol/blastkoalaWD
 cd /vol/studentFunMic1Vol/blastkoalaWD
 
-## put a genome of interest in
-
 ## find one by looking at your phylophlan taxonomic data:
 less /vol/studentFunMic1Vol/phylophlanWD/mbarc_phylophlan_matches.txt
 
@@ -488,9 +500,6 @@ pathToKey=~/.ssh/denbiTestVM
 
 scp -i $pathToKey -P 30112 ubuntu@129.70.51.6:/vol/studentFunMic1Vol/blastkoalaWD/41.genes.faa .
 
-
 ## now give that file to:
 
 https://www.kegg.jp/blastkoala/
-
-
