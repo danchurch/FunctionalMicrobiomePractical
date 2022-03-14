@@ -4738,3 +4738,23 @@ ssh -p 30192 -i $pathToKey ubuntu@129.70.51.6
 pathToKey=~/.ssh/denbiTestVM
 
 sudo umount /dev/sdb1
+
+
+######### qiime for class ######
+
+## restart the qiime pipeline for the students
+
+## qiime is here 
+conda activate qiime2_env 
+
+## but don't need yet. First, get them through QC, clipping, combining
+
+conda activate readQC_env
+
+
+## funmicone comp
+pathToKey=~/.ssh/id_rsa
+
+ssh -p 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6
+
+## bah, no remote access, I left my drive in the bikebag. ugh.

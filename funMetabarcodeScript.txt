@@ -1,1 +1,56 @@
 ## here we will keep our script of our metabarcoding project
+
+conda activate qiime2_env
+
+## our reads are here:
+
+sipRawReads=/vol/studentFunMic1Vol/sequenceData/SIPreads
+
+## let's take a look at them with fastqc:
+
+## make a working directory for metabarcoding pipeline:
+
+mkdir /vol/studentFunMic1Vol/sipMetabarcode
+cd  /vol/studentFunMic1Vol/sipMetabarcode
+
+## within this, a readQC working directory:
+
+mkdir sipReadQC
+cd sipReadQC
+
+## check these reads with fastqc
+
+mkdir -p reports/raw
+
+fastqc -o reports/raw $sipRawReads/*fastq
+
+## get these locally and look at them with your web browser
+## do you remember how to do this?
+
+## how do they look? How long are they? Do you think
+## we still have non-biological regions, like 16s primers?
+
+
+
+
+trim_galore \
+  --cores 8 \
+  -o /vol/funMicZeroVolume1/SIPamps/trimmed \
+  --clip_R1 20 \
+  --fastqc \
+  --illumina \
+  --length 200 \
+  /vol/funMicZeroVolume1/SIPamps/reads/*
+
+## this autoatically generated a fastqc report for these
+## trimmed reads - get it onto your local machine and 
+## compare.
+
+## amplicon data depend on examining very fine scale 
+## differences among very short read sequences...
+
+## how can we now make decisions about what is biological
+## variation and what is technological error?
+
+## let's get these into reads into qiime and learn about
+## denoising 
