@@ -3832,6 +3832,7 @@ scp -r -i /home/daniel/.ssh/denbiTestVM -P 30112 \
 
 qiime phylogeny align-to-tree-mafft-fasttree --help | less
 
+aligned2Tree/
 repSet=/vol/funMicZeroVolume1/qiimeWD/dada2OutPut/dada2_rep_set.qza
 
 qiime phylogeny align-to-tree-mafft-fasttree \
@@ -3853,7 +3854,6 @@ unrooted_tree.qza \
 rooted_tree.qza \
 phylogenetic_tree_generation.log \
 aligned2Tree/
-
 
 scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
   ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/aligned2Tree/rooted_tree.qza .
@@ -3929,7 +3929,6 @@ scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
   ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/taxClassification/taxonomy.qzv .
 
 ## subsetting in qiime
-
 
 qiime feature-table filter-samples \
   --i-table $dada2_table \
@@ -4766,4 +4765,7 @@ ssh -p 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6
 pathToKey=~/.ssh/denbiTestVM
 scp -P 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/metadata.tsv .
 scp -P 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/vol/funMicZeroVolume1/qiimeWD/SIP_manifest.tsv .
+
+scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+
 

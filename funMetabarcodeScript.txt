@@ -1,5 +1,7 @@
 ## here we will keep our script of our metabarcoding project
 
+https://github.com/danchurch/FunctionalMicrobiomePractical2022/blob/main/funMetabarcodeScript.txt
+
 ######## read quality #############
 
 conda activate readQC_env
@@ -34,12 +36,25 @@ fastqc -o rawFASTQCreports -t 10 $sipRawReads/*fastq.gz
 ## get these locally and look at them with your web browser
 ## do you remember how to do this?
 
+scp -r -i $pathToKey  -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/sipMetabarcode/sipReadQC/rawFASTQCreports .
+
+
+
+mv rawFASTQCreports/ /mnt/c/PUTLINUXFILESHERE/
+
+
+
+
 ## how do they look? How long are they? Do you think
 ## we still have non-biological regions, like 16s primers?
 
 ## do the trimming, with trim galore 
 
 ## (make sure you're back in a directory you want to be in:)
+
+conda activate readQC_env
+
 cd /vol/studentFunMic1Vol/sipMetabarcode/sipReadQC
 
 mkdir trimmedSIPreads
@@ -53,12 +68,19 @@ trim_galore \
   --length 200 \
   $sipRawReads/*fastq.gz
 
+sipRawReads=/vol/studentFunMic1Vol/sequenceData/SIPreads
 
 cd vol/studentFunMic1Vol/sipMetabarcode/sipReadQC/trimmedSIPreads
 
 ## this autoatically generated a fastqc report for these
 ## trimmed reads - get it onto your local machine and 
 ## compare. notice the differences?
+
+pathToKey=~/.ssh/denbiTestVM
+
+scp -i $pathToKey -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/sipMetabarcode/sipReadQC/trimmedSIPreads/*html .
+
 
 ## amplicon data depend on examining very fine scale 
 ## differences among very short read sequences...
@@ -78,6 +100,7 @@ cd /vol/studentFunMic1Vol/qiime2WD
 ## let's get some extra files from the class repository:
 
 wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/SIP_manifest.tsv"
+
 wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/SIP_metadata.tsv" 
 
 ## now import this into qiime2
@@ -87,6 +110,12 @@ qiime tools import \
   --input-path /vol/studentFunMic1Vol/qiime2WD/SIP_manifest.tsv \
   --output-path /vol/studentFunMic1Vol/qiime2WD/SIPreads_qiime \
   --input-format SingleEndFastqManifestPhred33V2
+
+
+less /vol/studentFunMic1Vol/qiime2WD/SIP_manifest.tsv 
+
+
+
 
 qiime dada2 denoise-single \
   --i-demultiplexed-seqs SIPreads_qiime.qza \
@@ -137,4 +166,119 @@ https://view.qiime2.org/
 
 #### take a break! ########
 
+## rarefaction:
 
+## make sure I'm back in my qiime WD:
+cd /vol/studentFunMic1Vol/qiime2WD
+
+
+dada2_table=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_table.qza
+metadata=/vol/studentFunMic1Vol/qiime2WD/SIP_metadata.tsv
+
+qiime diversity alpha-rarefaction \
+  --i-table $dada2_table \
+  --o-visualization /vol/studentFunMic1Vol/qiime2WD/alpha_rarefaction_curves.qzv \
+  --m-metadata-file $metadata \
+  --p-max-depth 10000
+
+## what does this look like?
+pathToKey= ~/.ssh/denbiTestVM ## that's mine, yours is different
+scp -r -i pathToKey  -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/alpha_rarefaction_curves.qzv .
+
+## look at it on view.qiime2.org !
+
+## now onto assigning phylogeny and taxonomy 
+
+## a first step for any phylogenetic
+## analysis would be to generate a tree
+
+mkdir /vol/studentFunMic1Vol/qiime2WD/aligned2Tree/
+
+cd /vol/studentFunMic1Vol/qiime2WD/aligned2Tree/
+ 
+repSet=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_rep_set.qza
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences $repSet \
+  --o-alignment aligned_dada2_rep_set.qza \
+  --o-masked-alignment masked_aligned_dada2_rep_set.qza \
+  --o-tree unrooted_tree.qza \
+  --o-rooted-tree rooted_tree.qza \
+  --p-n-threads 10 \
+  --verbose \
+
+
+## let's run some diversity metrics. 
+## for this to work, we need to pick a read depth 
+## to compare at among the samples
+## from rarefaction, it looks like maybe 5500 reads is a good compromise...
+
+cd /vol/studentFunMic1Vol/qiime2WD
+
+repSet=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_rep_set.qza
+dada2_table=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_table.qza
+metadata=/vol/studentFunMic1Vol/qiime2WD/SIP_metadata.tsv
+rootedTree=/vol/studentFunMic1Vol/qiime2WD/aligned2Tree/rooted_tree.qza
+
+qiime diversity core-metrics-phylogenetic \
+  --i-table $dada2_table \
+  --i-phylogeny $rootedTree \
+  --m-metadata-file $metadata \
+  --p-sampling-depth 5500 \
+  --output-dir core-metrics-results
+
+## get this locally, to look at:
+scp -r -i pathToKey  -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/core-metrics-results .
+
+
+## let's assign taxonomy
+
+mkdir /vol/studentFunMic1Vol/qiime2WD/taxClassification
+cd /vol/studentFunMic1Vol/qiime2WD/taxClassification
+
+
+## we need a classsifier algorithm!
+
+## because of high demand, there is a naive bayesian classifier
+## already trained on the v4 16s primer set provided by qiime
+
+wget https://data.qiime2.org/2022.2/common/silva-138-99-515-806-nb-classifier.qza
+
+## make a shortcut to it:
+ourClassifier=/vol/studentFunMic1Vol/qiime2WD/taxClassification/silva-138-99-515-806-nb-classifier.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier $ourClassifier \
+  --i-reads $repSet \
+  --p-n-jobs 10 \
+  --o-classification dada2_rep_set_classified.qza
+
+qiime metadata tabulate \
+  --m-input-file dada2_rep_set_classified.qza \
+  --o-visualization taxonomy.qzv
+
+scp -r -i pathToKey  -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/taxClassification/taxonomy.qzv .
+
+## to make the outputs interesting, break up by 
+## experimental treatments
+
+repSetClassified=/vol/studentFunMic1Vol/qiime2WD/taxClassification/dada2_rep_set_classified.qza
+dada2_table=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_table.qza
+metadata=/vol/studentFunMic1Vol/qiime2WD/SIP_metadata.tsv
+ourClassifier=/vol/studentFunMic1Vol/qiime2WD/taxClassification/silva-138-99-515-806-nb-classifier.qza
+dada2Reps=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_rep_set.qza
+
+
+qiime taxa barplot \
+  --i-table $dada2_table \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization all_taxa_bar_plots.qzv
+
+## get this locally, as per usual, and look at it:
+
+scp -r -i pathToKey  -P 30112 \
+  ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/taxClassification/taxonomy.qzv .
