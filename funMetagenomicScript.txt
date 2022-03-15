@@ -13,7 +13,6 @@
 ## https://github.com/danchurch/FunctionalMicrobiomePractical2022/blob/main/funBASHterminalScript.txt
 
 ## and right-clicking on "Raw" and saving it.
-
 ## this is my key, that I use for logins
 pathToKey=/home/daniel/.ssh/denbiTestVM
 ssh -p 30009 -i $pathToKey ubuntu@129.70.51.6
@@ -503,3 +502,21 @@ scp -i $pathToKey -P 30112 ubuntu@129.70.51.6:/vol/studentFunMic1Vol/blastkoalaW
 ## now give that file to:
 
 https://www.kegg.jp/blastkoala/
+
+
+######## starting on the Chu Data wastewater treatment data #########
+
+## now let's set you loose on some data from an ecological study:
+
+## our data is here:
+
+cd /vol/studentFunMic1Vol/sequenceData/Chu
+
+## let's divide into two groups, one for influent, one for effluent
+
+## the influent group should be small (2 people?), and the effluent group should 
+## more (=5 poeple?) 
+
+## what would you do first?
+
+

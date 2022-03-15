@@ -182,8 +182,10 @@ qiime diversity alpha-rarefaction \
   --p-max-depth 10000
 
 ## what does this look like?
-pathToKey= ~/.ssh/denbiTestVM ## that's mine, yours is different
-scp -r -i pathToKey  -P 30112 \
+
+pathToKey=~/.ssh/denbiTestVM ## that's mine, yours is different
+
+scp -r -i $pathToKey  -P 30112 \
   ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/alpha_rarefaction_curves.qzv .
 
 ## look at it on view.qiime2.org !
@@ -206,8 +208,15 @@ qiime phylogeny align-to-tree-mafft-fasttree \
   --o-tree unrooted_tree.qza \
   --o-rooted-tree rooted_tree.qza \
   --p-n-threads 10 \
-  --verbose \
+  --verbose 
 
+
+
+
+
+
+## check later:
+qiime empress community-plot
 
 ## let's run some diversity metrics. 
 ## for this to work, we need to pick a read depth 
@@ -271,7 +280,6 @@ metadata=/vol/studentFunMic1Vol/qiime2WD/SIP_metadata.tsv
 ourClassifier=/vol/studentFunMic1Vol/qiime2WD/taxClassification/silva-138-99-515-806-nb-classifier.qza
 dada2Reps=/vol/studentFunMic1Vol/qiime2WD/dada2OutPut/dada2_rep_set.qza
 
-
 qiime taxa barplot \
   --i-table $dada2_table \
   --i-taxonomy $repSetClassified \
@@ -282,3 +290,4 @@ qiime taxa barplot \
 
 scp -r -i pathToKey  -P 30112 \
   ubuntu@129.70.51.6:/vol/studentFunMic1Vol/qiime2WD/taxClassification/taxonomy.qzv .
+
