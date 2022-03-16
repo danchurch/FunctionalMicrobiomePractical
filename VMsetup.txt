@@ -2522,14 +2522,18 @@ scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 ubuntu@129.70.51.6:/vol/funMicZ
 conda activate quast_env
 cd /vol/funMicZeroVolume1/quastChu
 infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
+
 effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+
+ls $effCont
 
 \time -v metaquast --threads 10 $infCont
 ## that only took ~2gig RAM, but did take ~half hour
 
 ## while we're at it, let's look at the mbarc data
+
 infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
-metaquast --threads 10 $effCont &
+metaquast --threads 10 $effCont 
 
 ## can we get the whole folder to look at from each of those?
 
@@ -3559,6 +3563,11 @@ grep -E "s__" influentMPSprofiled_metagenome.txt | cut -f 2,3 | cut -d "|" -f 7
 cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
 
 mbarcMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/mbarcMPSprofiled_metagenome.txt
+
+less $mbarcMetaphlanOut
+
+ls $mbarcMetaphlanOut
+
 grep "s__" $mbarcMetaphlanOut | cut -f 2,3 | cut -d "|" -f 7 > mbarcNCBInumberAbundance.tsv 
 ## add some line numbers to this
 paste <(seq 1 1 $(wc -l mbarcNCBInumberAbundance.tsv | cut -f 1 -d " ") ) mbarcNCBInumberAbundance.tsv >  mbarcNCBInumberAbundanceNumbered.tsv
@@ -4879,12 +4888,15 @@ vim .ssh/authorized_keys
 
 ## Kai
 ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
+
 ## Jonas
 ssh -p 30064 -i $pathToKey ubuntu@129.70.51.6
+
 ## Denise
 ssh -p 30132 -i $pathToKey ubuntu@129.70.51.6
 ## Ulrike
 ssh -p 30014 -i $pathToKey ubuntu@129.70.51.6
+
 ## Eric
 ssh -p 30032 -i $pathToKey ubuntu@129.70.51.6
 ## Christoph
@@ -4897,10 +4909,68 @@ ssh -p 30035 -i $pathToKey ubuntu@129.70.51.6
 ## now to do the transfer, the effluent reads are 
 ## here:
 
-chuEff=/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq 
 
 ## we want to put this file on all the folks working with effluent
-
+chuEff=/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq 
 ## from funmic
-scp 
+pathToKey=/home/ubuntu/.ssh/funmicone2students
 
+## Kai
+scp -P 30089 -i $pathToKey $chuEff ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> kailog &
+## Jonas
+scp -P 30064 -i $pathToKey $chuEff ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> jonaslog &
+## Denise
+scp -P 30132 -i $pathToKey $chuEff ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> deniselog &
+## Ulrike
+scp -P 30014 -i $pathToKey $chuEff ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> ulrikelog &
+## Eric
+scp -v -P 30032 -i $pathToKey $chuEff ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ 
+
+
+## now can we get the assemblies on there also?:
+
+assembly=/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa
+
+## Jonas
+scp -P 30064 -i $pathToKey $assembly ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> jonasassemblylog &
+
+## Kai
+scp -P 30089 -i $pathToKey $assembly ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> kaiassemblylog &
+
+
+## Denise
+scp -v -P 30132 -i $pathToKey $assembly ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ 
+
+## Ulrike
+scp -v -P 30014 -i $pathToKey $assembly ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ 
+
+## Eric
+scp -v -P 30032 -i $pathToKey $assembly ubuntu@129.70.51.6:/vol/studentFunMic1Vol/ &> ericassemblylog &
+
+scp -v -P 30032 -i $pathToKey $assembly ubuntu@129.70.51.6:/vol/studentFunMic1Vol/  
+
+
+### issues with ghost koala ####
+
+## our files are too big from the efflux
+
+## divide the job into two files
+
+## our faa file is here:
+
+
+wc -l $effGenes ## 6623477 lines
+
+## /2 = ~ 3311738 genes
+
+## let's split this up
+## get as many as possible for the first file:
+
+effGenes=/vol/funMicZeroVolume1/koalaWD/effluxGenePred/eff.genes.faa
+
+head -n 4200000 $effGenes > test.faa
+
+
+head -n 4200000 $effGenes > test.faa
+
+### 

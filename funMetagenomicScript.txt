@@ -533,3 +533,6 @@ effGenes=/vol/funMicZeroVolume1/koalaWD/effluxGenePred/eff.genes.faa
 
 head -n 4200000 $effGenes > subsettedEffluentGenePredictions.faa
 
+tail -n +4200001 $effGenes > subsettedEffluentGenePredictions_partII.faa
+
+
