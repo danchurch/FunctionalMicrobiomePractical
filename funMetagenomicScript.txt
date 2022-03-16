@@ -520,3 +520,16 @@ cd /vol/studentFunMic1Vol/sequenceData/Chu
 ## what would you do first?
 
 
+
+
+## some random extra scripts that may be useful ##
+
+######### subsetting the big effluent gene file ######
+
+## find your gene predictions in amino acid format.
+## mine are here but yours will be different!!!
+
+effGenes=/vol/funMicZeroVolume1/koalaWD/effluxGenePred/eff.genes.faa
+
+head -n 4200000 $effGenes > subsettedEffluentGenePredictions.faa
+

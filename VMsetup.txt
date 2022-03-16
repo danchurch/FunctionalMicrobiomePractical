@@ -2385,17 +2385,60 @@ megahit --help | less
 
 ## influent assembly
 \time -v megahit \
+
+conda activate assembly
+
+megahit \
   --num-cpu-threads 6 \
   --12 $chuFastq/chuInfluent_trimmed_interleaved.fq \
-  -o $megahitOutInfluent
+  -o /vol/funMicZeroVolume1/tryMegahitAgain
+## influent works, I guess
 
-## can we run the effluent assembly at the same time?
+## what about effluent?
+megahit \
+  --num-cpu-threads 6 \
+  --12 /vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq \
+  -o /vol/funMicZeroVolume1/tryMegahitAgainEff
+
+
+## redo influent assembly
+megahit \
+  --num-cpu-threads 6 \
+  --12 $chuFastq/chuInfluent_trimmed_interleaved.fq \
+  -o /vol/funMicZeroVolume1/tryMegahitAgain
+
+
+conda activate assembly_env
 
 ## effluent assembly
+
 \time -v megahit \
   --num-cpu-threads 6 \
   --12 $chuFastq/chuEffluent_trimmed_interleaved.fq \
   -o $megahitOutEffluent
+
+
+head $effluentReads
+
+tail $effluentReads
+
+effluentReads=/vol/studentFunMic1Vol/sequenceData/Chu/chuEffluent.fastq 
+megahitOutEffluent=/vol/studentFunMic1Vol/megahitWD
+
+
+megahit \
+  --num-cpu-threads 6 \
+  --12 $effluentReads \
+  -o $megahitOutEffluent 
+
+## PID 1098436
+
+tail megahit.log
+
+ps 1098436
+
+
+
 
 #\time -v megahit -r smallerMBARC_trimmed.fq -o megahitOut
 
@@ -4768,4 +4811,96 @@ scp -P 30192 -i $pathToKey $danHomekey4denbi ubuntu@129.70.51.6:/vol/funMicZeroV
 
 scp -r -i /home/daniel/.ssh/denbiTestVM -P 30192 \
 
+######### effluent file transfers ###############
+
+## ugh, looks like a corrupted effluent file
+
+## get everyone a file that works. 
+
+## is the key for funmic2 on everyone's computer?
+
+ssh -p 30014 -i ~/.ssh/ ubuntu@129.70.51.6 ##nope
+
+## get the pubkey from funmic1 onto local:
+
+scp -P 30192 -i /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6:/home/ubuntu/.ssh/student1_funmic1.pub . ## on desktop
+
+## put this on everyone's computer:
+
+pathToKey=/home/daniel/.ssh/denbiTestVM
+
+## Kai for example, can we do this from funmic?
+
+pathToKey=/home/ubuntu/.ssh/student1_funmic1
+
+scp -P 30089 -i $pathToKey /home/daniel/Desktop/student1_funmic1.pub ubuntu@129.70.51.6:/home/ubuntu/.ssh/
+
+
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
+
+## nope, gotta go in manually. 
+
+## and my preset key for this is blocked. 
+
+## ugh. Get file locally? no way. 
+
+## new keypair? 
+
+## ssh-keygen
+
+## nope, let's get assemblies out to folks
+
+## this only solves the problem for assemblies.
+## they will still need raw reads for many other 
+## applications. 
+
+## so start raw read transfers, and then assembly 
+## file transfers. 
+
+## new key
+
+ssh-keygen -t rsa -f funmicone2students
+
+## can we just do this? 
+## we have a key pair on funmic1 that looks like this:
+publicKey=/home/ubuntu/.ssh/funmicone2students.pub
+pathToKey=/home/ubuntu/.ssh/funmicone2students
+
+## get it locally:
+scp -P 30192 -i ~/.ssh/denbiTestVM /home/daniel/.ssh/denbiTestVM ubuntu@129.70.51.6:$publicKey . ## on desktop
+
+pathToKey=/home/daniel/.ssh/denbiTestVM
+## now, add this to everyone's authorized keys:
+
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDUKDRft50ZThhsVy/1w17dKUVaVmzDMgrdo8ZC5MPx/MDgqTA5xrjY3XFCRy9AvCRIGOvwQfTw6EQSdHH9cvdNYkG92rC+tklbNNo0+/S3e0HQoOrhBp32+qyMnF+ba8wsJVRimeA1QaJmcvDV5w/ze3hXnlXyZK7LlTBBbM04TddWv2GyJidxG4AHpmOpzh8R8IC6gvhe8aSPjn3bGEXEYwax5P7/6HPsX2Z8UxGNoF9NMQVzqzBhgsbgff6KvLlivDzTFEInJaa7nA1abrC4y6i7ZWAxHjKVK3kVtqLhfI4yiExh5c5fXOwlUN/p02DTAT4wvCE7aAWawdFNdlnhcxPqrSpXh2WRbT3iyuzsTwFzBn3quW/GoY86bhfDl+MMX8qw3f1f/8NbAOI7Ag5RWEQmsj+PEN+59IYQlLoWUcmG7wel7Fwmaz1cGAZ1kwJ23cUmlY6BrZ1zhI2ab1lwyuX1wXAU6GWkTVTwrIaC8DvLbkIDuLWfdlBhBuoECxc= ubuntu@funmicone-3360f
+
+
+vim .ssh/authorized_keys
+
+## Kai
+ssh -p 30089 -i $pathToKey ubuntu@129.70.51.6
+## Jonas
+ssh -p 30064 -i $pathToKey ubuntu@129.70.51.6
+## Denise
+ssh -p 30132 -i $pathToKey ubuntu@129.70.51.6
+## Ulrike
+ssh -p 30014 -i $pathToKey ubuntu@129.70.51.6
+## Eric
+ssh -p 30032 -i $pathToKey ubuntu@129.70.51.6
+## Christoph
+ssh -p 30009 -i $pathToKey ubuntu@129.70.51.6
+## Felix
+ssh -p 30035 -i $pathToKey ubuntu@129.70.51.6
+
+## great, all are accessible from funmicone
+
+## now to do the transfer, the effluent reads are 
+## here:
+
+chuEff=/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq 
+
+## we want to put this file on all the folks working with effluent
+
+## from funmic
+scp 
 
