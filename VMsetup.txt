@@ -2832,6 +2832,7 @@ conda create -n maxbin2_env maxbin2
 ## great. Set up two binning processes, inf and eff 
 
 conda activate maxbin2_env
+
 ## influent maxbin:
 infCont="/vol/funMicZeroVolume1/megahitOutInfluent/final.contigs.fa"
 infRawReads="/vol/funMicZeroVolume1/ChuLibs/chuInfluent_trimmed_interleaved.fq"
@@ -2846,6 +2847,20 @@ effRawReads="/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq"
 cd /vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut
 run_MaxBin.pl -contig $effCont -reads $effRawReads -out effluentMaxBinOut 
 
+## rerun for eric:
+
+effCont="/vol/funMicZeroVolume1/megahitOutEffluent/final.contigs.fa"
+effRawReads="/vol/funMicZeroVolume1/ChuLibs/chuEffluent_trimmed_interleaved.fq"
+#mkdir -p /vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut_2forEric
+maxbinEffOut=/vol/funMicZeroVolume1/maxbinOut/effluentMaxBinOut_2forEric
+
+ls $effRawReads 
+
+  -contig $effCont \
+
+run_MaxBin.pl -reads $effRawReads -contig $effCont -out $maxbinEffOut 
+
+ls $effRawReads
 
 
 ##### Chu DAS refine bins #######
@@ -3560,22 +3575,29 @@ grep -E "s__" influentMPSprofiled_metagenome.txt | cut -f 2,3 | cut -d "|" -f 7
 
 ## try it on our mbarc results?
 
+conda activate krona_env
+
 cd /vol/funMicZeroVolume1/metaphlanWD/mbarcMPA
 
-mbarcMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/mbarcMPA/mbarcMPSprofiled_metagenome.txt
+effMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/effluentMPA/effluentMPSprofiled_metagenome.txt
 
-less $mbarcMetaphlanOut
+infMetaphlanOut=/vol/funMicZeroVolume1/metaphlanWD/influentMPA/influentMPSprofiled_metagenome.txt
 
-ls $mbarcMetaphlanOut
 
 grep "s__" $mbarcMetaphlanOut | cut -f 2,3 | cut -d "|" -f 7 > mbarcNCBInumberAbundance.tsv 
 ## add some line numbers to this
 paste <(seq 1 1 $(wc -l mbarcNCBInumberAbundance.tsv | cut -f 1 -d " ") ) mbarcNCBInumberAbundance.tsv >  mbarcNCBInumberAbundanceNumbered.tsv
 
+head $effMetaphlanOut 
+head $effMetaphlanOut 
+
+grep "s__" $infMetaphlanOut | cut -f 2,3 | cut -d "|" -f 7 > infNCBInumberAbundance.tsv 
+## add some line numbers to this
+paste <(seq 1 1 $(wc -l infNCBInumberAbundance.tsv | cut -f 1 -d " ") ) infNCBInumberAbundance.tsv > infNCBInumberAbundanceNumbered.tsv
+
 less mbarcNCBInumberAbundanceNumbered.tsv
 
 head mbarcNCBInumberAbundanceNumbered.tsv
-
 
 ## looks good, can we use this for krona tools?
 
@@ -4973,4 +4995,14 @@ head -n 4200000 $effGenes > test.faa
 
 head -n 4200000 $effGenes > test.faa
 
-### 
+###  debug ssh for jonas
+
+## get jonas' public
+
+## put jonas key on my computer:
+
+
+pathToKey=~/.ssh/denbiTestVM 
+ssh -p 30192 -i $pathToKey ubuntu@129.70.51.6
+
+
