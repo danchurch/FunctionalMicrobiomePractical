@@ -5006,3 +5006,22 @@ pathToKey=~/.ssh/denbiTestVM
 ssh -p 30192 -i $pathToKey ubuntu@129.70.51.6
 
 
+## check out jonas' gene predictions:
+
+pathToKey=/home/daniel/.ssh/denbiTestVM
+
+ssh -p 30064 -i $pathToKey ubuntu@129.70.51.6
+
+## file is here:
+AA=/vol/studentFunMic1Vol/WasteWater/blastKOALA/74.genes.faa
+
+
+## count number of gene predictions
+grep "^>" $AA | wc -l
+
+
+head -n 2689 $AA > 74.genes_firstHalf.faa 
+
+tail -n +2690 $AA > 74.genes_secondHalf.faa
+
+
