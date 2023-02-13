@@ -5027,19 +5027,6 @@ tail -n +2690 $AA > 74.genes_secondHalf.faa
 
 #######################
 
-
-
-
-
-
-
 tar -czvf {outputFileName.tar.gz} {pathToFolderIwant2Copy} &> tar.log & 
-
-
-
-
-
-
-
 
 
