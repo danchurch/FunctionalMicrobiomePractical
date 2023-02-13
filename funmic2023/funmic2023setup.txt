@@ -1,0 +1,109 @@
+## okay, time to start setting up the 2023 funmic class
+## first steps, today:
+
+## 0 - clean out the old folders, github repo
+## done
+## 1 - setup the instance for development
+## instance initiated, I think? Not showing on my dashboard...
+
+## 2 - get data sets
+
+## maybe let's check out the Sereika/Albertson data and pipeline:
+https://www.nature.com/articles/s41592-022-01539-7#data-availability
+
+## their repo is here:
+https://github.com/Serka-M/Digester-MultiSequencing
+
+## their pipeline is really similar to the one we used last year,
+## though no biobakery tools were used, just gtdb-tk. 
+
+## I like the biobakery tools, let's decide when we get there...
+
+## they have both mock and environmental data
+
+## the mock DNA is from the zymogen mock community. 
+## the eDNA is from activated sludge from an anaerobic sewage
+## treatment plant. I don't really understand, because I
+## thought "activated" implied the injection of oxygen
+## into sewage material...
+## intentionally anaerobic conditions implies they wanted
+## methane production.
+## not sure. Anyway...
+
+## They have illumina reads, pacbio, and nanopore sequence data
+## The nanopore data is of two flowcell generations, R10.4 and R9.4.1
+
+## data for the mock community are here:
+https://www.ebi.ac.uk/ena/browser/view/PRJEB48692
+
+## in both cases, there are two nanopore platforms on there...
+## do we want their minion data?
+
+## quote: 
+## "Anaerobic digester and Zymo R.9.4.1 datasets were generated on a MinION Mk1B (Oxford Nanopore Technologies) device"
+
+## so we want the minion datasets
+
+## in the case of the zymo data, I think the nanopore would be:
+## sample name = SAMEA10644976 , library name = LIB-Zymo_HMW_R941 
+## found here:
+https://www.ebi.ac.uk/ena/browser/view/ERR7255742
+
+## note there are promethion data for the R10.4 in the next entry, 
+## we won't use the promethion R10.4 data
+
+## I think we are going to need a way to do this without a gui...
+
+## for instance, does this work for the Nanopore Zymo data?
+
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.gz
+## looks like it works...so theoretically these are the files we
+## need:
+
+## zymo files (illumina miseq F+R, Nanopore minion):
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.gz
+
+
+## biodigestor files (illumina miseq F+R, Nanopore minion):
+## here they have two minion runs. One seems to be for a R10.3 cell.
+## So again, stick with the R9.4.1 cell..
+## also, there are two sets of illumina miseq files, one set from 2018,
+## and one from 2020. The 2020 set doesn't have a finished "generated" fastq
+## from the ENA folks. Supp. table 4 seems important here...
+
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/006/ERR7014876/ERR7014876.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-1.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-2.fastq.gz
+
+## can't find any further data. These last two are the submitted 2020 miseq 
+## files, maybe they will work, if not try the 2018 files
+
+## data for the digester are here:
+https://www.ebi.ac.uk/ena/browser/view/PRJEB48021
+
+## let's use the R9.4.1 data for the nanopore data
+## this is the one that benefitted from polishing 
+## with illumina data
+
+## We'll try assembly with illumina alone, nanopore alone, and then 
+## nanopore polished by illumina
+
+## weird, though, they used 9 years of illumina data to 
+## assist binning...hmm... wonder if we can skip that in the class.
+
+## run through these for the zymogen together, then set them loose on
+## the bioreactor data
+
+## they don't have fast5 files, I don't think...
+## should we practise basecalling with another dataset?
+
+## tomorrow, start running through the datasets.
+## this paper is a bit misleading. The title should actually say something
+## like "Near perfect nanopore MAGs without illumina polishing, but with nine years
+## of illumina data to help binning"....
+
+## oh well. Let's see how we do. If we have to, go back to mbarc and chu. 
+
+
