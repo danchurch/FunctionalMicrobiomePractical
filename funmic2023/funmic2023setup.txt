@@ -107,3 +107,34 @@ https://www.ebi.ac.uk/ena/browser/view/PRJEB48021
 ## oh well. Let's see how we do. If we have to, go back to mbarc and chu. 
 
 
+##### set up VM #####
+
+## de.NBI big VM is not working, everytime I try to set up a full, GPU+ 128g RAM, 28 core
+## machine, it stalls out.
+
+## So I started up a smaller machine, no GPU, 64g, 28 cores. 
+
+## seems to be running. Do I need to give it a new key?
+## they have some on file for me...
+
+ssh -vp 30481  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## looks like I deleted this key?
+
+grep -R "3NAYJHfS2K3z5DrOM"
+
+## yup. Can we sync up the keys that we used in the spruce project?
+## that also seems to not be working...
+
+## let's start over. We are not storing keys on the nanocomp,
+## the only old key we need is the one for the emic instance
+## that zhe is using.
+## also github...
+
+## it looks like our "ubuntu" keys are neither...
+## take a chance and delete them.
+
+can we still use githhub?
+
+
+
