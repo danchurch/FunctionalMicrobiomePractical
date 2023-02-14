@@ -134,7 +134,212 @@ grep -R "3NAYJHfS2K3z5DrOM"
 ## it looks like our "ubuntu" keys are neither...
 ## take a chance and delete them.
 
-can we still use githhub?
+## can we still use githhub?...yes
+## emikAdmin? nope. Just killed it. 
+
+## fix:
+chmod 600 ubuntu_e
+
+## plain old emik? yeah, still works
+
+## okay, so those keys are only good for emik stuff.
+## can we use our old id_ed keys? I think these are 
+## what we use for github...
+
+## so let's make some new ones...
+
+man ssh-keygen
+
+ssh-keygen -f funmic2023 
+
+chmod 600 funmic2023
+
+ssh -p 30427  -i /home/daniel/.ssh/funmic2023 ubuntu@129.70.51.6
+
+## okay, that works. remember not to change keys anymore.
+## de.nbi won't update the keys on VMs - they are stuck with 
+## the original user-profile public keys when the VM is started
+
+## great, now get our data:
+
+cd /vol/testNotSoBig
 
 
+sudo chown ubuntu: /vol/testNotSoBig
+
+mkdir datasets
+
+mkdir zymoMC
+
+cd /vol/testNotSoBig/zymoMC
+## zymo files (illumina miseq F+R, Nanopore minion):
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.gz
+
+cd /vol/testNotSoBig
+mkdir sludge
+
+cd /vol/testNotSoBig/sludge
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/006/ERR7014876/ERR7014876.fastq.gz &
+wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-1.fastq.gz &
+wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-2.fastq.gz &
+
+## next step check out the reads:
+
+## everyone, including the authors of this paper, used porechop
+## which is pretty much dead. 
+
+## this package was pretty 
+
+## for the illumina reads, we just use old fashioned fastqc
+
+## which means we need to get anaconda going... 
+
+wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
+
+## installed
+
+## add bioconda
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+
+## install fastqc
+conda create --name fastqc_env -c bioconda fastqc
+## meh, we'll need other tools..
+conda env remove -n readQC_env
+
+conda create -n readQC_env -c bioconda cutadapt fastqc bbmap seqtk
+
+
+## check out the zymo data:
+
+cd /vol/testNotSoBig/datasets/zymoMC
+
+mkdir /vol/testNotSoBig/datasets/zymoMC/illumina
+mkdir /vol/testNotSoBig/datasets/zymoMC/nanopore
+
+gunzip ERR7255689_1.fastq.gz &
+gunzip ERR7255689_2.fastq.gz &
+gunzip ERR7255742.fastq.gz &
+
+## the paired file probably = illumina
+
+cd /vol/testNotSoBig/datasets/zymoMC/illumina
+
+head ERR7255689_1.fastq
+
+tail ERR7255689_1.fastq
+
+grep "10003:13052/" ERR7255689_1.fastq
+
+grep "10003:13052/" ERR7255689_2.fastq
+
+seq="GGTGACCACTCGCCCGCCCGCCGCGTTCTCTTCGCTCACGGCCAGGGCGAACATGTTAATCCAGTCGATGACGTTCATCGGATCGCGGGAGAGATTATCGCTGGAGACCAGCAGACGCCGTAACGCTACCGCGCGGCGTGGAACGTTCAGC"
+seq="TTTGCATCAAAAGAAGCCCTATTTTTAGAAGTTTATCAAGATAGTATTCAGATGGAATTAACAGAACTAGGGAAAGTAGCAGAGCGAGATGATTTGGTTGGGGAAAAGAAGCTACAATCTATTTTCTTTGTAGCGACAGATTTTTCTAGCA"
+seq="ACAATGCGATCAATAATGATTTCAATAGAATGCTTTTTATTCTTCTCGATTTCAATTTCGTCATTGATATCATAAATTTCTCCATCAACACGAATTCGAACATAGCCTTCTTTTTTTATTTCCTCAATAGTTTTCTTATGGGTTCCTTTTT"
+
+echo $seq | wc -c ## seems like they are all 152 bp long. 
+
+## why are these sequences so short, if they are miseq?
+
+head ERR7255689_2.fastq ## same, short, 152 bp
+
+## and the big one probably nanopore:
+head ERR7255689_1.fastq
+tail -n 200 ERR7255742.fastq | less
+
+## how many reads?
+grep -c ^@ ERR7255689_1.fastq ## 24887493
+## 24,887,493 reads... interesting. let's see how many mags we 
+## get out of that...
+
+## get reports on the illumina data:
+
+conda activate readQC_env 
+
+cd /vol/testNotSoBig/datasets/zymoMC/illumina
+
+ERR7255689_1.fastq
+
+ERR7255689_2.fastq
+
+fastqc -o /vol/funMicZeroVolume1/fastqChuTrimmedOut/ \
+    $chuFastq/chuInfluent_trimmed_interleaved.fq \
+    $chuFastq/chuEffluent_trimmed_interleaved.fq
+
+scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
+    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/fastqChuTrimmedOut/chuInfluent_trimmed_interleaved_fastqc.html .
+
+
+
+## check out the sludge data:
+cd /vol/testNotSoBig/datasets/sludge
+
+
+gunzip IL-202001-1.fastq.gz &
+gunzip IL-202001-2.fastq.gz &
+gunzip ERR7014876.fastq.gz &
+
+## sludge illumina
+
+cd /vol/testNotSoBig/datasets/sludge/illumina
+
+head -n 1 IL-202001-1.fastq
+
+tail IL-202001-1.fastq
+
+head -n 1 IL-202001-2.fastq
+
+tail IL-202001-2.fastq
+
+## why are these different?
+tail -n 4 IL-202001-1.fastq | head -n 1
+tail -n 4 IL-202001-2.fastq | head -n 1
+
+## these do not look like paired read files to me
+
+head -n 1000 IL-202001-1.fastq | less
+
+## for instance:
+grep -A 2 "16026:1992" IL-202001-1.fastq ## gives us:
+@M00878:365:000000000-CVP5H:1:1102:16026:1992_1
+@M00878:365:000000000-CVP5H:1:1102:16026:1992_2
+## both in the same file
+
+
+grep -A 2 "16026:1992" IL-202001-2.fastq ## nothing is found. 
+
+grep -n "1102:16026:1992_" IL-202001-1.fastq &> findreadpairplace.txt ## gives us:
+997:@M00878:365:000000000-CVP5H:1:1102:16026:1992_1
+47092901:@M00878:365:000000000-CVP5H:1:1102:16026:1992_2
+
+## how many reads are there?
+
+grep -c ^@M00 IL-202001-1.fastq &> zoop ## 23545952 23,545,952
+
+grep -c ^@M00 IL-202001-2.fastq &> zoop ## 23545952 23,545,952
+
+## ugh, this is a fucking nature paper and I still have to clean
+## data. 
+
+tail IL-202001-1.fastq 
+
+head -n 1000 IL-202001-2.fastq | less
+
+## so looks like paired reads, but each file contains its own paired data?
+
+## then why are they the exact same number of reads? That is weird.
+
+## good explanation on illumina fastq sequence identifiers here: 
+## https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
+
+seq="CCCATTGCTTTTCATCACTTCAATTGTGTACCTTTGCTCTACGGTTAAATGGCTCATATTTTGCAACTTTTGGACGAGGACACAAAGTAAAGAGAATTTATCCATTTCAGGCGGGGGGACATTTTTGTCCCTTCGCTTGAAAAAAATTAATTCATGCCCTCAAAAAGTTGCATTTATTAGTT"
+echo $seq | wc -c ## 183 BP, still short for miseq
+
+## so if these are not paired, what are we looking at? 
+
+## goals - fastqc all illumina, MinionQC all nanopore, look into porechop
 
