@@ -1,4 +1,25 @@
 ## okay, time to start setting up the 2023 funmic class
+
+## mounting hard drive
+
+## find it:
+lsblk
+## get uuid
+blkid
+## mount
+sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/testNotSoBig
+
+## also, conda broke when we updated a cloud config file.
+
+## reinstall:
+
+wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
+
+bash ./Anaconda3-2022.10-Linux-x86_64.sh
+
+## put anaconda here:
+/vol/testNotSoBig/anaconda
+
 ## first steps, today:
 
 ## 0 - clean out the old folders, github repo
@@ -200,21 +221,36 @@ wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
 
 ## installed
 
+#### set up conda packages ###
+
 ## add bioconda
 conda config --add channels defaults
 conda config --add channels bioconda
 conda config --add channels conda-forge
 conda config --set channel_priority strict
 
-## install fastqc
+
+### fastqc ###
 conda create --name fastqc_env -c bioconda fastqc
 ## meh, we'll need other tools..
 conda env remove -n readQC_env
 
 conda create -n readQC_env -c bioconda cutadapt fastqc bbmap seqtk
 
+### vsearch ###
+conda create -n vsearch -c bioconda vsearch
 
-## check out the zymo data:
+### nanoplot/nanostat ###
+## got to relax things a bit
+conda config --set channel_priority flexible
+conda create -n nanoplot -c bioconda nanoplot
+
+conda config --set channel_priority strict
+
+### porechop ###
+conda create -n porechop -c bioconda porechop
+
+### check out the zymo data: ###
 
 cd /vol/testNotSoBig/datasets/zymoMC
 
@@ -225,7 +261,8 @@ gunzip ERR7255689_1.fastq.gz &
 gunzip ERR7255689_2.fastq.gz &
 gunzip ERR7255742.fastq.gz &
 
-## the paired file probably = illumina
+## the 1+2 files probably = illumina
+
 
 cd /vol/testNotSoBig/datasets/zymoMC/illumina
 
@@ -245,10 +282,44 @@ echo $seq | wc -c ## seems like they are all 152 bp long.
 
 ## why are these sequences so short, if they are miseq?
 
-head ERR7255689_2.fastq ## same, short, 152 bp
+## seq numbers line up:
+head ERR7255689_1.fastq 
+head ERR7255689_2.fastq 
+
+tail ERR7255689_1.fastq 
+tail ERR7255689_2.fastq 
+
+## these are really short. Did they already do some sort of trimming on them?
+## fastqc
+
+conda activate readQC_env
+
+cd /vol/testNotSoBig/datasets/zymoMC/zymoQC
+
+fastqc -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
+    /vol/testNotSoBig/datasets/zymoMC/illumina/ERR7255689_*
+
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:/vol/testNotSoBig/datasets/zymoMC/zymoQC/ERR7255689_1_fastqc.html .
+
+(firefox ERR7255689_1_fastqc.html &) &
+
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:/vol/testNotSoBig/datasets/zymoMC/zymoQC/ERR7255689_2_fastqc.html .
+
+(firefox ERR7255689_2_fastqc.html &) &
+
+## these look very good. A few illumina adapters in there...
+
+## can these be aligned if they are so short?
+
+conda activate readQC_env
 
 ## and the big one probably nanopore:
+cd /vol/testNotSoBig/datasets/zymoMC/nanopore/
+
 head ERR7255689_1.fastq
+
 tail -n 200 ERR7255742.fastq | less
 
 ## how many reads?
@@ -256,28 +327,79 @@ grep -c ^@ ERR7255689_1.fastq ## 24887493
 ## 24,887,493 reads... interesting. let's see how many mags we 
 ## get out of that...
 
-## get reports on the illumina data:
+## how do we find which is the forward? reverse?
+## meh, who cares. With so little overlap,
+## seems best to just use them unpaired. 
 
-conda activate readQC_env 
+conda activate vsearch 
 
-cd /vol/testNotSoBig/datasets/zymoMC/illumina
+vsearch --fastq_mergepairs ERR7255689_1.fastq --reverse ERR7255689_2.fastq --threads 20 --fastqout ERR7255689_paired.fasta 
 
-ERR7255689_1.fastq
+## what does that look like?
 
-ERR7255689_2.fastq
+conda activate readQC_env
 
-fastqc -o /vol/funMicZeroVolume1/fastqChuTrimmedOut/ \
-    $chuFastq/chuInfluent_trimmed_interleaved.fq \
-    $chuFastq/chuEffluent_trimmed_interleaved.fq
+fastqc -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
+    /vol/testNotSoBig/datasets/zymoMC/illumina/ERR7255689_paired.fasta
 
-scp -i /home/daniel/.ssh/denbiTestVM -P 30192 \
-    ubuntu@129.70.51.6:/vol/funMicZeroVolume1/fastqChuTrimmedOut/chuInfluent_trimmed_interleaved_fastqc.html .
+file=/vol/testNotSoBig/datasets/zymoMC/zymoQC/ERR7255689_paired.fasta_fastqc.html
+
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:$file .
+
+(firefox ERR7255689_paired.fasta_fastqc.html &) &
+
+head ERR7255689_paired.fasta
+
+## only 8 million reads successfully merged? I think we have to not merge...
+## the qualities of both R1 and R2 are high, can we use them without 
+## merging?
+
+## let's do it, for now. 
+
+## how about visualizing the nanopore reads?
+
+## we don't have a read report for the nanopore reads, so don't 
+## think we can use minionQC.
+
+## so just run fastqc again...
+
+cd /vol/testNotSoBig/datasets/zymoMC/nanopore/
+
+conda activate readQC_env
+
+fastqc -t 20 -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
+    /vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq 
+
+## meh, looking like that wants to crash. 
+## anyway, it will take forever. Does nohup work?
+
+nohup fastqc -t 20 -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
+    /vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq 
+
+## finding mention of nanoplot and nanostat
+## what are these?
+
+
+## before we go, see if we can get a quick output from nanoplot:
+
+conda activate nanoplot
+
+cd /vol/testNotSoBig/datasets/zymoMC/zymoQC/nanoplotOut
+
+inFastq="/vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq"
+outDir="/vol/testNotSoBig/datasets/zymoMC/zymoQC/nanoplotOut/"
+
+nohup NanoPlot -t 6 --verbose --store --huge -o $outDir --fastq $inFastq --format 'png' &
 
 
 
-## check out the sludge data:
+
+
+
+### check out the sludge data ###
+
 cd /vol/testNotSoBig/datasets/sludge
-
 
 gunzip IL-202001-1.fastq.gz &
 gunzip IL-202001-2.fastq.gz &
@@ -341,5 +463,5 @@ echo $seq | wc -c ## 183 BP, still short for miseq
 
 ## so if these are not paired, what are we looking at? 
 
-## goals - fastqc all illumina, MinionQC all nanopore, look into porechop
+## goals - fastqc all illumina, 
 
