@@ -9,6 +9,9 @@ blkid
 ## mount
 sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/testNotSoBig
 
+## to make sure everything is kosher for github:
+find . -type f -size +40M
+
 ## also, conda broke when we updated a cloud config file.
 
 ## reinstall:
@@ -229,6 +232,8 @@ conda config --add channels bioconda
 conda config --add channels conda-forge
 conda config --set channel_priority strict
 
+## for updates
+conda update -n base -c defaults conda
 
 ### fastqc ###
 conda create --name fastqc_env -c bioconda fastqc
@@ -244,11 +249,16 @@ conda create -n vsearch -c bioconda vsearch
 ## got to relax things a bit
 conda config --set channel_priority flexible
 conda create -n nanoplot -c bioconda nanoplot
-
 conda config --set channel_priority strict
 
 ### porechop ###
 conda create -n porechop -c bioconda porechop
+
+### megahit ###
+conda create -n megahit -c bioconda megahit
+
+### Flye ###
+conda create -n flye -c bioconda flye
 
 ### check out the zymo data: ###
 
@@ -377,6 +387,12 @@ fastqc -t 20 -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
 nohup fastqc -t 20 -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
     /vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq 
 
+file=/vol/testNotSoBig/datasets/zymoMC/zymoQC/ERR7255742_fastqc.html
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:$file .
+
+(firefox ERR7255689_paired.fasta_fastqc.html &) &
+
 ## finding mention of nanoplot and nanostat
 ## what are these?
 
@@ -392,10 +408,98 @@ outDir="/vol/testNotSoBig/datasets/zymoMC/zymoQC/nanoplotOut/"
 
 nohup NanoPlot -t 6 --verbose --store --huge -o $outDir --fastq $inFastq --format 'png' &
 
+## maybe next time don't save the pickle, too big for github
+
+## check it out:
+
+tar -zcvf nanoplot.tar.gz /vol/testNotSoBig/datasets/zymoMC/zymoQC/nanoplotOut/
+
+file=/vol/testNotSoBig/datasets/zymoMC/nanoplot.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:$file .
+
+## looks like we need to chop the adapters. Does porechop still work?
+
+## for the barcode data I used cutadapt, previously. 
+
+## tomorrow - do we need to chop adapters? try pore chop, and/or NanoFilt,  and/or cutadapt
+
+## for now, since this is just teaching, let's use cutadapt.
+
+conda activate readQC_env
+
+## the simplest thing is to cut the first nine bp off these.
+
+npData="/vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq"
+cutadapt -o ZymoNP_trimmed.fastq --cores 20 --cut 9 $npData 
+
+## cutadapt can also remove low quality ends, try this, also 
+cutadapt -q 10 \
+  -o ZymoNP_trimmed_filteredEnds.fastq \
+  --cores 15 \
+  ZymoNP_trimmed.fastq &
+
+## run fastqc on both
+
+file=ZymoNP_trimmed.fastq
+fastqc -t 10 \
+  -o /vol/testNotSoBig/datasets/zymoMC/ \
+  $file &> fastqcNPtrimmedLog.txt &
 
 
+file=ZymoNP_trimmed_filteredEnds.fastq
+fastqc -t 15 \
+  -o /vol/testNotSoBig/datasets/zymoMC/ \
+  $file &> fastqcNPtrimmedFilteredLog.txt &
+
+/vol/testNotSoBig/datasets/zymoMC/zymoQC/nanopore
+
+## get them
+
+file=/vol/testNotSoBig/datasets/zymoMC/zymoQC/nanopore/ZymoNP_trimmed_fastqc.html
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:$file .
+
+file=/vol/testNotSoBig/datasets/zymoMC/ZymoNP_trimmed_filteredEnds_fastqc.html
+scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+    ubuntu@129.70.51.6:$file .
+
+(firefox ZymoNP_trimmed_fastqc.html &) &
+
+(firefox ZymoNP_trimmed_filteredEnds_fastqc.html &) &
+
+find . ZymoNP_trimmed_filteredEnds.fastq_fastqc.html
+
+## that takes a long time, the fastqc generation.
+## but both steps really helped. 
+
+## just do fastqc once before on primary inspection of the nanopore reads
+## and once after trimming and filtering.
+
+## the illumina data seems find to me, except it doesn't pair well.
+## can we still use it for assembly
+
+### run assemblers! ###
+
+## for the nanopore data, we'll use metaFlye 
+
+## https://github.com/fenderglass/Flye
 
 
+## for the illumina, we can choose between megahit and spades..
+
+## both we (last year) and the Sereika project use megahit, so let's 
+## stay with it.
+
+conda activate megahit
+
+megahit -1 pe_1.fq -2 pe_2.fq -o out
+megahit -r $MBARCreads -o megahITmbaRCOut
+
+\time -v megahit -1 ERR7255689_1.fastq \
+          -2 ERR7255689_2.fastq \
+          -t 25 \
+          -o megahitZymoIllumina &> megahit.log &
 
 ### check out the sludge data ###
 
