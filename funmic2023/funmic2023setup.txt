@@ -428,19 +428,84 @@ scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
 
 conda activate readQC_env
 
+cd /vol/testNotSoBig/datasets/zymoMC/nanopore/
+
 ## the simplest thing is to cut the first nine bp off these.
 
+############################################################################
+## debug time
+## we know that cutadapt introduces empty reads some where in our pipe
+conda deactivate
+conda activate readQC_env
+head -n 1000000 "/vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq" > npHead.fastq
+cutadapt -o ZymoNP_trimmed.fastq --cores 20 --cut 9 npHead.fastq 
+grep "^$" npHead.fastq
+cutadapt -o ZymoNP_trimmed_filteredEnds.fastq --cores 20 --cut 9 ZymoNP_trimmed.fastq
+grep "^$" npHead.fastq
+
+## not found? so where did the empty reads come from?
+
+
+conda deactivate
+conda activate flye
+
+reads=ZymoNP_trimmed_filteredEnds.fastq
+flye --meta \
+     --threads 25 \
+     --out-dir . \
+     --nano-hq $reads 
+
+## seems fine. no errors. Why did earlier clipping cause empties?
+############################################################################
+
+conda deactivate
+conda activate readQC_env
+
+cd /vol/testNotSoBig/datasets/zymoMC/nanopore/
+
 npData="/vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq"
-cutadapt -o ZymoNP_trimmed.fastq --cores 20 --cut 9 $npData 
+nohup cutadapt -o ZymoNP_trimmed.fastq --cores 25 --cut 9 $npData 
+
+grep "^$" ZymoNP_trimmed.fastq ## check for empties
+
+
+grep "^$" ZymoNP_trimmed_filteredEnds.fastq ## check for empties
+
+## does flye like it?
+conda deactivate
+conda activate flye
+reads=ZymoNP_trimmed.fastq
+flye --meta \
+     --threads 25 \
+     --out-dir . \
+     --nano-hq $reads 
+## seems okay
+
+conda deactivate
+conda activate readQC_env
 
 ## cutadapt can also remove low quality ends, try this, also 
-cutadapt -q 10 \
+
+nohup cutadapt -q 10 \
   -o ZymoNP_trimmed_filteredEnds.fastq \
-  --cores 15 \
+  --cores 25 \
   ZymoNP_trimmed.fastq &
 
-## run fastqc on both
+grep -B 2 -A 2 "^$" ZymoNP_trimmed_filteredEnds.fastq ## check for empties
+## there they are
 
+conda deactivate
+conda activate flye
+reads=ZymoNP_trimmed_filteredEnds.fastq
+flye --meta \
+     --threads 25 \
+     --out-dir . \
+     --nano-hq $reads 
+
+## yup. 
+## fuck it, let's keep the "ragged edges".
+
+## run fastqc on both
 file=ZymoNP_trimmed.fastq
 fastqc -t 10 \
   -o /vol/testNotSoBig/datasets/zymoMC/ \
@@ -451,8 +516,6 @@ file=ZymoNP_trimmed_filteredEnds.fastq
 fastqc -t 15 \
   -o /vol/testNotSoBig/datasets/zymoMC/ \
   $file &> fastqcNPtrimmedFilteredLog.txt &
-
-/vol/testNotSoBig/datasets/zymoMC/zymoQC/nanopore
 
 ## get them
 
@@ -476,6 +539,8 @@ find . ZymoNP_trimmed_filteredEnds.fastq_fastqc.html
 ## just do fastqc once before on primary inspection of the nanopore reads
 ## and once after trimming and filtering.
 
+## actually, just trimming. Filtering is screwing up our fasta 
+
 ## the illumina data seems find to me, except it doesn't pair well.
 ## can we still use it for assembly
 
@@ -484,7 +549,6 @@ find . ZymoNP_trimmed_filteredEnds.fastq_fastqc.html
 ## for the nanopore data, we'll use metaFlye 
 
 ## https://github.com/fenderglass/Flye
-
 
 ## for the illumina, we can choose between megahit and spades..
 
@@ -501,7 +565,48 @@ megahit -r $MBARCreads -o megahITmbaRCOut
           -t 25 \
           -o megahitZymoIllumina &> megahit.log &
 
-### check out the sludge data ###
+## moved to:
+
+## not sure how well it went, but let's 
+## that was really quick - N50 is 103233, not bad
+
+## try to start the flye assembler, might take longer...
+
+conda activate flye
+
+ls /vol/testNotSoBig/datasets/zymoMC/nanopore/
+
+cd /vol/testNotSoBig/assemblies/zymoMC/flyeNanopore/
+
+#reads=/vol/testNotSoBig/datasets/zymoMC/nanopore/ZymoNP_trimmed_filteredEnds.fastq
+
+reads=/vol/testNotSoBig/datasets/zymoMC/nanopore/ZymoNP_trimmed.fastq
+outdir=/vol/testNotSoBig/assemblies/zymoMC/flyeNanopore/
+\time -v nohup flye --meta \
+          --threads 25 \
+          --out-dir $outdir \
+          --nano-hq $reads &> howlongDidIflye.log &
+
+##file=/vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq
+file=/vol/testNotSoBig/datasets/zymoMC/nanopore/ZymoNP_trimmed_filteredEnds.fastq
+
+grep -B 6 -A 2 "@ERR7255742.1631 " $file
+
+## are there others?
+head -n 10000 $file | grep -B 2 -A 2 "^$"
+
+## find these errors using empty lines
+## can't acutally look for linbreaks with grep
+grep -n -B 2 -A 2 "^$" $file > empties.txt &
+
+grep -n -B 2 -A 2 "^$" $file ## not found when we look in the pre-cutadapt
+
+## yeah, looks like a lot of empty reads after 
+
+## just curious, do we get the same result from the raw file?
+reads=/vol/testNotSoBig/datasets/zymoMC/nanopore/ZymoNP_trimmed_filteredEnds.fastq
+
+### check out the sludge data ### 
 
 cd /vol/testNotSoBig/datasets/sludge
 
