@@ -4,10 +4,16 @@
 
 ## find it:
 lsblk
+
 ## get uuid
 blkid
 ## mount
-sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/testNotSoBig
+
+sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/danBot
+
+## or
+sudo mount /dev/vdc /vol/danBot
+
 
 ## to make sure everything is kosher for github:
 find . -type f -size +40M
@@ -237,11 +243,7 @@ conda config --set channel_priority strict
 ## for updates
 conda update -n base -c defaults conda
 
-### fastqc ###
-conda create --name fastqc_env -c bioconda fastqc
-## meh, we'll need other tools..
-conda env remove -n readQC_env
-
+## readQC
 conda create -n readQC_env -c bioconda cutadapt fastqc bbmap seqtk
 
 ### vsearch ###
@@ -252,9 +254,6 @@ conda create -n vsearch -c bioconda vsearch
 conda config --set channel_priority flexible
 conda create -n nanoplot -c bioconda nanoplot
 conda config --set channel_priority strict
-
-### porechop ###
-conda create -n porechop -c bioconda porechop
 
 ### megahit ###
 conda create -n megahit -c bioconda megahit
@@ -274,7 +273,6 @@ gunzip ERR7255689_2.fastq.gz &
 gunzip ERR7255742.fastq.gz &
 
 ## the 1+2 files probably = illumina
-
 
 cd /vol/testNotSoBig/datasets/zymoMC/illumina
 
@@ -720,7 +718,19 @@ ssh -vp 30427  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6
 file=/vol/testNotSoBig/datasets/
 nohup scp -i /home/ubuntu/.ssh/danbotFuncomp -P 30427 -r ubuntu@129.70.51.6:$file . &
 
- 
-ssh -vp 30427  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6
+## meh, something failed.
+## in the end, detach old volume and attach here. 
+## let's try our flye assembly again:
 
-/vol/testNotSoBig/datasets
+conda activate flye
+
+reads=/vol/danBot/datasets/zymoMC/nanopore/ZymoNP_trimmed.fastq
+outdir=/vol/danBot/assemblies/zymoMC/flyeNanopore/
+\time -v nohup flye --meta \
+          --threads 25 \
+          --out-dir $outdir \
+          --nano-hq $reads &> howlongDidIflye.log &
+
+## anything else we can do right now?
+
+## could get started on binning...
