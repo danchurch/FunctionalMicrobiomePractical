@@ -74,6 +74,8 @@ https://www.ebi.ac.uk/ena/browser/view/PRJEB48692
 https://www.ebi.ac.uk/ena/browser/view/ERR7255742
 
 ## note there are promethion data for the R10.4 in the next entry, 
+
+## 
 ## we won't use the promethion R10.4 data
 
 ## I think we are going to need a way to do this without a gui...
@@ -587,6 +589,8 @@ outdir=/vol/testNotSoBig/assemblies/zymoMC/flyeNanopore/
           --out-dir $outdir \
           --nano-hq $reads &> howlongDidIflye.log &
 
+## oh crap. ran out of memory. Time to start a fat node.
+
 ##file=/vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq
 file=/vol/testNotSoBig/datasets/zymoMC/nanopore/ZymoNP_trimmed_filteredEnds.fastq
 
@@ -674,3 +678,49 @@ echo $seq | wc -c ## 183 BP, still short for miseq
 
 ## goals - fastqc all illumina, 
 
+###### start over on new instance ####
+
+## denbi has come through with the heavier (128 gb ram), GPU-equipped VMs.
+## also, our medium instance (64gb) can't handle the full nanopore dataset
+## assembly. So time to try the big guns.
+
+## ssh for new instance:
+
+ssh -p 30500 -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## or just
+
+danBot
+
+## get anaconda on there:
+wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
+
+bash ./Anaconda3-2022.10-Linux-x86_64.sh
+
+/vol/danBot/
+
+## let's make it so danbot and funcomp can talk.
+
+## on danbot, make a keypair:
+ssh-keygen -f danbotFuncomp
+
+chmod 600 danbotFuncomp
+chmod 444 danbotFuncomp.pub
+
+## put the pub key on funcomp authorized_keys
+cat danbotFuncomp.pub
+
+## try login:
+ssh -vp 30427  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6
+## works
+
+## what do we need?
+## the raw data, get it all:
+
+file=/vol/testNotSoBig/datasets/
+nohup scp -i /home/ubuntu/.ssh/danbotFuncomp -P 30427 -r ubuntu@129.70.51.6:$file . &
+
+ 
+ssh -vp 30427  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6
+
+/vol/testNotSoBig/datasets
