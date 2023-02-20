@@ -196,7 +196,6 @@ ssh -p 30427  -i /home/daniel/.ssh/funmic2023 ubuntu@129.70.51.6
 
 cd /vol/testNotSoBig
 
-
 sudo chown ubuntu: /vol/testNotSoBig
 
 mkdir datasets
@@ -260,6 +259,61 @@ conda create -n megahit -c bioconda megahit
 
 ### Flye ###
 conda create -n flye -c bioconda flye
+
+### (meta)quast ###
+conda config --set channel_priority flexible
+conda create -n metaquast -c bioconda quast
+conda config --set channel_priority strict
+
+### polishing ###
+## and should probably put medaka and racon in the same 
+#conda config --set channel_priority flexible
+#conda create -n polishNanopore -c bioconda racon minimap2 medaka
+#conda config --set channel_priority strict
+### racon ###
+#conda create -n racon -c bioconda medaka minimap2 
+
+## that's not working. Break it up.
+
+### medaka ###
+#conda config --set channel_priority flexible
+#conda create -n medaka -c bioconda medaka 
+
+## recommended by the nanopore github site:
+conda create -n medaka -c conda-forge -c bioconda medaka
+
+#conda config --set channel_priority strict
+
+### racon ###
+conda create -n racon -c bioconda racon 
+## quick
+
+### samtools, bedtools, bedtools ###
+conda create -n samBedBowtie -c bioconda samtools=1.9 bedtools bowtie2
+## can we add minimap2 to this?
+conda install -c bioconda minimap2
+## rename this to something nicer for the classk
+
+### binning environments ###
+
+## metaBat2 ##
+conda create -n metabat2 -c bioconda metabat2
+## quick
+
+## maxbin2 ##
+conda create -n maxbin2 -c bioconda maxbin2
+## takes a long,long time
+
+## VAMB ##
+conda create -n vamb -c bioconda vamb
+## looks like GPU support is available:
+conda activate vamb
+conda install -c pytorch pytorch torchvision cudatoolkit=10.2
+## even with the cuda install, it's quick
+
+## also needs minimap:
+conda install -c bioconda minimap2
+
 
 ### check out the zymo data: ###
 
@@ -733,4 +787,190 @@ outdir=/vol/danBot/assemblies/zymoMC/flyeNanopore/
 
 ## anything else we can do right now?
 
-## could get started on binning...
+## we can try the binning software, but this requires a lot of memory...think we are stuck for a bit
+
+## done!
+
+/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta
+
+## it's pretty small - 40M. 40,000,000 bytes
+
+wc -c assembly.fasta &
+
+## ecoli has  5.11174 mbp. This is a small metagenome.
+
+## let's check them with metaquast?  
+
+
+illuminaZymoAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
+illuminaZymoMetaquastOut=/vol/danBot/datasets/zymoMC/zymoQC/illumina/metaquast
+nanoporeZymoAssembly=/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta
+nanoporeZymoMetaquastOut=/vol/danBot/datasets/zymoMC/zymoQC/nanopore/metaquast
+
+conda activate metaquast
+
+metaquast --help
+
+metaquast -t 13 \
+          -o $illuminaZymoMetaquastOut \
+          $illuminaZymoAssembly 
+
+## not much memory usage, but the downloads from ncbi take a while
+
+metaquast -t 13 \
+          -o $nanoporeZymoMetaquastOut \
+          $nanoporeZymoAssembly &> nanoporeMetaquast.log &
+
+## zip them up
+
+cd /vol/danBot/datasets/zymoMC/zymoQC/illumina/
+tar -czvf metaquastOutZymoIllumina.tar.gz metaquast/
+
+cd /vol/danBot/datasets/zymoMC/zymoQC/nanopore
+
+tar -czvf metaquastOutZymoNanopore.tar.gz metaquast/
+
+## get these local
+## put these somewhere not in the repo, they are big.
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC/illumina/metaquast
+file=/vol/danBot/datasets/zymoMC/zymoQC/illumina/metaquastOutZymoIllumina.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC/nanoporeQC/metaquast
+file=/vol/danBot/datasets/zymoMC/zymoQC/nanopore/metaquastOutZymoNanopore.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC/illumina/metaquast
+
+
+### polishing with Racon ###
+
+## de.nbi has a working example here:
+## https://denbi-nanopore-training-course.readthedocs.io/en/latest/polishing/medaka/Racon_1.html
+
+conda activate racon
+
+cd /vol/danBot/polish/zymoMCnano
+
+## make alignment of reads to assembly
+
+### binning ###
+
+## the sereika paper used two of the same binning software packages
+## as we used last year: metabat2 and maxbin2
+
+## they polished the metagenome with Racon before binning.
+## which means we need to learn about polishing...
+
+## while we are waiting on medaka and maxbin2 installations,
+## can we try our other to binning software out on the 
+## illumina datasets?
+
+## metabat
+
+## we did this last year...
+
+## metabat uses contig abundances
+## they had a wrapper script to generate these
+## from your raw reads, 
+
+## I think we first had to do an alignment with bowtie and samtools
+
+conda activate samBedBowtie 
+
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+
+## do our raw reads for bowtie have to be in a single file?
+## looks like we use -1 and -2 options
+
+## step 1 make the bowtie index of the illimina read assembly
+
+binWD="/vol/danBot/binning/zymoMC/illumina/illuminaBowTieIndex"
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
+reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
+
+\time -v bowtie2-build $cont $binWD/zymoIlluminaAssembly
+
+## do the alignment
+\time -v bowtie2 \
+           -x $binWD/zymoIlluminaAssembly \
+           -1 $reads1 -2 $reads2 \
+           -S rawReads2Contigs.sam \
+           --threads 15 \
+           --local 
+
+## this takes a very long time, maybe 0.5 hour or more
+
+## sort it
+
+\time -v samtools sort -l 1 \
+    -@15 \
+    -o rawReads2ContigsSorted.bam \
+    -O BAM \
+    rawReads2Contigs.sam
+## 5 mins
+
+    #-T /tmp/sortRR2C \ ## do we need this? doesn't seem like it
+
+
+## not sure if we need this, in the past we indexed the sam for 
+## concoct:
+samtools index rawReads2ContigsSorted.bam rawReads2ContigsIndexed.bai
+## super quick and cheap
+
+## now what?
+
+## try metabat...
+
+conda deactivate
+conda activate metabat2
+
+
+cd /vol/danBot/binning/zymoMC/illumina/metabat2
+
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+bam="/vol/danBot/binning/zymoMC/illumina/illuminaBowTieIndex/rawReads2ContigsSorted.bam"
+
+\time runMetaBat.sh $cont $bam
+
+## 14 bins... that seems about right. Since we're not inject the hiseq data into this.
+
+### vamb ###
+
+## this is new this year - how does vamb work? 
+
+conda deactivate
+
+conda activate vamb 
+
+cd /vol/danBot/binning/zymoMC/illumina/vamb
+
+## they run a cataloging program on their assemblies. Not sure if I need to do this but...
+
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
+reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
+
+concatenate.py illumcatalogue.fna.gz $cont
+
+## they use minimap2 in their examples
+
+conda activate samBedBowtie 
+
+minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz; # make index
+
+minimap2 -t 8 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 18 > illumReadsAligned2Contigs.bam
+
+## I wonder if we could use minimap instead of bowtie above? seems much faster, and samtools seems to 
+## handle the outputs...
+
+## run the binner:
+conda deactivate 
+conda activate vamb
+
+#vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -o C --minfasta 200000
+## doesn't work...
+
+vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 64 -o C --minfasta 200000
