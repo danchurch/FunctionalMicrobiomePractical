@@ -95,8 +95,8 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.g
 ## zymo files (illumina miseq F+R, Nanopore minion):
 wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz
 wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz
-wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.gz
-
+#wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.gz ## that's 9.4 flowcell
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR728/008/ERR7287988/ERR7287988.fastq.gz ## 10.4, but promethion!
 
 ## biodigestor files (illumina miseq F+R, Nanopore minion):
 ## here they have two minion runs. One seems to be for a R10.3 cell.
@@ -105,7 +105,10 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.g
 ## and one from 2020. The 2020 set doesn't have a finished "generated" fastq
 ## from the ENA folks. Supp. table 4 seems important here...
 
-wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/006/ERR7014876/ERR7014876.fastq.gz
+## all the nanopore data in this folder is from minions...
+
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/004/ERR7014844/ERR7014844.fastq.gz ## 10.4
+#wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/006/ERR7014876/ERR7014876.fastq.gz ## 9.4 flowcell
 wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-1.fastq.gz
 wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-2.fastq.gz
 
@@ -279,10 +282,44 @@ conda config --set channel_priority strict
 #conda config --set channel_priority flexible
 #conda create -n medaka -c bioconda medaka 
 
-## recommended by the nanopore github site:
-conda create -n medaka -c conda-forge -c bioconda medaka
+# ## recommended by the nanopore github site:
+# conda create -n medaka -c conda-forge -c bioconda medaka
+# #conda config --set channel_priority strict
+# 
+# ## that's run for ~24 hours
+# 
+# ## try pip in a virtual env
+# python3 -m venv /path/to/new/virtual/environment
+# virtualenv medaka --python=python3 --prompt "(medaka) "
+# . medaka/bin/activate
+# pip install medaka
+# ## doesn't work, some sort of issue with compiler
+# 
+# ## still problems with virtualenv, won't install...jeezus
+# 
+# git clone https://github.com/nanoporetech/medaka.git
+# cd medaka
+# make install
+# . ./venv/bin/activate
+# ## also doesn't work
+#
+## maybe just a straight pip install.
 
-#conda config --set channel_priority strict
+conda create -n medaka 
+conda activate medaka 
+sudo apt install python3-pip
+
+pip install medaka
+
+## errors:
+checking for bzlib.h... no
+checking for lzma.h... no
+
+## bzlib.h
+sudo apt install libbz2-dev
+## lzma.h
+sudo apt install liblzma-dev
+## think it works now...
 
 ### racon ###
 conda create -n racon -c bioconda racon 
@@ -294,15 +331,91 @@ conda create -n samBedBowtie -c bioconda samtools=1.9 bedtools bowtie2
 conda install -c bioconda minimap2
 ## rename this to something nicer for the classk
 
+
+
 ### binning environments ###
 
 ## metaBat2 ##
 conda create -n metabat2 -c bioconda metabat2
 ## quick
 
-## maxbin2 ##
-conda create -n maxbin2 -c bioconda maxbin2
-## takes a long,long time
+# ### maxbin2 ###
+# #conda create -n maxbin2 -c bioconda maxbin2
+# ## takes a long,long time
+# 
+# conda create -n maxbin2 -c bioconda maxbin2
+# 
+# ## try downloading the source from sourceforge:
+# https://sourceforge.net/projects/maxbin2/
+# 
+# ## had to get it local
+# file=/home/daniel/Documents/teaching/functionalMicrobiomes/MaxBin-2.2.7.tar.gz
+# scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $file ubuntu@129.70.51.6:/vol/danBot/
+# ## and back on danBot
+# 
+# tar -xvf MaxBin-2.2.7.tar.gz
+# 
+# conda create -n maxbin2 
+# 
+# conda activate maxbin2
+# 
+# conda install -c conda-forge perl
+# 
+# ## quick install in the readme says:
+# ## 1. Download MaxBin and unzip it
+# ## 2. Enter src directory under MaxBin and "make" it.
+# ## 3. Run "./autobuild_auxiliary" at MaxBin directory to download, compile,
+# ##    and setup the auxiliary software packages
+# ## 4. MaxBin should be ready to go.
+# 
+# ## hopefully we can follow 
+# ## https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables
+# ## to add these settings
+# ## https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#setting-environment-variables
+# ## need perl in this environment
+# 
+# ## ugh, this is fucked...try concoct instead
+
+### concoct ###
+
+# ## following their github instructions:
+# conda config --add channels defaults
+# conda config --add channels bioconda
+# conda config --add channels conda-forge
+# conda create -n concoct python=3 concoct
+# 
+# ## is this necessary?
+# conda install -c conda-forge scikit-learn
+
+## this install isn't working. documentation here:
+https://github.com/BinPro/CONCOCT/issues/321
+
+## their yaml for concoct looks like thisL
+###############
+name: concoct
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - concoct=1.1.0
+  - libopenblas=*=openmp*
+  - mkl
+  - python>=3
+  - samtools>=1.9
+  - scikit-learn=1.1.*
+variables:
+  USE_OPENMP: 1
+######
+
+## let's try it:
+
+conda deactivate
+conda env remove -n concoct
+conda env create -f concoct.yml
+
+
+
+## then reset to bioconda priorities above
 
 ## VAMB ##
 conda create -n vamb -c bioconda vamb
@@ -314,10 +427,27 @@ conda install -c pytorch pytorch torchvision cudatoolkit=10.2
 ## also needs minimap:
 conda install -c bioconda minimap2
 
+## das tools ##
+
+conda config --set channel_priority flexible
+conda create -n das_tool -c bioconda das_tool
+
+conda config --set channel_priority strict
+## that seems to install ok, but won't work 
+
+## try a manual install?:
+conda create -n das_tool
+
+conda activate das_tool
+cd /vol/danBot/refining/
+git clone https://github.com/cmks/DAS_Tool.git
+cd DAS_Tool
+unzip db.zip
+
+conda install r-data.table r-magrittr r-docopt
+conda install -c bioconda prodigal diamond pullseq ruby
 
 ### check out the zymo data: ###
-
-cd /vol/testNotSoBig/datasets/zymoMC
 
 mkdir /vol/testNotSoBig/datasets/zymoMC/illumina
 mkdir /vol/testNotSoBig/datasets/zymoMC/nanopore
@@ -499,17 +629,29 @@ grep "^$" npHead.fastq
 
 ## not found? so where did the empty reads come from?
 
+## meh, leave it alone
+## flye claims they do not need qc on the nanopore reads,
+## https://github.com/fenderglass/Flye/blob/flye/docs/USAGE.md
+
+## so let's try it without:
 
 conda deactivate
+
 conda activate flye
 
-reads=ZymoNP_trimmed_filteredEnds.fastq
-flye --meta \
-     --threads 25 \
-     --out-dir . \
-     --nano-hq $reads 
+## let's redo this, with the zymoMC 10.4 data
+reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988.fastq
+cd /vol/danBot/assemblies/zymoMC/flyeNanopore
 
-## seems fine. no errors. Why did earlier clipping cause empties?
+nohup flye --meta \
+           --threads 25 \
+           --out-dir . \
+           --nano-hq $reads &> howlongdidIflye.log &
+
+## 89968
+
+
+
 ############################################################################
 
 conda deactivate
@@ -611,15 +753,17 @@ find . ZymoNP_trimmed_filteredEnds.fastq_fastqc.html
 
 conda activate megahit
 
-megahit -1 pe_1.fq -2 pe_2.fq -o out
-megahit -r $MBARCreads -o megahITmbaRCOut
-
-\time -v megahit -1 ERR7255689_1.fastq \
-          -2 ERR7255689_2.fastq \
+fast1=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq
+fast2=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq
+outdir=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina
+\time -v megahit -1 $fast1 \
+          -2 $fast1 \
           -t 25 \
-          -o megahitZymoIllumina &> megahit.log &
+          -o $outdir &> megahit.log &
 
-## moved to:
+
+## oops, forgot to nohup that
+disown -h %1
 
 ## not sure how well it went, but let's 
 ## that was really quick - N50 is 103233, not bad
@@ -914,12 +1058,6 @@ reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
 
     #-T /tmp/sortRR2C \ ## do we need this? doesn't seem like it
 
-
-## not sure if we need this, in the past we indexed the sam for 
-## concoct:
-samtools index rawReads2ContigsSorted.bam rawReads2ContigsIndexed.bai
-## super quick and cheap
-
 ## now what?
 
 ## try metabat...
@@ -974,3 +1112,241 @@ conda activate vamb
 ## doesn't work...
 
 vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 64 -o C --minfasta 200000
+
+## had to really drop the batch size down to far below what they recommend:
+vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 32 -o C --minfasta 200000
+
+## see here:
+https://github.com/RasmussenLab/vamb/issues/59
+
+## we may need to revert to a different binning software
+## but it does claim to have found ~8 bins...
+
+## conda maxbin really doesn't seem to be happening.
+## can we install from source?
+## nope.
+
+## new strategy - use concoct, VAMB, metabat
+##              - use the 10.4 data instead?
+##              - which means rerun flye
+
+### concoct ###
+
+## indepth documentation here, for example:
+## https://concoct.readthedocs.io/en/latest/scripts/cut_up_fasta.html
+
+## cut_up_fasta.py original_contigs.fa -c 10000 -o 0 --merge_last -b contigs_10K.bed > contigs_10K.fa
+## concoct_coverage_table.py contigs_10K.bed mapping/Sample*.sorted.bam > coverage_table.tsv
+## concoct --composition_file contigs_10K.fa --coverage_file coverage_table.tsv -b concoct_output/
+## merge_cutup_clustering.py concoct_output/clustering_gt1000.csv > concoct_output/clustering_merged.csv
+## mkdir concoct_output/fasta_bins
+## extract_fasta_bins.py original_contigs.fa concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
+
+## we'll work in our alignments folder
+cd /vol/danBot/binning/zymoMC/illumina/illuminaBowTieIndex/
+
+## necessary for step 2, generating the coverage table
+samtools index rawReads2ContigsSorted.bam
+
+conda activate concoct
+
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+outputDir="/vol/danBot/binning/zymoMC/illumina/concoct"
+cut_up_fasta.py $cont -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+concoct_coverage_table.py concoctContigs_10K.bed rawReads2ContigsSorted.bam > coverage_table.tsv
+## this takes maybe ten min?, started ~12:00
+## the meat of it is here:
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 20 \
+  -b $outputDir
+
+## get illumina reads through the binning and refining steps
+## get nanopore polished?
+## then bin/refine
+
+cd $outputDir
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+mkdir fasta_bins
+extract_fasta_bins.py $cont clustering_merged.csv --output_path fasta_bins/
+
+## 13 bins
+## metabat had 14
+## and VAMB had 8
+
+#
+
+## okay, the illumina data is ready for das tools
+
+
+## but let's back up a bit. 
+## don't really want to do the nanopore polishing right now,
+## because we are running out of time and the class
+## is full anyway. 
+
+## which means we should use the 10.4 flow cell data, not the 9.4
+## and we need to rerun flye, which takes forever. 
+
+## before lunch.... 
+
+## step one edit the data fetch above 
+## restart flye on the zymo data
+
+############# refining ###########
+
+## try dastools on our illumina assembly
+
+## das tools needs a contig-bin map of alignments
+## one for each of the binning softwares we used
+
+conda activate das_tool
+
+
+Fasta_to_Contigs2Bin.sh
+
+## odd, that file is not found in the conda installation
+## can't find it anywhere in the anaconda environment directories, at least
+
+## can we grab it out of the github repo?
+
+cd /vol/danBot/refining/zymoMC
+
+wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2Bin.sh
+chmod 777 Fasta_to_Contig2Bin.sh
+
+## our bins are here:
+concoctBins=/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins/ 
+metabatBins=/vol/danBot/binning/zymoMC/illumina/metabat2/final.contigs.fa.metabat-bins-20230220_154227/
+vambBins=/vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins/
+
+## concoct:
+./Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+## I don't think that quite worked...
+## let's keep just the first and last columns of that
+
+less concoct.contigs2bin.tsv
+
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin.edited.tsv
+
+head concoct.contigs2bin.tsv
+head concoct.contigs2bin.edited.tsv
+
+tail concoct.contigs2bin.tsv
+tail concoct.contigs2bin.edited.tsv
+
+wc -l concoct.contigs2bin.tsv
+wc -l concoct.contigs2bin.edited.tsv
+
+head $Cont
+
+
+## move to the directory:
+#mv concoct.contigs2bin.tsv $concoctBins
+
+## metabat
+./Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+#mv metabat.contigs2bin.tsv $metabatBins
+
+## vamb
+./Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+#mv vamb.contigs2bin.tsv $vambBins
+
+
+cd /vol/danBot/refining/zymoMC
+concoct="/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins/concoct.contigs2bin.tsv"
+metabat="/vol/danBot/binning/zymoMC/illumina/metabat2/final.contigs.fa.metabat-bins-20230220_154227/metabat.contigs2bin.tsv"
+vamb="/vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins/vamb.contigs2bin.tsv"
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+
+concoct.contigs2bin.tsv, \
+metabat.contigs2bin.tsv, \
+vamb.contigs2bin.tsv
+
+conda activate das_tool
+
+DAS_Tool \
+    -i concoct.contigs2bin.tsv,\
+       metabat.contigs2bin.tsv,\
+       vamb.contigs2bin.tsv \
+    -l concoct,metabat,vamb \
+    -t 2 \
+    --search_engine diamond \
+    -c $cont \
+    --create_plots 1 \
+    --write_bin_evals 1 \
+    --write_bins 1 \
+    -o DASToolRun1
+
+DAS_Tool  -i concoct.contigs2bin.tsv,\
+metabat.contigs2bin.tsv,\
+vamb.contigs2bin.tsv \
+-l concoct,metabat,vamb \
+-c $cont \
+-o sample_output/DASToolRun1
+
+DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun1
+
+
+DAS_Tool
+
+DAS_Tool/DAS_Tool -h
+
+## doesn't work, try it with sample data:
+git clone https://github.com/cmks/DAS_Tool.git
+
+cd DAS_Tool
+
+./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+             sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+             sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+             sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+          -l concoct,maxbin,metabat,tetraESOM \
+          -c sample_data/sample.human.gut_contigs.fa \
+          -o sample_output/DASToolRun1
+
+## typos, probably
+
+## this runs:
+
+./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun1
+
+## adapted for conda
+
+conda activate das_tool
+
+DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+-l concoct,maxbin,metabat,tetraESOM \
+-c sample_data/sample.human.gut_contigs.fa \
+-o sample_output/DASToolRun1
+
+## I think we need to rerun everything - all binning software
+## use the solution for the concoct mapping tsv
+## and try to somehow get the memory requirements down for 
+## flye with the nanopore data
+## and for petes sake backup the assembly and make it readonly. amateur shit
