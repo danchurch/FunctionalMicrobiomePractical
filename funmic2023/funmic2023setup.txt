@@ -1,5 +1,6 @@
 ## okay, time to start setting up the 2023 funmic class
 
+
 ## mounting hard drive
 
 ## find it:
@@ -17,6 +18,10 @@ sudo mount /dev/vdc /vol/danBot
 
 ## to make sure everything is kosher for github:
 find . -type f -size +40M
+
+## or newer than 
+
+find . -type f -newermt '5 minutes ago'
 
 ## also, conda broke when we updated a cloud config file.
 
@@ -326,12 +331,14 @@ conda create -n racon -c bioconda racon
 ## quick
 
 ### samtools, bedtools, bedtools ###
-conda create -n samBedBowtie -c bioconda samtools=1.9 bedtools bowtie2
+conda create -n alignmentTools -c bioconda samtools=1.9 bedtools bowtie2 minimap2
+
+conda activate alignmentTools
+
+conda install seqtk
+
 ## can we add minimap2 to this?
-conda install -c bioconda minimap2
 ## rename this to something nicer for the classk
-
-
 
 ### binning environments ###
 
@@ -447,6 +454,19 @@ unzip db.zip
 conda install r-data.table r-magrittr r-docopt
 conda install -c bioconda prodigal diamond pullseq ruby
 
+### checkm ###
+conda create -n checkm -c bioconda checkm-genome
+
+### MetaPhlan ###
+conda create --n metaphlan -c conda-forge -c bioconda python=3.7 metaphlan
+conda activate metaphlan
+## put the db on the volumne, so we can clone later
+metaphlan --install --bowtie2db /vol/danBot/metaphlanDB
+
+### phyloPhlan ###
+conda create --name phylophlan -c bioconda phylophlan
+
+
 ### check out the zymo data: ###
 
 mkdir /vol/testNotSoBig/datasets/zymoMC/illumina
@@ -558,20 +578,16 @@ head ERR7255689_paired.fasta
 
 ## so just run fastqc again...
 
-cd /vol/testNotSoBig/datasets/zymoMC/nanopore/
-
 conda activate readQC_env
 
-fastqc -t 20 -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
-    /vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq 
+cd /vol/danBot/datasets/zymoMC/zymoQC/nanopore/
 
-## meh, looking like that wants to crash. 
-## anyway, it will take forever. Does nohup work?
+less /vol/danBot/datasets/zymoMC/zymoQC/nanopore/nohup.out
 
-nohup fastqc -t 20 -o /vol/testNotSoBig/datasets/zymoMC/zymoQC/ \
-    /vol/testNotSoBig/datasets/zymoMC/nanopore/ERR7255742.fastq 
+nohup fastqc -t 20 -o /vol/danBot/datasets/zymoMC/zymoQC/nanopore/ \
+    /vol/danBot/datasets/zymoMC/nanopore/ERR7287988.fastq  &
 
-file=/vol/testNotSoBig/datasets/zymoMC/zymoQC/ERR7255742_fastqc.html
+file=/vol/danBot/datasets/zymoMC/zymoQC/nanopore/ERR7287988_fastqc.html
 scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
     ubuntu@129.70.51.6:$file .
 
@@ -579,7 +595,6 @@ scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
 
 ## finding mention of nanoplot and nanostat
 ## what are these?
-
 
 ## before we go, see if we can get a quick output from nanoplot:
 
@@ -641,17 +656,95 @@ conda activate flye
 
 ## let's redo this, with the zymoMC 10.4 data
 reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988.fastq
+
 cd /vol/danBot/assemblies/zymoMC/flyeNanopore
 
+#nohup flye --meta \
+#           --threads 25 \
+#           --out-dir . \
+#           --nano-hq $reads &> howlongdidIflye.log &
+
+## and that blows out the memory. wow.
+## the fly github repo says the following two settings 
+## can be changed to lower memory requirements...but with not much further explananation.
+
+--asm-coverage
+--genome-size
+
+## they say that 40x is usually enough coverage to make good initial "disjointig" assemblies
+## so set to asm to 40?
+## estimated genome size, I wonder if this applies to metagenomes?
+## but we can't run without a genome size estimate
+## do they want a metagenome size? or mag sizes?
+## try metagenome size. Base estimate on our illumina metagenome size:
+
+cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+wc -c $cont ## 41,514,822 characters, so maybe 41 million bp?
+
+## ugh, asm not compatible with meta, So:
+
 nohup flye --meta \
+           --genome-size 41m \
            --threads 25 \
            --out-dir . \
            --nano-hq $reads &> howlongdidIflye.log &
 
-## 89968
+## this will prbably break, but give it a shot
+
+## if it doesn't work, try either random subsetting of reads
+## or removal of small reads
 
 
+wc -l $reads & ## fails. too big?
 
+## taking a look at those reads, I see no justification in terms
+## of quality for eleminating short reads.
+## but they contain less info, I guess.
+
+## how about a random subset 
+
+## and, doesn't work. Time to subset. The first reads are presumably the best, 
+## so...
+## we know a file about the size of our r9.4 files worked with our cluster
+## so if we can get down ~28 gb 
+
+(28.2 / 48.1 ) 
+## if read length is distributed randomly (it's not), 
+## then we want to reduce this file by about half
+
+## we know the R9.4 files had 8,851,918 reads; 31,995,546,765 basepairs; and 28.2 GB
+## 10.4 - ??? reads; 53,221,766,826 basepairs; 48.1 GB
+
+## but we don't yet know how many reads are in the 10.4 nanopore dataset
+
+## we can make the guess that if we subset to the same number of 
+## reads that are in the 9.4 dataset, flye should be able to handle it. 
+## We also want as much data
+
+reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988.fastq
+
+cd /vol/danBot/datasets/zymoMC/nanopore/
+
+head -n 35000000 $reads > nanopore10subsetted.fastq 
+
+subsetReads=/vol/danBot/datasets/zymoMC/nanopore/nanopore10subsetted.fastq
+
+## that seems to go right to sleep. Not sure why. 
+## try split:
+
+mkdir splitUpZymoNanopore
+
+cd /vol/danBot/datasets/zymoMC/nanopore/splitUpZymoNanopore
+
+nohup split -l 4000000 $reads &
+
+nohup flye --meta \
+           --genome-size 41m \
+           --threads 25 \
+           --out-dir . \
+           --nano-hq $reads &> howlongdidIflye.log &
+
+## if this work, maybe try a higher number of reads?
 ############################################################################
 
 conda deactivate
@@ -757,13 +850,11 @@ fast1=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq
 fast2=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq
 outdir=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina
 \time -v megahit -1 $fast1 \
-          -2 $fast1 \
+          -2 $fast2 \
           -t 25 \
           -o $outdir &> megahit.log &
 
-
 ## oops, forgot to nohup that
-disown -h %1
 
 ## not sure how well it went, but let's 
 ## that was really quick - N50 is 103233, not bad
@@ -933,8 +1024,9 @@ outdir=/vol/danBot/assemblies/zymoMC/flyeNanopore/
 
 ## we can try the binning software, but this requires a lot of memory...think we are stuck for a bit
 
-## done!
+## 
 
+## how is our illumina assembly
 /vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta
 
 ## it's pretty small - 40M. 40,000,000 bytes
@@ -1021,7 +1113,9 @@ cd /vol/danBot/polish/zymoMCnano
 
 ## I think we first had to do an alignment with bowtie and samtools
 
-conda activate samBedBowtie 
+cd /vol/danBot/binning/zymoMC/illumina
+
+conda activate alignmentTools 
 
 cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
 
@@ -1035,21 +1129,23 @@ cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
 reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
 reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
 
-\time -v bowtie2-build $cont $binWD/zymoIlluminaAssembly
+bowtie2-build $cont $binWD/zymoIlluminaAssembly
 
 ## do the alignment
-\time -v bowtie2 \
-           -x $binWD/zymoIlluminaAssembly \
-           -1 $reads1 -2 $reads2 \
-           -S rawReads2Contigs.sam \
-           --threads 15 \
-           --local 
+bowtie2 \
+  -x $binWD/zymoIlluminaAssembly \
+  -1 $reads1 -2 $reads2 \
+  -S rawReads2Contigs.sam \
+  --threads 25 \
+  --local 
 
+## started 9:45
 ## this takes a very long time, maybe 0.5 hour or more
+## with 25 cores, 20 min
 
 ## sort it
 
-\time -v samtools sort -l 1 \
+samtools sort -l 1 \
     -@15 \
     -o rawReads2ContigsSorted.bam \
     -O BAM \
@@ -1058,11 +1154,16 @@ reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
 
     #-T /tmp/sortRR2C \ ## do we need this? doesn't seem like it
 
-## now what?
+## now what? this is needed for metabat and concoct, I think 
+## vamb uses minimap in their examples, though we could 
+## probably figure out how to use this alignment file, I'm sure.
 
 ## try metabat...
 
+### metabat ###
+
 conda deactivate
+
 conda activate metabat2
 
 
@@ -1071,7 +1172,7 @@ cd /vol/danBot/binning/zymoMC/illumina/metabat2
 cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
 bam="/vol/danBot/binning/zymoMC/illumina/illuminaBowTieIndex/rawReads2ContigsSorted.bam"
 
-\time runMetaBat.sh $cont $bam
+runMetaBat.sh $cont $bam ## quick, 5 min
 
 ## 14 bins... that seems about right. Since we're not inject the hiseq data into this.
 
@@ -1080,6 +1181,8 @@ bam="/vol/danBot/binning/zymoMC/illumina/illuminaBowTieIndex/rawReads2ContigsSor
 ## this is new this year - how does vamb work? 
 
 conda deactivate
+
+### vamb ###
 
 conda activate vamb 
 
@@ -1095,11 +1198,14 @@ concatenate.py illumcatalogue.fna.gz $cont
 
 ## they use minimap2 in their examples
 
-conda activate samBedBowtie 
+conda activate alignmentTools
 
-minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz; # make index
+minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz # make index, quick
 
+## align reads to metagenome
 minimap2 -t 8 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 18 > illumReadsAligned2Contigs.bam
+## maybe ten minutes
+## use more cores.
 
 ## I wonder if we could use minimap instead of bowtie above? seems much faster, and samtools seems to 
 ## handle the outputs...
@@ -1111,10 +1217,14 @@ conda activate vamb
 #vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -o C --minfasta 200000
 ## doesn't work...
 
-vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 64 -o C --minfasta 200000
+#vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 64 -o C --minfasta 200000
+## also doesn't work...
 
 ## had to really drop the batch size down to far below what they recommend:
 vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 32 -o C --minfasta 200000
+## 6 mins
+
+ls /vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins | wc -l  ## 8 bins
 
 ## see here:
 https://github.com/RasmussenLab/vamb/issues/59
@@ -1142,25 +1252,33 @@ https://github.com/RasmussenLab/vamb/issues/59
 ## mkdir concoct_output/fasta_bins
 ## extract_fasta_bins.py original_contigs.fa concoct_output/clustering_merged.csv --output_path concoct_output/fasta_bins
 
+
 ## we'll work in our alignments folder
 cd /vol/danBot/binning/zymoMC/illumina/illuminaBowTieIndex/
 
 ## necessary for step 2, generating the coverage table
+conda deactivate
+conda activate alignmentTools
+
 samtools index rawReads2ContigsSorted.bam
 
 conda activate concoct
 
 cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
 outputDir="/vol/danBot/binning/zymoMC/illumina/concoct"
+
 cut_up_fasta.py $cont -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
 concoct_coverage_table.py concoctContigs_10K.bed rawReads2ContigsSorted.bam > coverage_table.tsv
+
 ## this takes maybe ten min?, started ~12:00
 ## the meat of it is here:
+
 concoct \
   --composition_file concoctContigs_10K.fa \
   --coverage_file coverage_table.tsv \
-  -t 20 \
+  -t 25 \
   -b $outputDir
+
 
 ## get illumina reads through the binning and refining steps
 ## get nanopore polished?
@@ -1171,14 +1289,20 @@ merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
 mkdir fasta_bins
 extract_fasta_bins.py $cont clustering_merged.csv --output_path fasta_bins/
 
-## 13 bins
+## let's rename these, I think the raw numbers are causing problems
+for i in *; do 
+mv $i ${i/\.fa/_concat\.fa}
+done
+
+## this is here:
+cd /vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins_renamed
+
+
+## 15 bins
 ## metabat had 14
 ## and VAMB had 8
 
-#
-
 ## okay, the illumina data is ready for das tools
-
 
 ## but let's back up a bit. 
 ## don't really want to do the nanopore polishing right now,
@@ -1202,7 +1326,6 @@ extract_fasta_bins.py $cont clustering_merged.csv --output_path fasta_bins/
 
 conda activate das_tool
 
-
 Fasta_to_Contigs2Bin.sh
 
 ## odd, that file is not found in the conda installation
@@ -1216,9 +1339,14 @@ wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2
 chmod 777 Fasta_to_Contig2Bin.sh
 
 ## our bins are here:
+#concoctBins=/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins_renamed/ 
 concoctBins=/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins/ 
-metabatBins=/vol/danBot/binning/zymoMC/illumina/metabat2/final.contigs.fa.metabat-bins-20230220_154227/
+metabatBins=/vol/danBot/binning/zymoMC/illumina/metabat2/final.contigs.fa.metabat-bins-20230222_091706/
 vambBins=/vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins/
+
+ls $concoctBins
+ls $metabatBins
+ls $vambBins
 
 ## concoct:
 ./Fasta_to_Contig2Bin.sh \
@@ -1229,21 +1357,7 @@ vambBins=/vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins/
 ## I don't think that quite worked...
 ## let's keep just the first and last columns of that
 
-less concoct.contigs2bin.tsv
-
-paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin.edited.tsv
-
-head concoct.contigs2bin.tsv
-head concoct.contigs2bin.edited.tsv
-
-tail concoct.contigs2bin.tsv
-tail concoct.contigs2bin.edited.tsv
-
-wc -l concoct.contigs2bin.tsv
-wc -l concoct.contigs2bin.edited.tsv
-
-head $Cont
-
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
 
 ## move to the directory:
 #mv concoct.contigs2bin.tsv $concoctBins
@@ -1262,91 +1376,84 @@ head $Cont
     > vamb.contigs2bin.tsv
 #mv vamb.contigs2bin.tsv $vambBins
 
+## we need to cut the first three letters or so...
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
 
 cd /vol/danBot/refining/zymoMC
-concoct="/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins/concoct.contigs2bin.tsv"
-metabat="/vol/danBot/binning/zymoMC/illumina/metabat2/final.contigs.fa.metabat-bins-20230220_154227/metabat.contigs2bin.tsv"
-vamb="/vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins/vamb.contigs2bin.tsv"
-cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
 
-concoct.contigs2bin.tsv, \
-metabat.contigs2bin.tsv, \
-vamb.contigs2bin.tsv
+conda deactivate 
 
 conda activate das_tool
 
-DAS_Tool \
-    -i concoct.contigs2bin.tsv,\
-       metabat.contigs2bin.tsv,\
-       vamb.contigs2bin.tsv \
-    -l concoct,metabat,vamb \
-    -t 2 \
-    --search_engine diamond \
-    -c $cont \
-    --create_plots 1 \
-    --write_bin_evals 1 \
-    --write_bins 1 \
-    -o DASToolRun1
-
-DAS_Tool  -i concoct.contigs2bin.tsv,\
-metabat.contigs2bin.tsv,\
-vamb.contigs2bin.tsv \
--l concoct,metabat,vamb \
--c $cont \
--o sample_output/DASToolRun1
-
-DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
-sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
-sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
-sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
--l concoct,maxbin,metabat,tetraESOM \
--c sample_data/sample.human.gut_contigs.fa \
--o sample_output/DASToolRun1
-
-
-DAS_Tool
-
-DAS_Tool/DAS_Tool -h
-
-## doesn't work, try it with sample data:
-git clone https://github.com/cmks/DAS_Tool.git
-
-cd DAS_Tool
-
-./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
-             sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
-             sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
-             sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
-          -l concoct,maxbin,metabat,tetraESOM \
-          -c sample_data/sample.human.gut_contigs.fa \
-          -o sample_output/DASToolRun1
-
 ## typos, probably
-
-## this runs:
-
-./DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
-sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
-sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
-sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
--l concoct,maxbin,metabat,tetraESOM \
--c sample_data/sample.human.gut_contigs.fa \
--o sample_output/DASToolRun1
 
 ## adapted for conda
 
 conda activate das_tool
 
-DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
-sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
-sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
-sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
--l concoct,maxbin,metabat,tetraESOM \
--c sample_data/sample.human.gut_contigs.fa \
--o sample_output/DASToolRun1
+DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $cont \
+    -t 25 \
+    --write_bins \
+    --write_bin_evals \
+    -o DASToolRun1
 
-## I think we need to rerun everything - all binning software
-## use the solution for the concoct mapping tsv
-## and try to somehow get the memory requirements down for 
-## flye with the nanopore data
-## and for petes sake backup the assembly and make it readonly. amateur shit
+## put them here:
+ls /vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+## and we're down to 5 mags. Check them out with checkM
+## but first, we have to catch up the nanopore data...
+
+
+### checkM ###
+
+conda activate checkm
+
+cd /vol/danBot/refining/zymoMC/illumina
+
+## let's run checkm on our mags:
+
+## first step - find the right branch of tol:
+zymoIllBins=/vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+checkm lineage_wf -t 22 -x fa $zymoIllBins checkMout
+
+checkMout="/vol/danBot/refining/zymoMC/illumina/checkMout"
+
+## this also generated the markers we need to do some quality analyses.
+## we can look at this with checkm's qa function:
+
+zymoIlluminaMarkers=/vol/danBot/refining/zymoMC/illumina/checkMout/lineage.ms
+
+checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
+
+## great, get the nanopore data back on track, then try phylophlan on our MAGs.
+
+
+### metaphlan ###
+
+## let's look at our community using metaphlan, as a contrast to the metaquast
+## tool, whihc is dependent on 16s recoovery, I think.
+
+conda activate metaphlan
+
+metaphlanMarkerDB=/vol/studentFunMic1Vol/metaphlanMarkerDB
+MBARCraw=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq
+
+mkdir -p /vol/studentFunMic1Vol/metaphlanWD/mbarcMPA
+cd /vol/studentFunMic1Vol/metaphlanWD/mbarcMPA
+
+metaphlan $MBARCraw \
+    --bowtie2db $metaphlanMarkerDB \
+    --nproc 6 \
+    --input_type fastq \
+    -o mbarcMetaPhlanProfiled_metagenome.txt \
+
+
+
+## what to do tonight, if possible:
+
+## download the fastqc file of new nanopore
+## if split worked, put a few chunks together and 
+## try to start the nanopore assembly with this.
