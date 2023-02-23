@@ -211,10 +211,11 @@ mkdir datasets
 mkdir zymoMC
 
 cd /vol/testNotSoBig/zymoMC
-## zymo files (illumina miseq F+R, Nanopore minion):
+## zymo files (illumina miseq F+R, Nanopore 10.4):
 wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz
 wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz
-wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/002/ERR7255742/ERR7255742.fastq.gz
+wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR728/008/ERR7287988/ERR7287988.fastq.gz
+
 
 cd /vol/testNotSoBig
 mkdir sludge
@@ -463,9 +464,13 @@ conda activate metaphlan
 ## put the db on the volumne, so we can clone later
 metaphlan --install --bowtie2db /vol/danBot/metaphlanDB
 
+## oh, we want to try phylphlan
+conda activate metaphlan
+conda install -c biobakery graphlan
+
+
 ### phyloPhlan ###
 conda create --name phylophlan -c bioconda phylophlan
-
 
 ### check out the zymo data: ###
 
@@ -573,7 +578,7 @@ head ERR7255689_paired.fasta
 
 ## how about visualizing the nanopore reads?
 
-## we don't have a read report for the nanopore reads, so don't 
+## we don't have a read report for the zymoMC nanopore reads, so don't 
 ## think we can use minionQC.
 
 ## so just run fastqc again...
@@ -587,11 +592,28 @@ less /vol/danBot/datasets/zymoMC/zymoQC/nanopore/nohup.out
 nohup fastqc -t 20 -o /vol/danBot/datasets/zymoMC/zymoQC/nanopore/ \
     /vol/danBot/datasets/zymoMC/nanopore/ERR7287988.fastq  &
 
+## get it local
 file=/vol/danBot/datasets/zymoMC/zymoQC/nanopore/ERR7287988_fastqc.html
-scp -i /home/daniel/.ssh/funmic2023 -P 30427 \
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 \
     ubuntu@129.70.51.6:$file .
 
-(firefox ERR7255689_paired.fasta_fastqc.html &) &
+(firefox ERR7287988_fastqc.html &) &
+
+## wow, the 10.4 data is way way better.
+
+## let's check the sludge nanopore:
+cd /vol/danBot/datasets/sludge/nanopore
+nohup fastqc -t 20 -o /vol/danBot/datasets/sludge/sludgeQC/nanopore \
+    /vol/danBot/datasets/sludge/nanopore/ERR7014844.fastq  &> fastqc_sludgeNano.log
+
+## get it local
+file=/vol/danBot/datasets/sludge/sludgeQC/nanopore/ERR7014844_fastqc.html
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 \
+    ubuntu@129.70.51.6:$file .
+
+(firefox ERR7287988_fastqc.html &) &
+
+
 
 ## finding mention of nanoplot and nanostat
 ## what are these?
@@ -713,7 +735,27 @@ wc -l $reads & ## fails. too big?
 ## then we want to reduce this file by about half
 
 ## we know the R9.4 files had 8,851,918 reads; 31,995,546,765 basepairs; and 28.2 GB
-## 10.4 - ??? reads; 53,221,766,826 basepairs; 48.1 GB
+## 10.4 -   18,831,686 reads; 53,221,766,826 basepairs; 48.1 GB
+
+## wait, 48 gig is the listed file size on the ENA website for this file,
+## but this is compressed size. I've deleted the r9.4 data, so I don't know 
+## know what its uncompressed size was exactly.
+
+## but it looks like the compression and the #bps scale about 1:1 here, so 
+## assume we had ~1/2 the uncompressed file size.
+
+## in general, it looks like the 10.4 data is about twice as large. 
+
+## check the md5 -- 
+
+cd /vol/danBot/datasets/zymoMC/nanopore
+
+md5sum ERR7287988.fastq > nanoporechecksum.txt & ## 2c457962887c03afd89537e0a6cd4502
+
+## this is different than the published md5 on the ena site, maybe they meant the compressed file?
+## ena md5 = f40091ab244d98e9da48b561992a371e
+
+md5sum ERR7287988.fastq.gz > nanoporechecksum.txt & ## yup, matches
 
 ## but we don't yet know how many reads are in the 10.4 nanopore dataset
 
@@ -738,13 +780,86 @@ cd /vol/danBot/datasets/zymoMC/nanopore/splitUpZymoNanopore
 
 nohup split -l 4000000 $reads &
 
-nohup flye --meta \
-           --genome-size 41m \
-           --threads 25 \
-           --out-dir . \
-           --nano-hq $reads &> howlongdidIflye.log &
+## 19 files, 
+## each should start with "@" and header info
 
-## if this work, maybe try a higher number of reads?
+## and end with qscores...
+
+for i in *; do
+  echo $i
+  head -n 1 $i
+  tail -n 1 $i
+  echo "##################"
+done
+
+## looks good, and the last line of the last file looks like the last of our nanopore reads
+
+## now try to combine. We want three combinations
+
+## 1 - equal size to the last nanopore data that worked: ~50 gig
+## 2 - halfway between this and the full size that failed, ~75 gig
+## 3 - size that equals the illumina datasets, to make a fair comparison ~17.4 gig 
+
+## not sure if we'll have time to test all three...
+
+## to make the largest, 38 gig...
+## I think I remember that quality drops over the course of a run, 
+## so let's take from the oldest to newest files
+
+4.1G xaa
+4.8G xab
+5.6G xac
+5.8G xad
+6.2G xae
+6.2G xaf
+6.3G xag
+6.4G xah
+6.5G xai
+6.1G xaj
+6.2G xak
+5.9G xal
+5.8G xam
+5.5G xan
+4.9G xao
+4.4G xap
+3.9G xaq
+3.8G xar
+2.8G xas
+
+
+python3
+import pandas as pd
+
+filename=["xaa", "xab", "xac", "xad", "xae", "xaf", "xag", "xah", "xai", "xaj", "xak", "xal", "xam", "xan", "xao", "xap", "xaq", "xar", "xas"]
+sizes = [4.1, 4.8, 5.6, 5.8, 6.2, 6.2, 6.3, 6.4, 6.5, 6.1, 6.2, 5.9, 5.8, 5.5, 4.9, 4.4, 3.9, 3.8, 2.8]
+aa = pd.DataFrame({'file':filename, 'sizes':sizes})
+
+aa.sizes.sum()
+
+## we want the sizes to sum to ~50g, as a first attempt. This is about what a single minion flowcell can do, anway
+
+
+aa.iloc[0:9,1].sum()  ## taking the first nine files gives us ~52 gig. Any less and we drop to 45 gig.
+
+
+aa.iloc[0:9,0]
+
+## so we want these files:
+xaa
+xab
+xac
+xad
+xae
+xaf
+xag
+xah
+xai
+
+cat xaa xab xac xad xae xaf xag xah xai > ERR7287988_shortened.fastq &
+
+## flye command above edited to work with this file
+
+
 ############################################################################
 
 conda deactivate
@@ -1013,18 +1128,33 @@ nohup scp -i /home/ubuntu/.ssh/danbotFuncomp -P 30427 -r ubuntu@129.70.51.6:$fil
 
 conda activate flye
 
-reads=/vol/danBot/datasets/zymoMC/nanopore/ZymoNP_trimmed.fastq
+cd /vol/danBot/assemblies/zymoMC/flyeNanopore/
+
+## edited to use the shortened zymoMC reads, started 12:55
+reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq
 outdir=/vol/danBot/assemblies/zymoMC/flyeNanopore/
 \time -v nohup flye --meta \
           --threads 25 \
           --out-dir $outdir \
           --nano-hq $reads &> howlongDidIflye.log &
+## still going (but mostly done?) at 17:00
 
-## anything else we can do right now?
+## and let's get the assembly going for our nanopore sludge reads
 
-## we can try the binning software, but this requires a lot of memory...think we are stuck for a bit
+conda deactivate 
+conda activate flye
 
-## 
+reads=/vol/danBot/datasets/sludge/nanopore/ERR7014844.fastq
+outdir=/vol/danBot/assemblies/sludge/nanopore/
+\time -v nohup flye --meta \
+          --threads 25 \
+          --out-dir $outdir \
+          --nano-hq $reads &> howlongDidIflye.log &
+
+
+
+########## assembly qc #############
+
 
 ## how is our illumina assembly
 /vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta
@@ -1036,7 +1166,6 @@ wc -c assembly.fasta &
 ## ecoli has  5.11174 mbp. This is a small metagenome.
 
 ## let's check them with metaquast?  
-
 
 illuminaZymoAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
 illuminaZymoMetaquastOut=/vol/danBot/datasets/zymoMC/zymoQC/illumina/metaquast
@@ -1438,22 +1567,135 @@ checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
 conda activate metaphlan
 
-metaphlanMarkerDB=/vol/studentFunMic1Vol/metaphlanMarkerDB
-MBARCraw=/vol/studentFunMic1Vol/sequenceData/mbarc/smallerMBARC_trimmed.fq
+cd /vol/danBot/communityProfiles/zymoMC/illumina/metaphlan
 
-mkdir -p /vol/studentFunMic1Vol/metaphlanWD/mbarcMPA
-cd /vol/studentFunMic1Vol/metaphlanWD/mbarcMPA
+metaphlanMarkerDB=/vol/danBot/metaphlanDB
+seqs1=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq
+seqs2=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq
 
-metaphlan $MBARCraw \
+## run metaphlan. Save the bowtie alignment in case we want to do it again..
+
+metaphlan $seqs1,$seqs2 \
     --bowtie2db $metaphlanMarkerDB \
-    --nproc 6 \
+    --bowtie2out metaphlanBowtie2.ZymoIllu.bz2 \
+    --nproc 20 \
     --input_type fastq \
-    -o mbarcMetaPhlanProfiled_metagenome.txt \
+    -o MetaPhlanProfiled_zymoIllu.txt 
+
+## is there any way to quickly? we have this old script:
 
 
+mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
 
-## what to do tonight, if possible:
+head $mphlanprofile
 
-## download the fastqc file of new nanopore
-## if split worked, put a few chunks together and 
-## try to start the nanopore assembly with this.
+#grep "s__" $mphlanprofile | sed  's/\([0-9]*[0-9]\.[0-9]*\).*$/\1/g' | sed 's/^.*s__//g' | cut -f 1,3
+## too complicated but its neat, so save it... 
+
+## this works better. 
+mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
+grep -v "t__" $mphlanprofile | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > zymoIlluMetaphlanAbundances.tsv
+
+## if there is time, see visualizations for this? they use GraPhlan
+## here:
+
+https://github.com/biobakery/biobakery/wiki/metaphlan2#create-a-cladogram-with-graphlan
+
+
+## they edit their abundance table in a similar way:
+
+mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
+grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > merged_abundance_table_species.txt
+
+## they use this script. I remember this not working last year:
+export2graphlan.py --skip_rows 1,2 \
+  -i merged_abundance_table.txt \
+  --tree merged_abundance.tree.txt \
+  --annotation merged_abundance.annot.txt \
+  --most_abundant 100 \
+  --abundance_threshold 1 \
+  --least_biomarkers 10 \
+  --annotations 5,6 \
+  --external_annotations 7 \
+  --min_clade_size 1
+
+## but it's not installing. Wait to try this out, I think it is a dead end, and that I probably
+## need to build my pipeline for tree visualization, don't have time for this.
+
+### phylophlan ###
+
+cd /vol/danBot/assignTax/zymoMC/illumina
+
+conda activate phylophlan
+
+MAGs=/vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+## the newest database as implied by name is: CMG2122
+## but that database sucks, I think is some project or tutorial specific thing.
+
+phylophlan_metagenomic
+
+\time -v phylophlan_metagenomic \
+    -i $MAGs \
+    -e fa \
+    -d SGB.Jul20 \
+    -o phylophlanOut_ZymoIllu \
+    --nproc 2 \
+    -n 1 \
+    --verbose &> phylophlan23.log &
+
+## and works like a charm. all five mags go right where they are supposed to.
+
+## this takes a long time, just to download the databases..
+## so, maybe add the database for the class ahead of time. 
+
+## add processors if not running an assembly
+
+## looks like they have a vis script:
+
+## if the nanopore assembly doesn't give more mags, what do we do?
+
+## well, need to start on the sludge data...we need to know that 
+## they will have at least a few MAGs to work with.
+
+## best to get the other nanopore assembly going tonight, so we can 
+## run it through the pipeline quickly and make sure it is a viable 
+## dataset
+
+## so get download going when we have a core or two. 
+## if the R10 data isn't enough, we'll have to try the R9 data
+
+## or sick them on the mbarc data?
+
+## looks like we have the right data. So set up the code for another flye assembly.
+## also metabat?
+
+## we have to understand the miseq data from the sludge - is it any good?
+## or is it totally dependent on the hiseq reads?
+
+## then we can run all three through the same pipeline?
+
+## tonight, start the sludge nanopore assembly and fastqc
+
+## this is repeated on line 612 above. delete when done:
+cd /vol/danBot/datasets/sludge/nanopore
+nohup fastqc -t 23 -o /vol/danBot/datasets/sludge/sludgeQC/nanopore \
+    /vol/danBot/datasets/sludge/nanopore/ERR7014844.fastq  &> fastqc_sludgeNano.log
+
+## get it local
+file=/vol/danBot/datasets/sludge/sludgeQC/nanopore/ERR7014844_fastqc.html
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 \
+    ubuntu@129.70.51.6:$file .
+
+
+## this is repeated on line 1144 above. delete when done:
+conda deactivate 
+conda activate flye
+
+reads=/vol/danBot/datasets/sludge/nanopore/ERR7014844.fastq
+outdir=/vol/danBot/assemblies/sludge/nanopore/
+\time -v nohup flye --meta \
+          --threads 25 \
+          --out-dir $outdir \
+          --nano-hq $reads &> howlongDidIflye.log &
+
