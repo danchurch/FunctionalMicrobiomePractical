@@ -252,7 +252,11 @@ conda config --set channel_priority strict
 conda update -n base -c defaults conda
 
 ## readQC
-conda create -n readQC_env -c bioconda cutadapt fastqc bbmap seqtk
+#conda create -n readQC_env -c bioconda cutadapt fastqc bbmap seqtk
+## oops, this name is better
+conda rename -n readQC_env readQC
+
+#conda create -n readQCnv -c bioconda cutadapt fastqc bbmap seqtk
 
 ### vsearch ###
 conda create -n vsearch -c bioconda vsearch
@@ -464,13 +468,23 @@ conda activate metaphlan
 ## put the db on the volumne, so we can clone later
 metaphlan --install --bowtie2db /vol/danBot/metaphlanDB
 
-## oh, we want to try phylphlan
+## oh, we want to try graphlan
 conda activate metaphlan
 conda install -c biobakery graphlan
+## and didn't work
 
 
 ### phyloPhlan ###
 conda create --name phylophlan -c bioconda phylophlan
+
+
+### qiime2 ###
+
+## qiime2 folks recommend getting their yml and 
+## installing from there:
+
+wget https://data.qiime2.org/distro/core/qiime2-2022.11-py38-linux-conda.yml
+conda env create -n qiime2-2022.11 --file qiime2-2022.11-py38-linux-conda.yml
 
 ### check out the zymo data: ###
 
@@ -1162,7 +1176,6 @@ outdir=/vol/danBot/assemblies/sludge/nanopore/
           --threads 25 \
           --out-dir $outdir \
           --nano-hq $reads &> howlongDidIflye.log &
-
 
 
 ########## assembly qc #############
@@ -1935,3 +1948,338 @@ DAS_Tool  -i concoct.contigs2bin.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_ed
 ls /vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
 
 ## when we get a chance, rerun the metaphlan
+
+## meh, metaphlan just ain't working with nanopore reads
+## shelve it for now, look for an easy alternative when there is 
+## time.
+
+##### sludge data through pipeline #####
+
+### look at sludge illumina files ###
+
+## let's get the sludge data through the above pipeline
+## start by catching up the illumina data from this
+
+## do we understand this data?
+## 
+
+wc -l IL-202001-1.fastq && wc -l IL-202001-2.fastq  ## both have exactly 94183808 lines, weird
+
+head -n 1 IL-202001-1.fastq
+head -n 1 IL-202001-2.fastq
+
+head -n 4 IL-202001-1.fastq
+head -n 4 IL-202001-2.fastq
+
+## it looks like these were done in the same run? but different flow cell?
+
+## are the reads and qualities the same?
+
+clear
+echo "#############################################################"
+tail -n 4 IL-202001-1.fastq
+echo ""
+echo "#############################################################"
+echo ""
+tail -n 4 IL-202001-2.fastq
+echo "#############################################################"
+
+## nope, these are different reads. Not sure what they did here...
+
+cd /vol/danBot/datasets/sludge/illumina
+
+
+head IL-202001-1.fastq
+
+##  first read in IL-202001-1.fastq 
+readAddress=":1:1102:17610:1802_."
+grep -n $readAddress IL-202001-1.fastq &
+1:@M00878:365:000000000-CVP5H:1:1102:17610:1802_1
+47091905:@M00878:365:000000000-CVP5H:1:1102:17610:1802_2
+## both are present in the first file
+
+##  last read in IL-202001-1.fastq 
+readAddress="1:2119:11004:25088_."
+47091901:@M00878:374:000000000-J34NL:1:2119:11004:25088_1
+94183805:@M00878:374:000000000-J34NL:1:2119:11004:25088_2
+grep -n $readAddress IL-202001-1.fastq 
+## again, both are present in the first file
+## not interleaved, but stacked.
+
+## for IL-202001-1.fastq, looks like the forward reads 
+## end at 47091901 (+3) and the reverse reads begin at 47091905
+
+## and for IL-202001-2.fastq:
+wc -l IL-202001-2.fastq ## 94183808
+
+head IL-202001-2.fastq ## first read 1:1102:18835:1811_1
+tail IL-202001-2.fastq ## last read 1:2119:13532:25096_2
+
+readAddress="1:1102:18835:1811_."
+grep -n $readAddress IL-202001-2.fastq &
+1:@M00878:365:000000000-CVP5H:1:1102:18835:1811_1
+47091905:@M00878:365:000000000-CVP5H:1:1102:18835:1811_2
+
+readAddress="1:2119:13532:25096_."
+grep -n $readAddress IL-202001-2.fastq &
+47091901:@M00878:374:000000000-J34NL:1:2119:13532:25096_1
+94183805:@M00878:374:000000000-J34NL:1:2119:13532:25096_2
+
+## so it looks like the forward read sets end with the read at line 47091901 (+3), 
+## just like the other illumina file
+
+## and it looks like the reverse read sets start with the read at line 47091905
+
+
+
+
+
+
+## so some reassembly is in order ... break up each file in R1 and R2:
+
+## the last line of our R1 reads in IL1 should be
+cd /vol/danBot/datasets/sludge/illumina/splitIL1/
+split ../IL-202001-1.fastq -l 47091904
+
+mv xaa IL-202001-1_R1.fastq
+mv xab IL-202001-1_R2.fastq
+
+## sanity checks
+wc -l * 
+
+head -n 4 IL-202001-1_R1.fastq
+head -n 4 IL-202001-1_R2.fastq
+tail -n 4 IL-202001-1_R1.fastq
+tail -n 4 IL-202001-1_R2.fastq
+## looks right
+
+#mkdir /vol/danBot/datasets/sludge/illumina/splitIL2/
+cd /vol/danBot/datasets/sludge/illumina/splitIL2/
+
+## the last line of our R1 reads in IL2 should be
+split ../IL-202001-2.fastq -l 47091904 &
+
+## rename
+mv xaa IL-202001-2_R1.fastq
+mv xab IL-202001-2_R2.fastq
+
+## we don't actually know that these are R1, R2, etc...
+## should be right, because they were from the same 
+## run. 
+## see if the readqc makes sense:
+## I guess we should run quality checks on these separately
+
+ls /vol/danBot/datasets/sludge/illumina/splitIL1/
+
+conda activate readQC
+
+cd /vol/danBot/datasets/sludge/sludgeQC/illumina
+
+#file=/vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R1.fastq
+#file=/vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R2.fastq
+#file=/vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R1.fastq
+file=/vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R2.fastq
+filename=$(basename $file)
+fastqc -t 5 -o . \
+  $file &> fastqc_$filename.log &
+
+#  -o "/vol/danBot/datasets/sludge/sludgeQC/illumina/"$filename \
+
+## wrap them and get them local:
+cd ..
+
+tar -czvf sludgeIlluminaFastqc.tar.gz illumina/ 
+
+file=/vol/danBot/datasets/sludge/sludgeQC/sludgeIlluminaFastqc.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+tar -xvf sludgeIlluminaFastqc.tar.gz
+
+### concatenate these ###
+
+
+#mkdir /vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina 
+
+cd /vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina 
+
+## R1 reads:
+
+cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R1.fastq \
+    /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R1.fastq > recombinedSludgeIllumina_R1.fastq && \
+cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R2.fastq \
+    /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R2.fastq > recombinedSludgeIllumina_R2.fastq &
+
+## sanity check
+
+wc -l * 
+
+clear
+head -n 4 recombinedSludgeIllumina_R1.fastq
+head -n 4 recombinedSludgeIllumina_R2.fastq
+
+clear
+tail -n 4 recombinedSludgeIllumina_R1.fastq
+tail -n 4 recombinedSludgeIllumina_R2.fastq
+
+
+## each read should be represented once in each file:
+
+readAddress="1:1102:18835:1811_."
+grep -n $readAddress recombinedSludgeIllumina_R1.fastq
+grep -n $readAddress recombinedSludgeIllumina_R2.fastq
+
+readAddress="1:2119:13532:25096_."
+grep -n $readAddress recombinedSludgeIllumina_R1.fastq
+grep -n $readAddress recombinedSludgeIllumina_R2.fastq
+
+## just to be sure, look at these with readqc
+
+cd /vol/danBot/datasets/sludge/sludgeQC/illumina
+
+conda deactivate
+conda activate readQC
+
+fastqc -t 2 -o . /vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/* &> fastqc_$filename.log &
+
+## great, looks good. Can we use these for the assembly?
+
+### assembly of sludge illumina data ###
+
+conda deactivate 
+conda activate megahit 
+
+cd /vol/danBot/assemblies/sludge
+fast1=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq
+fast2=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq
+outdir=/vol/danBot/assemblies/sludge/illumina
+\time -v nohup megahit -1 $fast1 \
+          -2 $fast2 \
+          -t 25 \
+          -o $outdir &> sludgeIlluMegahit.log &
+
+
+cat /vol/danBot/assemblies/sludge/sludgeIlluMegahit.log
+
+## taking a couple hours (3+ hours)
+
+## while we wait...
+
+## we can run metaquast on the assembly on the sludgeNano data?
+
+### sludge metaquast ###
+
+## nanopore ##
+
+mkdir -p /vol/danBot/communityProfiles/sludge/nanopore/metaquast
+
+cd /vol/danBot/communityProfiles/sludge/nanopore/metaquast
+
+conda deactivate 
+
+conda activate metaquast
+
+sludgeNanoAssembly=/vol/danBot/assemblies/sludge/nanopore/assembly.fasta
+sludgeNanoporeMetaquastOut=/vol/danBot/communityProfiles/sludge/nanopore/metaquast/
+
+nohup metaquast -t 2 \
+          -o $sludgeNanoporeMetaquastOut \
+          $sludgeNanoAssembly
+
+## get it local:
+tar -czvf sludgeNanoMetaquast.tar.gz metaquast/
+
+file=/vol/danBot/communityProfiles/sludge/nanopore/sludgeNanoMetaquast.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+tar -xvf sludgeNanoMetaquast.tar.gz
+
+## illumina ##
+
+cd /vol/danBot/communityProfiles/sludge/illumina/metaquast
+
+sludgeIlluAssembly=/vol/danBot/assemblies/sludge/illumina/final.contigs.fa
+sludgeIlluMetaquastOut=/vol/danBot/communityProfiles/sludge/illumina/metaquast/
+metaquast -t 20 \
+          -o $sludgeIlluMetaquastOut \
+          $sludgeIlluAssembly &> metaquastSludgeIllu.log &
+
+## get it local:
+
+tar -czvf sludgeIlluMetaquast.tar.gz metaquast/
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/sludge/illumina
+file=/vol/danBot/communityProfiles/sludge/illumina/sludgeIlluMetaquast.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+tar -xvf sludgeIlluMetaquast.tar.gz
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/sludge/illumina/metaquast
+
+firefox report.html
+
+### sludge illumina metaphlan ###
+
+conda deactivate 
+
+conda activate metaphlan
+
+cd /vol/danBot/communityProfiles/sludge/illumina/metaphlan
+
+metaphlanMarkerDB=/vol/danBot/metaphlanDB
+seq1=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq
+seq2=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq
+\time -v nohup metaphlan $seq1,$seq2 \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out metaphlanBowtie2.sludgeIllu.bz2 \
+    --nproc 20 \
+    --input_type fastq \
+    -o MetaPhlanProfiled_sludgeIllu.txt &> metaphlanSludgeIllu.log &
+
+## try with lots of cores. if memory dump, lower. Start with 20
+## started 15:37 UTC, monday feb27
+## quick
+
+mphlanprofile=MetaPhlanProfiled_sludgeIllu.txt
+grep -v "t__" $mphlanprofile | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > sludgeIlluMetaphlanAbundances.tsv
+
+grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > merged_abundance_table_species.txt
+
+### sludge binning ###
+
+
+
+
+### sludge refining ###
+
+
+
+### sludge checkM ###
+
+
+
+### sludge phylophlan ###
+
+
+########### barcoding ############
+
+## let's get the metabarcoding together
+## this will be a mishmash of the amplicons
+## created two years ago (and analyzed last year)
+## and milan's new data
+
+## get last year's sip data onto denbi:
+
+## our local file:
+sipData=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/16S_amps_SIP_2022.zip
+## put it here:
+barcodeDir=/vol/danBot/datasets/metabarcoding/
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $sipData ubuntu@129.70.51.6:$barcodeDir
+
+## also get the new milan data from alfons:
+
+file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/Oemik-Exp014.zip
+barcodeDir=/vol/danBot/datasets/metabarcoding/
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $file ubuntu@129.70.51.6:$barcodeDir
+
+## what is milan's data?
+
+
+## today: get metaphlan started, look at metaquast, 
