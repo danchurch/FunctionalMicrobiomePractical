@@ -468,9 +468,14 @@ conda activate metaphlan
 ## put the db on the volumne, so we can clone later
 metaphlan --install --bowtie2db /vol/danBot/metaphlanDB
 
-## oh, we want to try graphlan
-conda activate metaphlan
-conda install -c biobakery graphlan
+### graphlan ###
+
+#conda create -n graphlan -c biobakery graphlan ## doesn't work
+
+conda create -n graphlan -c bioconda graphlan
+conda activate graphlan ## looks like we need this also, has to be done separately?
+conda install export2graphlan -c bioconda
+
 ## and didn't work
 
 
@@ -1370,19 +1375,13 @@ minimap2 -t 8 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $rea
 conda deactivate 
 conda activate vamb
 
-#vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -o C --minfasta 200000
-## doesn't work...
+vamb --outdir vambOut --fasta sludgeIlluCatalogue.fna.gz --bamfiles sludgeIlluVamb_ReadsAligned2Contigs.bam -o C --minfasta 200000 
 
-#vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 64 -o C --minfasta 200000
-## also doesn't work...
 
-## had to really drop the batch size down to far below what they recommend:
-vamb --outdir vambOut --fasta illumcatalogue.fna.gz --bamfiles illumReadsAligned2Contigs.bam -p 16 -t 32 -o C --minfasta 200000
-## 6 mins
+cd /vol/danBot/binning/sludge/illumina/vamb/vambOut/bins
+ls | wc -l  ## 88 bins
 
-ls /vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins | wc -l  ## 8 bins
-
-## see here:
+## see here, btw
 https://github.com/RasmussenLab/vamb/issues/59
 
 ## we may need to revert to a different binning software
@@ -1592,6 +1591,8 @@ checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 ## let's look at our community using metaphlan, as a contrast to the metaquast
 ## tool, whihc is dependent on 16s recoovery, I think.
 
+conda deactivate
+
 conda activate metaphlan
 
 cd /vol/danBot/communityProfiles/zymoMC/illumina/metaphlan
@@ -1623,20 +1624,33 @@ head $mphlanprofile
 mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
 grep -v "t__" $mphlanprofile | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > zymoIlluMetaphlanAbundances.tsv
 
+### visualize metaphlan results with graphlan ###
+
 ## if there is time, see visualizations for this? they use GraPhlan
 ## here:
-
 https://github.com/biobakery/biobakery/wiki/metaphlan2#create-a-cladogram-with-graphlan
+
+conda deactivate
+
+conda activate graphlan
+
+cd /vol/danBot/communityProfiles/zymoMC/illumina/metaphlan
 
 
 ## they edit their abundance table in a similar way:
 
 mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
-grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > merged_abundance_table_species.txt
 
-## they use this script. I remember this not working last year:
-export2graphlan.py --skip_rows 1,2 \
-  -i merged_abundance_table.txt \
+grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > zymoIlluMetaphlanAbundances.tsv
+
+export2graphlan.py -h
+
+## this works
+export2graphlan.py -i MetaPhlanProfiled_zymoIllu.txt  -t merged_abundance.tree.txt -a  merged_abundance.annot.txt
+
+## so try full suggested settings:
+export2graphlan.py -i MetaPhlanProfiled_zymoIllu.txt \
+  --skip_rows 1,2 \
   --tree merged_abundance.tree.txt \
   --annotation merged_abundance.annot.txt \
   --most_abundant 100 \
@@ -1644,7 +1658,930 @@ export2graphlan.py --skip_rows 1,2 \
   --least_biomarkers 10 \
   --annotations 5,6 \
   --external_annotations 7 \
-  --min_clade_size 1
+  --min_clade_size 1 
+
+graphlan_annotate.py --annot merged_abundance.annot.txt merged_abundance.tree.txt merged_abundance.xml
+graphlan.py --dpi 300 merged_abundance.xml merged_abundance.png --external_legends
+
+## get it local
+rm zymoIlluGraphlanOut/*
+mv *.png zymoIlluGraphlanOut/ ## put a copy of our relative abundances in there
+cp zymoIlluMetaphlanAbundances.tsv zymoIlluGraphlanOut/
+tar -czvf zymoIlluGraphlanOut.tar.gz zymoIlluGraphlanOut/
+
+## local
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/metaphlanGraphics
+file=/vol/danBot/communityProfiles/zymoMC/illumina/metaphlan/zymoIlluGraphlanOut.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file .
+tar -xzf zymoIlluGraphlanOut.tar.gz 
+eog zymoIlluGraphlanOut/*png &
+
+### phylophlan ###
+
+cd /vol/danBot/assignTax/zymoMC/illumina
+
+conda activate phylophlan
+
+MAGs=/vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+## the newest database as implied by name is: CMG2122
+## but that database sucks, I think is some project or tutorial specific thing.
+
+phylophlan_metagenomic
+
+\time -v phylophlan_metagenomic \
+    -i $MAGs \
+    -e fa \
+    -d SGB.Jul20 \
+    -o phylophlanOut_ZymoIllu \
+    --nproc 2 \
+    -n 1 \
+    --verbose &> phylophlan23.log &
+
+## and works like a charm. all five mags go right where they are supposed to.
+
+## this takes a long time, just to download the databases..
+## so, maybe add the database for the class ahead of time. 
+
+## add processors if not running an assembly
+
+## looks like they have a vis script:
+
+## if the nanopore assembly doesn't give more mags, what do we do?
+
+## well, need to start on the sludge data...we need to know that 
+## they will have at least a few MAGs to work with.
+
+## best to get the other nanopore assembly going tonight, so we can 
+## run it through the pipeline quickly and make sure it is a viable 
+## dataset
+
+## so get download going when we have a core or two. 
+## if the R10 data isn't enough, we'll have to try the R9 data
+
+## or sick them on the mbarc data?
+
+## looks like we have the right data. So set up the code for another flye assembly.
+## also metabat?
+
+## we have to understand the miseq data from the sludge - is it any good?
+## or is it totally dependent on the hiseq reads?
+
+## then we can run all three through the same pipeline?
+
+#### run MC nanopore through the above pipeline ###
+
+## start over with with zymoNano assembly:
+
+## run metaquast and metaphlan on the nanopore data. 
+## can metaphlan handle nanopore data?
+## I think it is largely based on bowtie, which isn't 
+## optimized for nanopore, but let's see
+
+conda deactivate 
+
+conda activate metaphlan
+
+cd /vol/danBot/communityProfiles/zymoMC/nanopore/metaphlan
+
+metaphlanMarkerDB=/vol/danBot/metaphlanDB
+#seqs=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq ## too big, memory dump
+seqs=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_forZymoNanoMetaphlan.fastq ## smaller, 27 gig
+
+
+## started ~13:42 UTC
+## lots of cores memory dumps, even with 5 cores. try 1
+\time -v nohup metaphlan $seqs \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out metaphlanBowtie2.ZymoNano.bz2 \
+    --nproc 1 \
+    --input_type fastq \
+    -o MetaPhlanProfiled_zymoIllu.txt  &> metaphlanZymoNano.log &
+
+## runs really slow. But can't speed up because of memory issues
+## use nohup next time
+
+### zymoNano metaquast ###
+
+## as with metaphlan, not sure how metaquast will behave with nanopore reads
+## should be fine, this uses the assembly, not the reads. 
+## but who knows. Try it out.
+
+cd /vol/danBot/communityProfiles/zymoMC/nanopore/metaquast
+
+conda deactivate 
+
+conda activate metaquast
+
+illuminaNanoAssembly=/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta
+illuminaZymoMetaquastOut=/vol/danBot/communityProfiles/zymoMC/nanopore/metaquast
+## not much memory usage, but the downloads from ncbi take a while
+metaquast -t 13 \
+          -o $illuminaZymoMetaquastOut \
+          $illuminaNanoAssembly &> nanoporeMetaquast.log &
+
+## zip it up 
+
+cd /vol/danBot/communityProfiles/zymoMC/nanopore
+tar -czvf metaquastOutZymoNanopore.tar.gz metaquast/
+
+## and get it local:
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC/nanoporeQC/nano10.4/metaquast
+file=/vol/danBot/communityProfiles/zymoMC/nanopore/metaquastOutZymoNanopore.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+### zymoNano binning ###
+
+## step 1 make the index of the read assembly
+
+## bowtie is really not handling these reads well. 
+## can we use minimap?
+
+conda deactivate 
+
+conda activate alignmentTools 
+
+indexWD="/vol/danBot/binning/zymoMC/nanopore/nanoporeIndex"
+cont="/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta"
+reads="/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq"
+
+cd $indexWD
+
+minimap2 -d zymoNanoAssembly.mmi $cont # make index
+minimap2 -t 8 -ax map-ont zymoNanoAssembly.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 18 > nanoReadsAligned2Contigs.bam ## 11:09 to 11:58, ~50 mins!
+
+## do we need this?: yes
+samtools sort -l 1 \
+    -@10 \
+    -o zymoNanoReads2ContigsSorted.bam \
+    -O BAM \
+    nanoReadsAligned2Contigs.bam
+## 12:03 to 12:25??ish
+
+
+samtools index $bam ## do we need this? yes. takes time, maybe put this above
+## 13:55ish
+
+## not even sure we can use the for the metabat and concoct pipelines
+
+### metabat zymoNano ###
+
+conda deactivate
+
+conda activate metabat2
+
+runMetaBat.sh
+
+cd /vol/danBot/binning/zymoMC/nanopore/metabat2/
+cont="/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta"
+## but this probably is what will really work:
+bam="/vol/danBot/binning/zymoMC/nanopore/nanoporeIndex/zymoNanoReads2ContigsSorted.bam"
+
+\time -v runMetaBat.sh $cont $bam ## started 12:38, finished two minutes later, didn't even use a gig of RAM
+
+### concoct zymoNano ###
+
+conda deactivate
+
+conda activate concoct
+
+cd /vol/danBot/binning/zymoMC/nanopore/concoct
+
+cont="/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta"
+outputDir="/vol/danBot/binning/zymoMC/nanopore/concoct"
+bam="/vol/danBot/binning/zymoMC/nanopore/nanoporeIndex/zymoNanoReads2ContigsSorted.bam"
+
+#samtools index $bam ## do we need this? yes. takes time, maybe put this above
+
+cd /vol/danBot/binning/zymoMC/nanopore/concoct
+
+cut_up_fasta.py $cont -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+concoct_coverage_table.py concoctContigs_10K.bed $bam > coverage_table.tsv
+## 14:16 UTC, Finished 14:55, 40 mins!!
+
+## the meat of it is here:
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 25 \
+  -b $outputDir
+
+## get illumina reads through the binning and refining steps
+## get nanopore polished?
+## then bin/refine
+
+cd $outputDir
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+mkdir fasta_bins
+extract_fasta_bins.py $cont clustering_merged.csv --output_path fasta_bins/
+
+## 15 bins. weird.
+
+### vamb zymoNano ###
+
+conda deactivate
+
+conda activate vamb 
+
+cd /vol/danBot/binning/zymoMC/nanopore/vamb
+
+## they run a cataloging program on their assemblies. Not sure if I need to do this but...
+
+cd /vol/danBot/binning/zymoMC/nanopore/vamb
+reads="/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq"
+cont="/vol/danBot/assemblies/zymoMC/flyeNanopore/assembly.fasta"
+outdir="/vol/danBot/binning/zymoMC/nanopore/vamb/vambOut"
+rm -r vambOut
+
+concatenate.py zymoNanoCatalogue.fna.gz $cont
+
+conda deactivate
+conda activate alignmentTools
+
+minimap2 -d zymoNanoCatalogue.mmi zymoNanoCatalogue.fna.gz # make index, quick
+
+## align reads to metagenome
+minimap2 -t 8 -N 5 -ax map-ont zymoNanoCatalogue.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 10 > zymoNanoVamb_ReadsAligned2Contigs.bam &
+## takes forever. 47 mins
+
+## run the binner:
+conda deactivate 
+
+conda activate vamb
+
+## had to really drop the batch size down to far below what they recommend:
+vamb --outdir vambOut --fasta zymoNanoCatalogue.fna.gz --bamfiles zymoNanoVamb_ReadsAligned2Contigs.bam -t 8 -o C --minfasta 200000 &
+
+ls /vol/danBot/binning/zymoMC/nanopore/vamb/vambOut/bins | wc -l  ## 
+
+### zymoNano das_tool ###
+
+conda deactivate
+conda activate das_tool
+
+## okay, first the pain in the ass of generating abundance tables
+
+## the script to start us off is here:
+ls /vol/danBot/refining/Fasta_to_Contig2Bin.sh
+
+cd /vol/danBot/refining/zymoMC/nanopore
+
+## our bins are here:
+concoctBins=/vol/danBot/binning/zymoMC/nanopore/concoct/fasta_bins
+metabatBins=/vol/danBot/binning/zymoMC/nanopore/metabat2/assembly.fasta.metabat-bins-20230224_114049
+vambBins=/vol/danBot/binning/zymoMC/nanopore/vamb/vambOut/bins
+
+ls $concoctBins
+ls $metabatBins
+ls $vambBins
+
+## concoct:
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+## that seemed to work more smoothly than with the concoct table from the illumina
+
+## metabat
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+## why is that so short? I guess the longer reads...
+
+## vamb
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+## we need to cut the first three letters or so...
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+
+
+DAS_Tool  -i concoct.contigs2bin.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $cont \
+    -t 25 \
+    --write_bins \
+    --write_bin_evals \
+    -o DASTool_zymoNano
+
+## 8 bins, that's encouraging. Run checkM on them and see how they look on monday
+## 16:09
+
+## put them here:
+ls /vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+## when we get a chance, rerun the metaphlan
+
+## meh, metaphlan just ain't working with nanopore reads
+## shelve it for now, look for an easy alternative when there is 
+## time.
+
+##### sludge data through pipeline #####
+
+### look at sludge illumina files ###
+
+## let's get the sludge data through the above pipeline
+## start by catching up the illumina data from this
+
+## do we understand this data?
+## 
+
+wc -l IL-202001-1.fastq && wc -l IL-202001-2.fastq  ## both have exactly 94183808 lines, weird
+
+head -n 1 IL-202001-1.fastq
+head -n 1 IL-202001-2.fastq
+
+head -n 4 IL-202001-1.fastq
+head -n 4 IL-202001-2.fastq
+
+## it looks like these were done in the same run? but different flow cell?
+
+## are the reads and qualities the same?
+
+clear
+echo "#############################################################"
+tail -n 4 IL-202001-1.fastq
+echo ""
+echo "#############################################################"
+echo ""
+tail -n 4 IL-202001-2.fastq
+echo "#############################################################"
+
+## nope, these are different reads. Not sure what they did here...
+
+cd /vol/danBot/datasets/sludge/illumina
+
+
+head IL-202001-1.fastq
+
+##  first read in IL-202001-1.fastq 
+readAddress=":1:1102:17610:1802_."
+grep -n $readAddress IL-202001-1.fastq &
+1:@M00878:365:000000000-CVP5H:1:1102:17610:1802_1
+47091905:@M00878:365:000000000-CVP5H:1:1102:17610:1802_2
+## both are present in the first file
+
+##  last read in IL-202001-1.fastq 
+readAddress="1:2119:11004:25088_."
+47091901:@M00878:374:000000000-J34NL:1:2119:11004:25088_1
+94183805:@M00878:374:000000000-J34NL:1:2119:11004:25088_2
+grep -n $readAddress IL-202001-1.fastq 
+## again, both are present in the first file
+## not interleaved, but stacked.
+
+## for IL-202001-1.fastq, looks like the forward reads 
+## end at 47091901 (+3) and the reverse reads begin at 47091905
+
+## and for IL-202001-2.fastq:
+wc -l IL-202001-2.fastq ## 94183808
+
+head IL-202001-2.fastq ## first read 1:1102:18835:1811_1
+tail IL-202001-2.fastq ## last read 1:2119:13532:25096_2
+
+readAddress="1:1102:18835:1811_."
+grep -n $readAddress IL-202001-2.fastq &
+1:@M00878:365:000000000-CVP5H:1:1102:18835:1811_1
+47091905:@M00878:365:000000000-CVP5H:1:1102:18835:1811_2
+
+readAddress="1:2119:13532:25096_."
+grep -n $readAddress IL-202001-2.fastq &
+47091901:@M00878:374:000000000-J34NL:1:2119:13532:25096_1
+94183805:@M00878:374:000000000-J34NL:1:2119:13532:25096_2
+
+## so it looks like the forward read sets end with the read at line 47091901 (+3), 
+## just like the other illumina file
+
+## and it looks like the reverse read sets start with the read at line 47091905
+
+
+
+
+
+
+## so some reassembly is in order ... break up each file in R1 and R2:
+
+## the last line of our R1 reads in IL1 should be
+cd /vol/danBot/datasets/sludge/illumina/splitIL1/
+split ../IL-202001-1.fastq -l 47091904
+
+mv xaa IL-202001-1_R1.fastq
+mv xab IL-202001-1_R2.fastq
+
+## sanity checks
+wc -l * 
+
+head -n 4 IL-202001-1_R1.fastq
+head -n 4 IL-202001-1_R2.fastq
+tail -n 4 IL-202001-1_R1.fastq
+tail -n 4 IL-202001-1_R2.fastq
+## looks right
+
+#mkdir /vol/danBot/datasets/sludge/illumina/splitIL2/
+cd /vol/danBot/datasets/sludge/illumina/splitIL2/
+
+## the last line of our R1 reads in IL2 should be
+split ../IL-202001-2.fastq -l 47091904 &
+
+## rename
+mv xaa IL-202001-2_R1.fastq
+mv xab IL-202001-2_R2.fastq
+
+## we don't actually know that these are R1, R2, etc...
+## should be right, because they were from the same 
+## run. 
+## see if the readqc makes sense:
+## I guess we should run quality checks on these separately
+
+ls /vol/danBot/datasets/sludge/illumina/splitIL1/
+
+conda activate readQC
+
+cd /vol/danBot/datasets/sludge/sludgeQC/illumina
+
+#file=/vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R1.fastq
+#file=/vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R2.fastq
+#file=/vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R1.fastq
+file=/vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R2.fastq
+filename=$(basename $file)
+fastqc -t 5 -o . \
+  $file &> fastqc_$filename.log &
+
+#  -o "/vol/danBot/datasets/sludge/sludgeQC/illumina/"$filename \
+
+## wrap them and get them local:
+cd ..
+
+tar -czvf sludgeIlluminaFastqc.tar.gz illumina/ 
+
+file=/vol/danBot/datasets/sludge/sludgeQC/sludgeIlluminaFastqc.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+tar -xvf sludgeIlluminaFastqc.tar.gz
+
+### concatenate these ###
+
+
+#mkdir /vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina 
+
+cd /vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina 
+
+## R1 reads:
+
+cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R1.fastq \
+    /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R1.fastq > recombinedSludgeIllumina_R1.fastq && \
+cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R2.fastq \
+    /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R2.fastq > recombinedSludgeIllumina_R2.fastq &
+
+## sanity check
+
+wc -l * 
+
+clear
+head -n 4 recombinedSludgeIllumina_R1.fastq
+head -n 4 recombinedSludgeIllumina_R2.fastq
+
+clear
+tail -n 4 recombinedSludgeIllumina_R1.fastq
+tail -n 4 recombinedSludgeIllumina_R2.fastq
+
+
+## each read should be represented once in each file:
+
+readAddress="1:1102:18835:1811_."
+grep -n $readAddress recombinedSludgeIllumina_R1.fastq
+grep -n $readAddress recombinedSludgeIllumina_R2.fastq
+
+readAddress="1:2119:13532:25096_."
+grep -n $readAddress recombinedSludgeIllumina_R1.fastq
+grep -n $readAddress recombinedSludgeIllumina_R2.fastq
+
+## just to be sure, look at these with readqc
+
+cd /vol/danBot/datasets/sludge/sludgeQC/illumina
+
+conda deactivate
+conda activate readQC
+
+fastqc -t 2 -o . /vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/* &> fastqc_$filename.log &
+
+## great, looks good. Can we use these for the assembly?
+
+### assembly of sludge illumina data ###
+
+conda deactivate 
+conda activate megahit 
+
+cd /vol/danBot/assemblies/sludge
+fast1=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq
+fast2=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq
+outdir=/vol/danBot/assemblies/sludge/illumina
+\time -v nohup megahit -1 $fast1 \
+          -2 $fast2 \
+          -t 25 \
+          -o $outdir &> sludgeIlluMegahit.log &
+
+
+cat /vol/danBot/assemblies/sludge/sludgeIlluMegahit.log
+
+## taking a couple hours (3+ hours)
+
+## while we wait...
+
+## we can run metaquast on the assembly on the sludgeNano data?
+
+### sludge metaquast ###
+
+## nanopore ##
+
+mkdir -p /vol/danBot/communityProfiles/sludge/nanopore/metaquast
+
+cd /vol/danBot/communityProfiles/sludge/nanopore/metaquast
+
+conda deactivate 
+
+conda activate metaquast
+
+sludgeNanoAssembly=/vol/danBot/assemblies/sludge/nanopore/assembly.fasta
+sludgeNanoporeMetaquastOut=/vol/danBot/communityProfiles/sludge/nanopore/metaquast/
+
+nohup metaquast -t 2 \
+          -o $sludgeNanoporeMetaquastOut \
+          $sludgeNanoAssembly
+
+## get it local:
+tar -czvf sludgeNanoMetaquast.tar.gz metaquast/
+
+file=/vol/danBot/communityProfiles/sludge/nanopore/sludgeNanoMetaquast.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+
+tar -xvf sludgeNanoMetaquast.tar.gz
+
+## illumina ##
+
+cd /vol/danBot/communityProfiles/sludge/illumina/metaquast
+
+sludgeIlluAssembly=/vol/danBot/assemblies/sludge/illumina/final.contigs.fa
+sludgeIlluMetaquastOut=/vol/danBot/communityProfiles/sludge/illumina/metaquast/
+metaquast -t 20 \
+          -o $sludgeIlluMetaquastOut \
+          $sludgeIlluAssembly &> metaquastSludgeIllu.log &
+
+## get it local:
+
+tar -czvf sludgeIlluMetaquast.tar.gz metaquast/
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/sludge/illumina
+file=/vol/danBot/communityProfiles/sludge/illumina/sludgeIlluMetaquast.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file . 
+tar -xvf sludgeIlluMetaquast.tar.gz
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/readQC/sludge/illumina/metaquast
+
+firefox report.html
+
+### sludge illumina metaphlan ###
+
+conda deactivate 
+
+conda activate metaphlan
+
+cd /vol/danBot/communityProfiles/sludge/illumina/metaphlan
+
+metaphlanMarkerDB=/vol/danBot/metaphlanDB
+seq1=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq
+seq2=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq
+\time -v nohup metaphlan $seq1,$seq2 \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out metaphlanBowtie2.sludgeIllu.bz2 \
+    --nproc 20 \
+    --input_type fastq \
+    -o MetaPhlanProfiled_sludgeIllu.txt &> metaphlanSludgeIllu.log &
+
+## try with lots of cores. if memory dump, lower. Start with 20
+## started 15:37 UTC, monday feb27
+## quick, worked fine
+
+mphlanprofile=MetaPhlanProfiled_sludgeIllu.txt
+grep -v "t__" $mphlanprofile | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > sludgeIlluMetaphlanAbundances.tsv
+
+grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > merged_abundance_table_species.txt
+
+### sludge binning ###
+
+## illumina ##
+
+## indexing ##
+conda deactivate 
+conda activate alignmentTools 
+indexWD="/vol/danBot/binning/sludge/minimapIndices/"
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq"
+reads2="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq"
+cd $indexWD
+
+minimap2 -d sludgeIlluAssembly.mmi $cont # make index
+
+minimap2 -t 8 -ax sr sludgeIlluAssembly.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 15 > sludgeIlluAligned2Contigs.bam &
+## 9:43 local, took maybe 20 min? not sure. quick-ish
+
+## do we need this?: yes
+samtools sort -l 1 \
+    -@15 \
+    -o sludgeIlluReads2ContigsSorted.bam \
+    -O BAM \
+    sludgeIlluAligned2Contigs.bam
+## quick
+
+## oops
+#mv zymoNanoReads2ContigsSorted.bam sludgeIlluReads2ContigsSorted.bam
+
+bam=sludgeIlluReads2ContigsSorted.bam
+samtools index -@ 15 $bam ## do we need this? yes. with lots of cores is very quick
+
+## sludge illu metabat ##
+
+conda deactivate
+
+conda activate metabat2
+
+cd /vol/danBot/binning/sludge/illumina/metabat
+
+runMetaBat.sh
+
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+bam="/vol/danBot/binning/sludge/illumina/minimapIndices/sludgeIlluReads2ContigsSorted.bam"
+\time -v runMetaBat.sh $cont $bam ## started 12:38, finished two minutes later, didn't even use a gig of RAM
+
+## holy crap, 138 bins...
+
+## sludge illu concoct ##
+
+conda deactivate
+
+conda activate concoct
+
+cd /vol/danBot/binning/sludge/illumina/concoct
+
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+outputDir="/vol/danBot/binning/sludge/illumina/concoct"
+sortedBam="/vol/danBot/binning/sludge/illumina/minimapIndices/sludgeIlluReads2ContigsSorted.bam"
+
+cut_up_fasta.py $cont -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+concoct_coverage_table.py concoctContigs_10K.bed $sortedBam > coverage_table.tsv
+
+## this takes maybe ten min?, started ~12:00
+## the meat of it is here:
+
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 25 \
+  -b $outputDir
+
+
+## get illumina reads through the binning and refining steps
+## get nanopore polished?
+## then bin/refine
+
+cd $outputDir
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+mkdir fasta_bins
+
+extract_fasta_bins.py $cont clustering_merged.csv --output_path fasta_bins/
+## 227. Jeezus
+
+## let's rename these
+cd fasta_bins
+
+for i in *; do 
+mv $i "concoct_"$i
+done
+
+## this is here:
+cd /vol/danBot/binning/sludge/illumina/concoct/fasta_bins
+
+
+## sludge illu vamb ##
+
+conda deactivate
+
+conda activate vamb 
+
+cd /vol/danBot/binning/sludge/illumina/vamb
+
+## they run a cataloging program on their assemblies. Not sure if I need to do this but...
+
+cd /vol/danBot/binning/sludge/illumina/vamb
+
+reads1="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq"
+reads2="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq"
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+outdir="/vol/danBot/binning/zymoMC/nanopore/vamb/vambOut"
+
+concatenate.py sludgeIlluCatalogue.fna.gz $cont
+
+conda deactivate
+
+conda activate alignmentTools
+
+minimap2 -d sludgeIlluCatalogue.mmi sludgeIlluCatalogue.fna.gz # make index, quick
+
+## align reads to metagenome
+minimap2 -t 12 -N 5 -ax sr sludgeIlluCatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 13 > sludgeIlluVamb_ReadsAligned2Contigs.bam &
+## ~ten minutes with above settings
+
+conda deactivate
+
+conda activate vamb 
+
+## 
+
+############# refining ###########
+
+## try dastools on our illumina assembly
+
+## das tools needs a contig-bin map of alignments
+## one for each of the binning softwares we used
+
+conda activate das_tool
+
+Fasta_to_Contigs2Bin.sh
+
+## odd, that file is not found in the conda installation
+## can't find it anywhere in the anaconda environment directories, at least
+
+## can we grab it out of the github repo?
+
+cd /vol/danBot/refining/zymoMC
+
+wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2Bin.sh
+chmod 777 Fasta_to_Contig2Bin.sh
+
+## our bins are here:
+#concoctBins=/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins_renamed/ 
+concoctBins=/vol/danBot/binning/zymoMC/illumina/concoct/fasta_bins/ 
+metabatBins=/vol/danBot/binning/zymoMC/illumina/metabat2/final.contigs.fa.metabat-bins-20230222_091706/
+vambBins=/vol/danBot/binning/zymoMC/illumina/vamb/vambOut/bins/
+
+ls $concoctBins
+ls $metabatBins
+ls $vambBins
+
+## concoct:
+./Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+## I don't think that quite worked...
+## let's keep just the first and last columns of that
+
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+
+## move to the directory:
+#mv concoct.contigs2bin.tsv $concoctBins
+
+## metabat
+./Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+#mv metabat.contigs2bin.tsv $metabatBins
+
+## vamb
+./Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+#mv vamb.contigs2bin.tsv $vambBins
+
+## we need to cut the first three letters or so...
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+
+cd /vol/danBot/refining/zymoMC
+
+conda deactivate 
+
+conda activate das_tool
+
+## typos, probably
+
+## adapted for conda
+
+conda activate das_tool
+
+DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $cont \
+    -t 25 \
+    --write_bins \
+    --write_bin_evals \
+    -o DASToolRun1
+
+## put them here:
+ls /vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+## and we're down to 5 mags. Check them out with checkM
+## but first, we have to catch up the nanopore data...
+
+
+### checkM ###
+
+conda activate checkm
+
+cd /vol/danBot/refining/zymoMC/illumina
+
+## let's run checkm on our mags:
+
+## first step - find the right branch of tol:
+zymoIllBins=/vol/danBot/refining/zymoMC/illumina/DASToolRun1_DASTool_bins
+
+checkm lineage_wf -t 22 -x fa $zymoIllBins checkMout
+
+checkMout="/vol/danBot/refining/zymoMC/illumina/checkMout"
+
+## this also generated the markers we need to do some quality analyses.
+## we can look at this with checkm's qa function:
+
+zymoIlluminaMarkers=/vol/danBot/refining/zymoMC/illumina/checkMout/lineage.ms
+
+checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
+
+## great, get the nanopore data back on track, then try phylophlan on our MAGs.
+
+
+### metaphlan ###
+
+## let's look at our community using metaphlan, as a contrast to the metaquast
+## tool, whihc is dependent on 16s recoovery, I think.
+
+conda deactivate
+
+conda activate metaphlan
+
+cd /vol/danBot/communityProfiles/zymoMC/illumina/metaphlan
+
+metaphlanMarkerDB=/vol/danBot/metaphlanDB
+seqs1=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq
+seqs2=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq
+
+## run metaphlan. Save the bowtie alignment in case we want to do it again..
+
+metaphlan $seqs1,$seqs2 \
+    --bowtie2db $metaphlanMarkerDB \
+    --bowtie2out metaphlanBowtie2.ZymoIllu.bz2 \
+    --nproc 20 \
+    --input_type fastq \
+    -o MetaPhlanProfiled_zymoIllu.txt 
+
+## is there any way to quickly? we have this old script:
+
+
+mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
+
+head $mphlanprofile
+
+#grep "s__" $mphlanprofile | sed  's/\([0-9]*[0-9]\.[0-9]*\).*$/\1/g' | sed 's/^.*s__//g' | cut -f 1,3
+## too complicated but its neat, so save it... 
+
+## this works better. 
+mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
+grep -v "t__" $mphlanprofile | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > zymoIlluMetaphlanAbundances.tsv
+
+### visualize metaphlan results with graphlan ###
+
+## if there is time, see visualizations for this? they use GraPhlan
+## here:
+https://github.com/biobakery/biobakery/wiki/metaphlan2#create-a-cladogram-with-graphlan
+
+conda deactivate
+
+conda activate graphlan
+
+cd /vol/danBot/communityProfiles/zymoMC/illumina/metaphlan
+
+
+
+## they edit their abundance table in a similar way:
+
+mphlanprofile=MetaPhlanProfiled_zymoIllu.txt 
+
+grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > merged_abundance_table_species.txt
+
+head merged_abundance_table_species.txt
+
+export2graphlan.py -i merged_abundance_table_species.txt \
+  --tree merged_abundance.tree.txt \
+  --annotation merged_abundance.annot.txt \
+  --most_abundant 100 \
+  --abundance_threshold 1 \
+  --least_biomarkers 10 \
+  --annotations 5,6 \
+  --external_annotations 7 \
+  --min_clade_size 1 
 
 ## but it's not installing. Wait to try this out, I think it is a dead end, and that I probably
 ## need to build my pipeline for tree visualization, don't have time for this.
@@ -2233,30 +3170,374 @@ seq2=/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSlu
     --input_type fastq \
     -o MetaPhlanProfiled_sludgeIllu.txt &> metaphlanSludgeIllu.log &
 
-## try with lots of cores. if memory dump, lower. Start with 20
-## started 15:37 UTC, monday feb27
-## quick
+## visualize ##
+
+conda deactivate
+
+conda activate graphlan
+
+cd /vol/danBot/communityProfiles/sludge/illumina/metaphlan
 
 mphlanprofile=MetaPhlanProfiled_sludgeIllu.txt
 grep -v "t__" $mphlanprofile | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > sludgeIlluMetaphlanAbundances.tsv
 
-grep -E "(s__)|(^ID)" $mphlanprofile | grep -v "t__" | sed 's/^.*s__//g' > merged_abundance_table_species.txt
+## so try full suggested settings:
+export2graphlan.py -i $mphlanprofile \
+  --skip_rows 1,2 \
+  --tree merged_abundance.tree.txt \
+  --annotation merged_abundance.annot.txt \
+  --most_abundant 100 \
+  --abundance_threshold 1 \
+  --least_biomarkers 10 \
+  --annotations 3,4,5,6 \
+  --external_annotations 7
+
+
+graphlan_annotate.py --annot merged_abundance.annot.txt merged_abundance.tree.txt merged_abundance.xml
+graphlan.py --dpi 300 merged_abundance.xml merged_abundance.png --external_legends
+
+## get it local
+
+mkdir sludgeIlluGraphlanOut
+
+mv *.png sludgeIlluGraphlanOut/
+
+cp sludgeIlluMetaphlanAbundances.tsv sludgeIlluGraphlanOut/  ## put a copy of our relative abundances in there
+
+
+tar -czvf sludgeIlluGraphlanOut.tar.gz sludgeIlluGraphlanOut/
+
+file=/vol/danBot/communityProfiles/sludge/illumina/metaphlan/sludgeIlluGraphlanOut.tar.gz
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r ubuntu@129.70.51.6:$file .
+
+tar -xzf sludgeIlluGraphlanOut.tar.gz 
 
 ### sludge binning ###
 
+## illumina ##
+
+## indexing ##
+conda deactivate 
+conda activate alignmentTools 
+indexWD="/vol/danBot/binning/sludge/minimapIndices/"
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq"
+reads2="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq"
+cd $indexWD
+
+minimap2 -d sludgeIlluAssembly.mmi $cont # make index
+
+minimap2 -t 8 -ax sr sludgeIlluAssembly.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 15 > sludgeIlluAligned2Contigs.bam &
+## 9:43 local, took maybe 20 min? not sure. quick-ish
+
+## do we need this?: yes
+samtools sort -l 1 \
+    -@15 \
+    -o sludgeIlluReads2ContigsSorted.bam \
+    -O BAM \
+    sludgeIlluAligned2Contigs.bam
+## quick
+
+## oops
+#mv zymoNanoReads2ContigsSorted.bam sludgeIlluReads2ContigsSorted.bam
+
+bam=sludgeIlluReads2ContigsSorted.bam
+samtools index -@ 15 $bam ## do we need this? yes. with lots of cores is very quick
+
+## sludge illu metabat ##
+
+conda deactivate
+
+conda activate metabat2
+
+cd /vol/danBot/binning/sludge/illumina/metabat
+
+runMetaBat.sh
+
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+bam="/vol/danBot/binning/sludge/illumina/minimapIndices/sludgeIlluReads2ContigsSorted.bam"
+
+\time -v runMetaBat.sh $cont $bam 
+## 104 bins
+
+
+## sludge illu concoct ##
+
+## oh god, mixed up my scripts, this is done above
+## around 2400 or so.
+
+
+### sludge illu refining ###
+
+## das tool time
+
+## bins are here:
+
+
+conda activate das_tool
+
+cd /vol/danBot/refining/sludge/illumina
+
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh
+
+concoctBins=/vol/danBot/binning/sludge/illumina/concoct/fasta_bins/
+metabatBins=/vol/danBot/binning/sludge/illumina/metabat/final.contigs.fa.metabat-bins-20230228_095818/
+vambBins=/vol/danBot/binning/sludge/illumina/vamb/vambOut/bins/
+
+ls $concoctBins
+ls $metabatBins
+ls $vambBins
+
+## concoct:
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+
+## metabat
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+
+## vamb
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+## get rid of a few 
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+
+conda activate das_tool
+
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $cont \
+    -t 25 \
+    --write_bins \
+    --write_bin_evals \
+    -o DASToolRun1 &
+
+## these are stored here:
+
+cd /vol/danBot/refining/sludge/illumina/DASToolRun1_DASTool_bins
+
+### sludge illu checkM ###
+
+
+conda deactivate
+
+conda activate checkm
+
+cd /vol/danBot/refining/sludge/illumina/DASToolRun1_DASTool_bins
+
+## let's run checkm on our mags:
+
+## first step - find the right branch of tol:
+sludgeNanoBins=/vol/danBot/refining/sludge/illumina/DASToolRun1_DASTool_bins
+
+checkm lineage_wf -t 2 -x fa $sludgeNanoBins checkMout &
+
+checkMout="/vol/danBot/refining/zymoMC/illumina/checkMout"
+
+## this also generated the markers we need to do some quality analyses.
+## we can look at this with checkm's qa function:
+
+zymoIlluminaMarkers=/vol/danBot/refining/zymoMC/illumina/checkMout/lineage.ms
+
+checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
+
+## great, get the nanopore data back on track, then try phylophlan on our MAGs.
+
+### sludge illu phylophlan ###
 
 
 
-### sludge refining ###
+##### run sludge nanopore through pipeline #####
+
+## start over. 
+## can't run metaphlan on nanopore data
+## already ran metaquast on it, it was a disaster
+## so, time for binning. 
+
+### bin sludge nano ###
+
+## make index ##
+
+conda deactivate 
+
+conda activate alignmentTools 
+
+indexWD="/vol/danBot/binning/sludge/nanopore/minimapIndices"
+cont="/vol/danBot/assemblies/sludge/nanopore/assembly.fasta"
+reads="/vol/danBot/datasets/sludge/nanopore/ERR7014844.fastq"
+cd $indexWD
+
+minimap2 -d sludgeNanoAssembly.mmi $cont # make index
+minimap2 -t 12 -ax map-ont sludgeNanoAssembly.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 15 > sludgeNanoAligned2Contigs.bam 
+## 14:55 local, took maybe 20 min?
+
+cd $indexWD
+
+## do we need this?: yes
+samtools sort -l 1 \
+    -@15 \
+    -o sludgeNanoReads2ContigsSorted.bam \
+    -O BAM \
+    sludgeNanoAligned2Contigs.bam
+## quick
+
+bam=sludgeNanoReads2ContigsSorted.bam
+samtools index -@ 15 $bam ## do we need this? yes. with lots of cores is very quick
+
+## sludge nanopore concoct ##
+
+conda activate concoct
+
+cont="/vol/danBot/assemblies/sludge/nanopore/assembly.fasta"
+outputDir="/vol/danBot/binning/sludge/nanopore/concoct/"
+bam="/vol/danBot/binning/sludge/nanopore/minimapIndices/sludgeNanoReads2ContigsSorted.bam"
+
+cut_up_fasta.py $cont -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+concoct_coverage_table.py concoctContigs_10K.bed $bam > coverage_table.tsv
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 25 \
+  -b $outputDir
+
+cd $outputDir
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+mkdir fasta_bins
+extract_fasta_bins.py $cont clustering_merged.csv --output_path fasta_bins/
+
+## clean up the names...
+cd /vol/danBot/binning/sludge/nanopore/concoct/fasta_bins
+
+for i in *; do
+mv $i "concoct_"$i
+done
+
+## 179 bins
+
+## sludge nanopore metabat  ##
+
+cd /vol/danBot/binning/sludge/nanopore/metabat
+
+conda deactivate
+
+conda activate metabat2
+
+cd /vol/danBot/binning/sludge/nanopore/metabat
+
+cont="/vol/danBot/assemblies/sludge/nanopore/assembly.fasta"
+bam="/vol/danBot/binning/sludge/nanopore/minimapIndices/sludgeNanoReads2ContigsSorted.bam"
+runMetaBat.sh $cont $bam 
+
+### vamb sludge nanopore ###
 
 
+conda deactivate
 
-### sludge checkM ###
+conda activate vamb 
+
+cd /vol/danBot/binning/sludge/nanopore/vamb
 
 
+## they run a cataloging program on their assemblies. Not sure if I need to do this but...
 
-### sludge phylophlan ###
+cd /vol/danBot/binning/sludge/nanopore/vamb
 
+reads="/vol/danBot/datasets/sludge/nanopore/ERR7014844.fastq"
+cont="/vol/danBot/assemblies/sludge/nanopore/assembly.fasta"
+outdir="/vol/danBot/binning/sludge/nanopore/vamb/vambOut"
+
+concatenate.py sludgeNanoCatalogue.fna.gz $cont
+
+conda deactivate
+
+conda activate alignmentTools
+
+minimap2 -d sludgeNanoCatalogue.mmi sludgeNanoCatalogue.fna.gz # make index, quick
+
+## align reads to metagenome
+minimap2 -t 10 -N 5 -ax map-ont sludgeNanoCatalogue.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 10 > sludgeNanoVamb_ReadsAligned2Contigs.bam &
+## 
+
+## run the binner:
+conda deactivate 
+
+conda activate vamb
+
+## had to really drop the batch size down to far below what they recommend:
+vamb --outdir vambOut --fasta sludgeNanoCatalogue.fna.gz --bamfiles sludgeNanoVamb_ReadsAligned2Contigs.bam -o C --minfasta 200000 
+
+## not run
+
+ls /vol/danBot/binning/sludge/nanopore/vamb/vambOut/bins 
+
+ls /vol/danBot/binning/sludge/nanopore/vamb/vambOut/bins | wc -l  ## 166 bins
+
+
+### sludge nano refining ###
+
+conda deactivate
+
+conda activate das_tool
+
+
+cd /vol/danBot/refining/sludge/nanopore
+concoctBins=/vol/danBot/binning/sludge/nanopore/concoct/fasta_bins/
+metabatBins=/vol/danBot/binning/sludge/nanopore/metabat/assembly.fasta.metabat-bins-20230228_150348/
+vambBins=/vol/danBot/binning/sludge/nanopore/vamb/vambOut/bins/
+
+ls $concoctBins
+ls $metabatBins
+ls $vambBins
+
+
+## concoct:
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+#paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+## don't need it, I guess. Weird.
+
+## metabat
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+
+## vamb
+/vol/danBot/refining/Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+less vamb.contigs2bin.tsv 
+
+## get rid of a few characters
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+less vamb.contigs2bin_edited.tsv
+
+cont="/vol/danBot/assemblies/sludge/nanopore/assembly.fasta"
+
+DAS_Tool  -i concoct.contigs2bin.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $cont \
+    -t 25 \
+    --write_bins \
+    --write_bin_evals \
+    -o sludgeNano_refinedBins
 
 ########### barcoding ############
 
@@ -2274,12 +3555,73 @@ barcodeDir=/vol/danBot/datasets/metabarcoding/
 scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $sipData ubuntu@129.70.51.6:$barcodeDir
 
 ## also get the new milan data from alfons:
-
 file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/Oemik-Exp014.zip
 barcodeDir=/vol/danBot/datasets/metabarcoding/
 scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $file ubuntu@129.70.51.6:$barcodeDir
 
-## what is milan's data?
+## and his metadata
+file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/mapping.tsv
+barcodeDir=/vol/danBot/datasets/metabarcoding/
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $file ubuntu@129.70.51.6:$barcodeDir
+
+## 
+
+## today: 
+## try to get graphlan installed 
+## get mags out of sludge
+## phylophlan
+
+########### barcoding ############
+
+## let's get the metabarcoding together
+## this will be a mishmash of the amplicons
+## created two years ago (and analyzed last year)
+## and milan's new data
+
+## get last year's sip data onto denbi:
+
+## our local file:
+sipData=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/16S_amps_SIP_2022.zip
+## put it here:
+barcodeDir=/vol/danBot/datasets/metabarcoding/
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $sipData ubuntu@129.70.51.6:$barcodeDir
+
+## also get the new milan data from alfons:
+file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/Oemik-Exp014.zip
+barcodeDir=/vol/danBot/datasets/metabarcoding/
+scp -i /home/daniel/.ssh/funmic2023 -P 30500 -r $file ubuntu@129.70.51.6:$barcodeDir
+
+## to integrate Milan's data, I think we need to put it into the manifest, and metadata
+
+## first, I guess we need to do some quality checks
+
+#### fastqc both sip SIP data ####
+
+## we should look at the quality of both datasets, Milan's and the old data 
+
+cd /vol/danBot/datasets/metabarcoding/milanReads
+cd /vol/danBot/datasets/metabarcoding/old16S
+
+## we need the following
+
+milanReadDir="/vol/danBot/datasets/metabarcoding/milanReads/"
+mv Oemik-001254* $milanReadDir
+mv Oemik-001255* $milanReadDir
+mv Oemik-001256* $milanReadDir
+mv Oemik-001257* $milanReadDir
+mv Oemik-001258* $milanReadDir
+mv Oemik-001259* $milanReadDir
+mv Oemik-001260* $milanReadDir
+mv Oemik-001261* $milanReadDir
+mv Oemik-001262* $milanReadDir
 
 
-## today: get metaphlan started, look at metaquast, 
+## today: 
+## try to get graphlan installed 
+## refine mags out of sludge
+## checkm
+## phylophlan
+## prodigal
+## koala
+
+
