@@ -1,5 +1,14 @@
 ## okay, time to start setting up the 2023 funmic class
 
+### evaluation ###
+
+## look for this email:
+10.01.2023
+## link is here:
+https://eval.uni-bayreuth.de/unizensus/b/2SNX5DIRRZZ3I?0
+
+## email title is:
+Zugang zur Lehrevaluation Ihrer Veranstaltung Funktionelle Mikrobiomforschung
 
 ## mounting hard drive
 
@@ -114,7 +123,10 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR728/008/ERR7287988/ERR7287988.fastq.g
 
 wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/004/ERR7014844/ERR7014844.fastq.gz ## 10.4
 #wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR701/006/ERR7014876/ERR7014876.fastq.gz ## 9.4 flowcell
+
+## illumina miseq data, sludge
 wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-1.fastq.gz
+
 wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-2.fastq.gz
 
 ## can't find any further data. These last two are the submitted 2020 miseq 
@@ -236,6 +248,8 @@ wget ftp://ftp.sra.ebi.ac.uk/vol1/run/ERR701/ERR7015307/IL-202001-2.fastq.gz &
 
 ## which means we need to get anaconda going... 
 
+/vol/danBot
+
 wget https://repo.anaconda.com/archive/Anaconda3-2022.10-Linux-x86_64.sh
 
 ## installed
@@ -254,7 +268,9 @@ conda update -n base -c defaults conda
 ## readQC
 #conda create -n readQC_env -c bioconda cutadapt fastqc bbmap seqtk
 ## oops, this name is better
-conda rename -n readQC_env readQC
+##conda rename -n readQC_env readQC
+
+conda create -n readQC -c bioconda cutadapt fastqc bbmap seqtk
 
 #conda create -n readQCnv -c bioconda cutadapt fastqc bbmap seqtk
 
@@ -336,11 +352,11 @@ conda create -n racon -c bioconda racon
 ## quick
 
 ### samtools, bedtools, bedtools ###
-conda create -n alignmentTools -c bioconda samtools=1.9 bedtools bowtie2 minimap2
+conda create -n alignmentTools -c bioconda samtools=1.9 bedtools bowtie2 minimap2 seqtk
 
 conda activate alignmentTools
 
-conda install seqtk
+#conda install seqtk
 
 ## can we add minimap2 to this?
 ## rename this to something nicer for the classk
@@ -349,6 +365,7 @@ conda install seqtk
 
 ## metaBat2 ##
 conda create -n metabat2 -c bioconda metabat2
+
 ## quick
 
 # ### maxbin2 ###
@@ -422,24 +439,27 @@ variables:
 ## let's try it:
 
 conda deactivate
-conda env remove -n concoct
-conda env create -f concoct.yml
 
+conda env remove -n concoct
+
+conda env create -f concoct.yml
 
 
 ## then reset to bioconda priorities above
 
 ## VAMB ##
-conda create -n vamb -c bioconda vamb
-## looks like GPU support is available:
-conda activate vamb
-conda install -c pytorch pytorch torchvision cudatoolkit=10.2
-## even with the cuda install, it's quick
 
+conda create -n vamb -c bioconda vamb minimap2
+
+## looks like GPU support is available:
+#conda activate vamb
+#conda install -c pytorch pytorch torchvision cudatoolkit=10.2
+## even with the cuda install, it's quick
 ## also needs minimap:
-conda install -c bioconda minimap2
+#conda install -c bioconda minimap2
 
 ## das tools ##
+
 
 conda config --set channel_priority flexible
 conda create -n das_tool -c bioconda das_tool
@@ -448,16 +468,84 @@ conda config --set channel_priority strict
 ## that seems to install ok, but won't work 
 
 ## try a manual install?:
+
 conda create -n das_tool
 
 conda activate das_tool
+
+mkdir /vol/danBot/refining/
 cd /vol/danBot/refining/
+
+conda install -c conda-forge unzip
+
 git clone https://github.com/cmks/DAS_Tool.git
+
 cd DAS_Tool
+
 unzip db.zip
 
 conda install r-data.table r-magrittr r-docopt
 conda install -c bioconda prodigal diamond pullseq ruby
+
+## i think I remember we needed another script...
+wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2Bin.sh
+chmod 777 Fasta_to_Contig2Bin.sh
+
+## we installed this last year around 1419. Try those scripts, 
+## see if they work...
+
+conda create -n das_env
+
+conda activate das_env
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+conda install -c bioconda das_tool
+
+## nope...gotta do the git install, I guess. Start over.
+
+conda create -n unzip -c conda-forge unzip
+
+conda create -n das_env
+
+git clone https://github.com/cmks/DAS_Tool.git
+
+conda deactivate
+conda activate unzip
+
+unzip db.zip
+
+conda deactivate
+
+conda activate das_env
+
+conda install -c conda-forge r-base
+
+conda install r-data.table r-magrittr r-docopt
+## not working, try manual installation
+## in R
+
+repo='http://cran.us.r-project.org' #select a repository
+install.packages('data.table', repos=repo, dependencies = T)
+install.packages('magrittr', repos=repo, dependencies = T)
+install.packages('docopt', repos=repo, dependencies = T)
+
+conda install -c bioconda prodigal diamond pullseq ruby
+## this is taking forever
+
+## not run
+## git the script
+wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2Bin.sh
+
+## make sure to check DAS_Tool ahead of time, I'm betting we accidentally
+## destroyed it when we deleted the repo. 
+
+## maybe they have some sample data to test in the github repo
+
+## ugh.
+
 
 ### checkm ###
 conda create -n checkm -c bioconda checkm-genome
@@ -490,6 +578,9 @@ conda create --name phylophlan -c bioconda phylophlan
 
 wget https://data.qiime2.org/distro/core/qiime2-2022.11-py38-linux-conda.yml
 conda env create -n qiime2-2022.11 --file qiime2-2022.11-py38-linux-conda.yml
+conda rename -n qiime2-2022.11 qiime2
+
+
 
 ### check out the zymo data: ###
 
@@ -2058,26 +2149,31 @@ grep -n $readAddress IL-202001-2.fastq &
 ## and it looks like the reverse read sets start with the read at line 47091905
 
 
-
-
-
-
 ## so some reassembly is in order ... break up each file in R1 and R2:
 
 ## the last line of our R1 reads in IL1 should be
+
+
+mkdir /vol/danBot/datasets/sludge/illumina/splitIL1/
+mkdir /vol/danBot/datasets/sludge/illumina/splitIL2/
+
 cd /vol/danBot/datasets/sludge/illumina/splitIL1/
+
 split ../IL-202001-1.fastq -l 47091904
 
 mv xaa IL-202001-1_R1.fastq
 mv xab IL-202001-1_R2.fastq
 
 ## sanity checks
+
 wc -l * 
 
 head -n 4 IL-202001-1_R1.fastq
 head -n 4 IL-202001-1_R2.fastq
+
 tail -n 4 IL-202001-1_R1.fastq
 tail -n 4 IL-202001-1_R2.fastq
+
 ## looks right
 
 #mkdir /vol/danBot/datasets/sludge/illumina/splitIL2/
@@ -2135,6 +2231,20 @@ cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R1.fastq \
     /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R1.fastq > recombinedSludgeIllumina_R1.fastq && \
 cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R2.fastq \
     /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R2.fastq > recombinedSludgeIllumina_R2.fastq &
+
+## or multitask
+cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R1.fastq \
+    /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R1.fastq > recombinedSludgeIllumina_R1.fastq &
+
+cat /vol/danBot/datasets/sludge/illumina/splitIL1/IL-202001-1_R2.fastq \
+    /vol/danBot/datasets/sludge/illumina/splitIL2/IL-202001-2_R2.fastq > recombinedSludgeIllumina_R2.fastq &
+
+    recombinedSludgeIllumina_R1.fastq
+    recombinedSludgeIllumina_R2.fastq
+
+## put a copy lower...going to clean this up
+mv recombinedSludgeIllumina_R1.fastq /vol/danBot/datasets/sludge/illumina/sludgeIllumina_R1.fastq
+mv recombinedSludgeIllumina_R2.fastq /vol/danBot/datasets/sludge/illumina/sludgeIllumina_R2.fastq
 
 ## sanity check
 
@@ -2969,9 +3079,6 @@ grep -n $readAddress IL-202001-2.fastq &
 
 
 
-
-
-
 ## so some reassembly is in order ... break up each file in R1 and R2:
 
 ## the last line of our R1 reads in IL1 should be
@@ -3348,6 +3455,8 @@ checkMout="/vol/danBot/refining/zymoMC/illumina/checkMout"
 ## this also generated the markers we need to do some quality analyses.
 ## we can look at this with checkm's qa function:
 
+## not sure why I called this nano, should be illu
+
 zymoIlluminaMarkers=/vol/danBot/refining/zymoMC/illumina/checkMout/lineage.ms
 
 checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
@@ -3483,7 +3592,6 @@ ls /vol/danBot/binning/sludge/nanopore/vamb/vambOut/bins
 
 ls /vol/danBot/binning/sludge/nanopore/vamb/vambOut/bins | wc -l  ## 166 bins
 
-
 ### sludge nano refining ###
 
 conda deactivate
@@ -3538,6 +3646,32 @@ DAS_Tool  -i concoct.contigs2bin.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_ed
     --write_bins \
     --write_bin_evals \
     -o sludgeNano_refinedBins
+
+### checkm sludge nano ###
+
+conda deactivate
+
+conda activate checkm
+
+cd /vol/danBot/refining/sludge/nanopore/sludgeNano_refinedBins_DASTool_bins
+
+## let's run checkm on our mags:
+
+## first step - find the right branch of tol:
+sludgeNanoBins=/vol/danBot/refining/sludge/nanopore/sludgeNano_refinedBins_DASTool_bins
+checkm lineage_wf -t 26 -x fa $sludgeNanoBins checkMout &
+
+checkMout="/vol/danBot/refining/sludge/nanopore/sludgeNano_refinedBins_DASTool_bins/checkMout"
+
+## this also generated the markers we need to do some quality analyses.
+## we can look at this with checkm's qa function:
+
+zymoIlluminaMarkers=/vol/danBot/refining/zymoMC/illumina/checkMout/lineage.ms
+
+/vol/danBot/refining/sludge/nanopore/sludgeNano_refinedBins_DASTool_bins
+
+checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
+
 
 ########### barcoding ############
 
@@ -3617,11 +3751,195 @@ mv Oemik-001262* $milanReadDir
 
 
 ## today: 
-## try to get graphlan installed 
-## refine mags out of sludge
-## checkm
-## phylophlan
-## prodigal
-## koala
+
+## clean up the computer, down to data and anaconda packages
+
+## okay, computer volume seems ready
+
+#### testing new volumes ####
+
+## we need to test our volumes, see if everything runs well. 
+
+## we have three working instances
+
+## let's try to set up Milan's computer. If the volumes aren't up and 
+## running by then, include this in an email to de.NBI.
+
+## access milan via:
+
+## from danBot
+ssh -p 30284 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6 ## put this, plus all the others, into our .bashrc on both personal and denvi
+
+## from personal
+ssh -p 30284 -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## clean out the private key from danBot (oops). 
+#rm .ssh/danbotFuncomp
+#cat .ssh/danbotFuncomp.pub >> .ssh/authorized_keys
+
+## tried changing permissions on danBot
+#chmod 600 danbotFuncom*
+#chmod 700 ~/.ssh
+## oh well. Work it out later.
+## do need this, though, for large file transfers to catch up students
+
+## put his key on there:
+
+vim ~/.ssh/authorized_keys
+
+## mount volume
+lsblk
+blkid
+
+sudo mkdir /vol/milanBot
+sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/milanBot
+
+## but this causes problems with the anaconda installation. It's looking in /vol/danBot,
+## if we mount in the same spot, does anaconda come back?
+
+sudo umount /vol/milanBot
 
 
+## yup. I think we are stuck with this...sucks
+
+
+
+## try the above with another...
+
+## schneiderBot, which belongs to Julia
+
+
+## from personal
+ssh -p 30381  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6 
+
+## from danBot
+ssh -p 30381 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6 
+
+## mount drive
+sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/danBot
+
+
+## restart, see if anaconda 
+
+### now hausmannBot, which belongs to Maria
+
+## personal
+ssh -p 30355  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## from danBot
+ssh -p 30355 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6 
+
+sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/danBot
+
+## remove: bkup bashrc, pub/private key, bkup assemblies
+
+rm /vol/danBot/bashrc.bk
+
+### scharrerBot, which belongs to Anja ###
+
+## personal
+ssh -p 30452  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## from danBot
+ssh -p 30452 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6 
+
+## so ...
+
+## on local
+echo 'alias anja="ssh -p 30452  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6"' >> ~/.bashrc
+
+## on danbot
+echo 'alias anja="ssh -p 30452 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6"' >> ~/.bashrc
+
+vim ~/.ssh/authorized_keys ## put 
+
+sudo mount -U "c1feef14-014f-4cb0-9ee0-4db329308eab" /vol/danBot
+
+rm -f /home/ubuntu/*fa*
+rm -rf /home/ubuntu/backups/
+rm -f /home/ubuntu/.ssh/danbotFuncomp
+rm -f /home/ubuntu/.ssh/danbotFuncomp.pub
+rm /vol/danBot/bashrc.bk
+
+### merzBot, which belongs to Susanne ###
+
+## personal
+ssh -p 30461  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## from danBot
+ssh -p 30461 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6 
+
+## on local
+echo 'alias susanne="ssh -p 30461  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6"' >> ~/.bashrc
+
+## on danbot
+echo 'alias susanne="ssh -p 30461 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6"' >> ~/.bashrc
+
+vim ~/.ssh/authorized_keys 
+
+rm -f /home/ubuntu/*fa*
+rm -rf /home/ubuntu/backups/
+rm -f /home/ubuntu/.ssh/danbotFuncomp
+rm -f /home/ubuntu/.ssh/danbotFuncomp.pub
+rm /vol/danBot/bashrc.bk
+
+### arnoldBot, which belongs to Rebekka  ###
+ssh -p 30372  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6
+
+## from danBot
+ssh -p 30372 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6 
+
+## on local
+echo 'alias rebekka="ssh -p 30372  -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6"' >> ~/.bashrc
+
+## on danbot
+echo 'alias rebekka="ssh -p 30372 -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6"' >> ~/.bashrc
+
+## looks like the last computer they promised me isn't really available. 
+## so we can't do our installations via the image of the original computer.
+## so we need to rebuild our conda environment from scratch, I think.
+
+## clean the old anaconda off the volume they created for us
+## start with a fresh Instance and volume and try to rep
+
+## all the datasets are there, so we should try to rebuild the anaconda environments
+
+## here is our list. 
+
+alignmentTools
+checkm        
+concoct       
+das_tool      
+flye          
+graphlan      
+maxbin2       
+medaka        
+megahit       
+metabat2      
+metaphlan     
+metaquast     
+nanoplot      
+phylophlan    
+qiime2        
+readQC        
+vamb          
+vsearch       
+
+
+
+
+checkm        
+das_tool      
+graphlan      
+maxbin2       
+metaphlan     
+phylophlan    
+qiime2        
+
+## check the wgets for a das_tool, I think there is an extra script
+## check the das_tool installation generally, because I think we probably
+## deleted the github repo for das_tool. 
+
+## finish other installs for arnoldBot
+## check das_tool installation on cloned volumes 
+## figure out arnoldBot, can we just run it out of the github repo?
