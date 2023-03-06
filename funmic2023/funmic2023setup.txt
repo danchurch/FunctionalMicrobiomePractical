@@ -463,8 +463,8 @@ conda create -n vamb -c bioconda vamb minimap2
 
 conda config --set channel_priority flexible
 conda create -n das_tool -c bioconda das_tool
-
 conda config --set channel_priority strict
+
 ## that seems to install ok, but won't work 
 
 ## try a manual install?:
@@ -548,11 +548,18 @@ wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2
 
 
 ### checkm ###
+
+conda config --set channel_priority flexible
 conda create -n checkm -c bioconda checkm-genome
 
+conda config --set channel_priority strict
+
 ### MetaPhlan ###
-conda create --n metaphlan -c conda-forge -c bioconda python=3.7 metaphlan
+
+conda create --name metaphlan -c conda-forge -c bioconda python=3.7 metaphlan
+
 conda activate metaphlan
+
 ## put the db on the volumne, so we can clone later
 metaphlan --install --bowtie2db /vol/danBot/metaphlanDB
 
@@ -564,12 +571,16 @@ conda create -n graphlan -c bioconda graphlan
 conda activate graphlan ## looks like we need this also, has to be done separately?
 conda install export2graphlan -c bioconda
 
+## would this work?
+conda create -n graphlan -c bioconda graphlan export2graphlan
+
 ## and didn't work
 
 
 ### phyloPhlan ###
+conda config --set channel_priority flexible
 conda create --name phylophlan -c bioconda phylophlan
-
+conda config --set channel_priority strict
 
 ### qiime2 ###
 
@@ -577,8 +588,10 @@ conda create --name phylophlan -c bioconda phylophlan
 ## installing from there:
 
 wget https://data.qiime2.org/distro/core/qiime2-2022.11-py38-linux-conda.yml
-conda env create -n qiime2-2022.11 --file qiime2-2022.11-py38-linux-conda.yml
-conda rename -n qiime2-2022.11 qiime2
+
+conda env create -n qiime2 --file qiime2-2022.11-py38-linux-conda.yml
+
+#conda rename -n qiime2-2022.11 qiime2
 
 
 
@@ -3928,18 +3941,71 @@ vsearch
 
 
 
-checkm        
 das_tool      
-graphlan      
-maxbin2       
-metaphlan     
-phylophlan    
-qiime2        
 
 ## check the wgets for a das_tool, I think there is an extra script
 ## check the das_tool installation generally, because I think we probably
 ## deleted the github repo for das_tool. 
 
-## finish other installs for arnoldBot
-## check das_tool installation on cloned volumes 
-## figure out arnoldBot, can we just run it out of the github repo?
+## check das_tools, all installs ## 
+
+## on danBot, check with sample data:
+
+conda activate das_tool
+
+mkdir /vol/danBot/sample_data
+cd /vol/danBot/sample_data
+
+wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/sample_data/sample.human.gut_concoct_contigs2bin.tsv
+wget https://github.com/cmks/DAS_Tool/raw/master/sample_data/sample.human.gut_maxbin2_contigs2bin.tsv
+wget https://github.com/cmks/DAS_Tool/raw/master/sample_data/sample.human.gut_metabat_contigs2bin.tsv
+wget https://github.com/cmks/DAS_Tool/raw/master/sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv
+wget https://github.com/cmks/DAS_Tool/raw/master/sample_data/sample.human.gut_contigs.fa
+
+cd /vol/danBot/
+DAS_Tool  -i sample_data/sample.human.gut_concoct_contigs2bin.tsv,\
+sample_data/sample.human.gut_maxbin2_contigs2bin.tsv,\
+sample_data/sample.human.gut_metabat_contigs2bin.tsv,\
+sample_data/sample.human.gut_tetraESOM_contigs2bin.tsv \
+  -l concoct,maxbin,metabat,tetraESOM \
+  -c sample_data/sample.human.gut_contigs.fa \
+  --write_bins \
+  -t 25 \
+  -o sample_output/DASToolRun1  
+
+rm -r sample_data/
+rm -r sample_output/
+
+## works on danBot, arnoldBot, scharrerBot
+## seems okay
+
+### qiime time ###
+
+## we need to check out qiime pipeline
+
+### let's aggregate the ssh commands for a slide ###
+
+Milan   "ssh -p 30284  -i /path/to/your/privateKey ubuntu@129.70.51.6"
+Julia   "ssh -p 30381  -i /path/to/your/privateKey ubuntu@129.70.51.6"
+Maria   "ssh -p 30355  -i /path/to/your/privateKey ubuntu@129.70.51.6"
+Anja    "ssh -p 30452  -i /path/to/your/privateKey ubuntu@129.70.51.6"
+Susanne "ssh -p 30461  -i /path/to/your/privateKey ubuntu@129.70.51.6"
+Rebekka "ssh -p 30372  -i /path/to/your/privateKey ubuntu@129.70.51.6"
+
+
+ssh -p 30500 -i /home/daniel/.ssh/funmic2023.pub ubuntu@129.70.51.6
+
+## or try it with a shell variable:
+
+key=/home/daniel/.ssh/funmic2023.pub
+ssh -p 30500 -i $key ubuntu@129.70.51.6
+
+
+## to get the latest version of the script:
+
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2023/funBASHterminalScript.txt
+
+### qiime time ###
+
+## we need to check out qiime pipeline
+

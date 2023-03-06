@@ -1,0 +1,6 @@
+
+## use wget to get the latest version of the intro script (this document!)
+
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2023/funBASHterminalScript.txt
+
+
