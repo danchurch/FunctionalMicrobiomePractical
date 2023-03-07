@@ -1,14 +1,16 @@
 ## playing around with BASH (the linux command line)
 
-
-
 ## use wget to get the latest version of the intro script (this document!)
 
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2023/funBASHterminalScript.txt
 
 ## an example remote login: Dan and his de.NBI machine (danBot):
 
-key=/home/daniel/.ssh/funmic2023.pub
+ssh -p 30500 -i /home/daniel/.ssh/funmic2023 ubuntu@129.70.51.6
+
+## or, using shell variables
+
+key=/home/daniel/.ssh/funmic2023
 ssh -p 30500 -i $key ubuntu@129.70.51.6
 
 ## look at the storage volume:
@@ -17,10 +19,25 @@ cd /vol/danBot
 
 ## and let's learn how to get files onto and off our VM. 
 
-fileOnVM="/vol/danBot/helloWorld.txt"
-mySSHkey="/home/daniel/.ssh/funmic2023.pub"
 
-scp -i /home/daniel/.ssh/funmic2023 -P 30500 ubuntu@129.70.51.6:$fileOnVM .
+fileOnVM="/vol/danBot/helloWorld.txt"
+mySSHkey="/home/daniel/.ssh/funmic2023"
+
+scp -i $mySSHkey -P 30500 ubuntu@129.70.51.6:$fileOnVM .
+
+
+scp -P 30284 -i /home/daniel/.ssh/ubuntu_e ubuntu@129.70.51.6:$fileOnVM .
+
+## here windows and linux can share files if we put a folder here:
+
+cd /mnt/c/
+
+sudo mkdir putFilesHere
+
+## put the file we just downloaded there:
+mv helloWorld.txt /mnt/c/putFilesHere
+
+## can you see it windows? look in the your C:\ drive.
 
 
 ## let's get our nanopore assembly going, because this takes a very long time.
@@ -32,16 +49,25 @@ scp -i /home/daniel/.ssh/funmic2023 -P 30500 ubuntu@129.70.51.6:$fileOnVM .
 conda activate flye
 
 ## make a directory for our new assembly:
+mkdir -p /vol/danBot/assemblies/zymoMC/nanopore/
 
-mkdir -p /vol/danBot/assemblies/sludge/nanopore/
+## or you could make a folder here:
+cd /vol/danBot/
+mkdir zymoNanoporeAssembly
 
 ## set my variables
 reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq
-outdir=/vol/danBot/assemblies/sludge/nanopore/
+outdir=/vol/danBot/assemblies/zymoMC/nanopore/
+## (or your output directory might look like this, depends on what you did above):
+## outdir=/vol/danBot/zymoNanoporeAssembly
+
 
 ## run it, using nohup to make sure it doesn't die when we hang up the connection
 nohup flye --meta \
     --threads 25 \
     --out-dir $outdir \
     --nano-hq $reads &
+
+## this is the same as:
+nohup flye --meta --threads 25 --out-dir $outdir --nano-hq $reads &
 

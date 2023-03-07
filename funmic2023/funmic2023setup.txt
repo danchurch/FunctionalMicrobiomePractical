@@ -3995,6 +3995,8 @@ Rebekka "ssh -p 30372  -i /path/to/your/privateKey ubuntu@129.70.51.6"
 
 ssh -p 30500 -i /home/daniel/.ssh/funmic2023.pub ubuntu@129.70.51.6
 
+ssh -p 30381 -i /root/.ssh/id_rsa ubuntu@129.70.51.6
+
 ## or try it with a shell variable:
 
 key=/home/daniel/.ssh/funmic2023.pub
@@ -4004,6 +4006,10 @@ ssh -p 30500 -i $key ubuntu@129.70.51.6
 ## to get the latest version of the script:
 
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2023/funBASHterminalScript.txt
+
+
+## get Julia's key on there:
+
 
 ### qiime time ###
 
