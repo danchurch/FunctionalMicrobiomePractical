@@ -13,12 +13,16 @@ conda activate flye
 ## make a directory for our new assembly:
 mkdir -p /vol/danBot/assemblies/zymoMC/nanopore/
 
+cd /vol/danBot/assemblies/zymoMC/nanopore/
+cd /vol/danBot/zymoNanoporeAssembly
+
+
+
 ## or you could make a folder here:
 cd /vol/danBot/
 mkdir zymoNanoporeAssembly
 
 ## set my variables
-
 reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq
 outdir=/vol/danBot/assemblies/zymoMC/nanopore/
 
@@ -51,6 +55,7 @@ nohup flye --meta --threads 25 --out-dir $outdir --nano-hq $reads &
 ## zymoMC nanopore fastqc
 
 ## activate conda environment:
+conda deactivate 
 conda activate readQC
 
 ## make our output directory:
@@ -61,26 +66,29 @@ file="/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq"
 outdir="/vol/danBot/zymoQualityChecks/"
 
 ## run the command. Use lots of cores, but save some (10) for illumina readsets
-fastqc -t 22 -o  $outdir $file 
+fastqc -t 22 -o  $outdir $file  &
 
 ## that will run for a while! check on it once and while with top
 ## so try starting another window for repeating with illumina data. 
+
+
+
 
 ## activate conda environment:
 conda activate readQC
 
 ## set variables, let's start with our R1 reads
+
 file="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
 outdir="/vol/danBot/zymoQualityChecks/"
-
 ## run the command, with fewer threads than nanopore
 fastqc -t 5 -o  $outdir $file 
-
 
 ## and when the R1 reads are complete, run the R2 reads
 file="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
 outdir="/vol/danBot/zymoQualityChecks/"
 fastqc -t 5 -o  $outdir $file 
+
 
 ## can you find the outputs from this? 
 
@@ -89,12 +97,18 @@ fastqc -t 5 -o  $outdir $file
 
 
 ## I will put my files here, on my local computer
-cd readQC/zymoQC 
 ## this may be different for you!
+
 
 fileOnVM="/vol/danBot/zymoQualityChecks"
 mySSHkey="/home/daniel/.ssh/funmic2023"
+
 scp -r -i $mySSHkey -P 30500 ubuntu@129.70.51.6:$fileOnVM .
+
+cp -r zymoQualityChecks /mnt/c/putfileshere/
+
+mv zymoQualityChecks /mnt/c/putfileshere/
+
 
 ## put them in your /mnt/c/putFilesHere or whatever you called it
 ## so that windows can see it
@@ -104,7 +118,6 @@ scp -r -i $mySSHkey -P 30500 ubuntu@129.70.51.6:$fileOnVM .
 #### start metaphlan ####
 
 ## activate conda
-conda deactivate ## only if we are in another environment besides base
 conda activate metaphlan
 
 ## make your output directory
@@ -123,7 +136,30 @@ nohup metaphlan $seq1,$seq2 \
     --input_type fastq \
     -o MetaPhlanProfiled_zymoIllu.txt &
 
+### looking our metaphlan outputs ###
 
+## some BASH magic to turn our metaphlan output into a simple table
+
+cd /vol/danBot/zymoMCcommunityProfile
+
+grep -v "t__" MetaPhlanProfiled_zymoIllu.txt | grep "s__" | sed 's/^.*s__//g' | cut -f1,3 > zymoIlluMetaphlanAbundances.tsv
+
+
+## we can also visualize with graphPhlan
+
+conda deactivate
+conda activate graphlan
+
+## they have a script for modifying their data:
+export2graphlan.py -i MetaPhlanProfiled_zymoIllu.txt -t merged_abundance.tree.txt -a merged_abundance.annot.txt
+graphlan_annotate.py --annot merged_abundance.annot.txt merged_abundance.tree.txt merged_abundance.xml
+graphlan.py --dpi 600 merged_abundance.xml merged_abundance.png --external_legends
+
+## get it local
+file=/vol/danBot/zymoMCcommunityProfile/merged_abundance.png
+#file=/vol/danBot/zymoMCcommunityProfile/merged_abundance_legend.png
+key=/home/daniel/.ssh/funmic2023
+scp -i $key -P 30500 -r ubuntu@129.70.51.6:$file .
 
 #### illumina assembly ####
 
@@ -134,21 +170,74 @@ conda activate megahit
 ## make our output directory. megahit wants to make the last directory itself
 mkdir -p /vol/danBot/assemblies/zymoMC/
 
+cd /vol/danBot/assemblies/zymoMC/
+
 ## set our variables
 seq1=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq
 seq2=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq
 outdir=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina
 
 ## run the actual command
-megahit -1 $seq1 \
+nohup megahit -1 $seq1 \
         -2 $seq2 \
-        -t 17 \
-        -o $outdir 
-
+        -t 12 \
+        -o $outdir &
 
 #### metaquast evaluation of assemblies ####
 
-
 ### metaquast nanopore assembly ###
 
+## activate conda environment
+
+conda deactivate
+conda activate metaquast
+
+## make our output directory:
+mkdir -p /vol/danBot/zymoMetaquast/nanopore
+
+cd /vol/danBot/zymoMetaquast/nanopore
+
+## define our path variables
+zymoMCnanoAssembly=/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta
+zymoMCnanoMetaquastOut=/vol/danBot/zymoMetaquast/nanopore/
+
+## run the command
+nohup metaquast -t 12 \
+          -o $zymoMCnanoMetaquastOut \
+          $zymoMCnanoAssembly &
+
+
 ### metaquast illumina assembly ###
+
+## conda activated already
+
+## make our output directory:
+mkdir /vol/danBot/zymoMetaquast/illumina
+
+cd /vol/danBot/zymoMetaquast/illumina
+
+## define our path variables
+zymoMCilluAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
+zymoMCilluMetaquastOut=/vol/danBot/zymoMetaquast/illumina
+
+## run the command
+nohup metaquast -t 12 \
+          -o $zymoMCilluMetaquastOut \
+          $zymoMCilluAssembly &
+
+## get these local:
+
+
+#### binning ####
+
+## we have three binning software to try.
+
+## concoct, metabat2, and VAMB
+
+## two of them require an alignment of our 
+## raw reads back to our assembly
+
+## we need this for both our illumina and our
+## nanopore data
+
+## start with nanopore reads
