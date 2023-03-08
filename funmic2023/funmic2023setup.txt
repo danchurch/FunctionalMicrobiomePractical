@@ -4026,9 +4026,6 @@ scp -i /home/ubuntu/.ssh/danbotFuncomp -P 30284 MetaPhlanProfiled_zymoIllu.txt u
 scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30284 zymoIlluAssembly.fasta ubuntu@129.70.51.6:/vol/danBot/
 
 
-#### run nanopore binning for the class ####
-
-# mkdir /vol/danBot/ZymoBinning/nanopore
 
 
 ### we need to add the refining script somewhere they can use without problems
@@ -4050,3 +4047,169 @@ cd /vol
 Fasta_to_Contig2Bin.sh
 
 ## okay, think that worked
+
+
+## share working metaquast files:
+
+
+## file is here:
+
+
+#julia
+file="/vol/danBot/zymoMetaquast/illumina"
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30381 $file ubuntu@129.70.51.6:/vol/danBot/
+#anja
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30452  $file ubuntu@129.70.51.6:/vol/danBot/
+# maria
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:/vol/danBot/
+# susanne
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P 30461  $file ubuntu@129.70.51.6:/vol/danBot/
+
+# maria nanopore metaquast
+file="/vol/danBot/zymoMetaquast/nanopore"
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P 30355  $file ubuntu@129.70.51.6:/vol/danBot/
+
+
+
+mv illumina/ zymoMetaquastIllumina/
+
+
+
+
+#### run nanopore binning for the class ####
+
+# mkdir /vol/danBot/ZymoBinning/nanopore
+
+## we don't have time to run the full binning and refining for both illumina and nanopore
+
+## let's repeat here:
+
+## first step is align our raw reads back to the metagenome assembly
+
+## make our directories
+mkdir /vol/danBot/zymoBinning/nanopore
+mkdir /vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning
+
+cd /vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning
+
+## conda environment
+conda deactivate
+conda activate alignmentTools
+
+## variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+reads="/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq"
+
+## for our nanopore alignments we use minimap
+minimap2 -d zymoMCnanoAssembly.mmi $nanoporeAssembly # make index
+
+## make the alignments, takes ~1/2 hour
+minimap2 -t 25 -ax map-ont zymoMCnanoAssembly.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 25 > zymoMCnanoAligned2Contigs.bam
+
+
+## sort and index the alignment. nanopore takes much more time than the illumina reads
+samtools sort -l 1 \
+    -@25 \
+    -o zymoMCnanoAligned2ContigsSorted.bam \
+    -O BAM \
+    zymoMCnanoAligned2Contigs.bam
+
+## index it
+samtools index -@ 25 zymoMCnanoAligned2ContigsSorted.bam 
+
+
+## now to binning. Start with metabat
+
+conda deactivate
+conda activate metabat2
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/nanopore/metabat
+cd /vol/danBot/zymoBinning/nanopore/metabat
+
+## define our variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+bam="/vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning/zymoMCnanoAligned2ContigsSorted.bam"
+
+## run the program
+runMetaBat.sh $illuminaAssembly $bam
+
+## concoct ##
+
+
+## activate our concoct environment
+conda deactivate
+conda activate concoct
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/nanopore/concoct
+cd /vol/danBot/zymoBinning/nanopore/concoct
+
+## define our variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+readAlignments="/vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning/zymoMCnanoAligned2ContigsSorted.bam"
+outdir="/vol/danBot/zymoBinning/nanopore/concoct"
+
+cut_up_fasta.py $nanoporeAssembly -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+
+concoct_coverage_table.py concoctContigs_10K.bed $readAlignments > coverage_table.tsv 
+
+
+## not run ##
+ls $readAlignments
+
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 25 \
+  -b $outdir
+
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+
+mkdir fasta_bins
+
+extract_fasta_bins.py $nanoporeAssembly clustering_merged.csv --output_path fasta_bins/
+
+## concoct gives numerical numbers for names, which upsets some software downstream
+## rename, with some BASH terminal magic:
+
+cd fasta_bins
+for i in *; do
+mv $i "concoct_$i"
+done
+
+### binning with zymoMC illumina reads with VAMB ###
+
+## activate conda environment
+conda deactivate
+conda activate vamb
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/nanopore/vamb
+cd /vol/danBot/zymoBinning/nanopore/vamb
+
+## define our variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+readAlignments="/vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+outdir="/vol/danBot/zymoBinning/nanopore/vamb"
+
+concatenate.py nanocatalogue.fna.gz $nanoporeAssembly
+
+conda deactivate
+conda activate alignmentTools
+
+## make an index with minimap
+minimap2 -d nanocatalogue.mmi nanocatalogue.fna.gz
+
+## map our reads to metagenome assembly with minimap and samtools
+## This takes some time, maybe 20 minutes
+minimap2 -t 25 -N 5 -ax sr nanocatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 25 > nanoReadsAligned2Contigs.bam
+
+conda deactivate
+conda activate vamb
+
+vamb --outdir vambOut --fasta zymoNanoCatalogue.fna.gz --bamfiles zymoNanoVamb_ReadsAligned2Contigs.bam -t 8 -o C --minfasta 200000 &
+
+### nanopore zymomc bin refining  ###
+
+

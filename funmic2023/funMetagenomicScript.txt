@@ -239,7 +239,6 @@ less nohup.out
 
 ### metaquast illumina assembly ###
 
-
 #conda deactivate
 conda activate metaquast
 
@@ -259,18 +258,17 @@ nohup metaquast -t 25 \
 
 ## get these local:
 
-cd /vol/danBot 
-
-file=/vol/danBot/zymoMetaquast/nanopore
+file=/vol/danBot/nanopore
+file=/vol/danBot/illumina
 key=/home/daniel/.ssh/funmic2023
-scp -r -i $key -P 30500 -r ubuntu@129.70.51.6:$file .
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
 
 #### binning ####
 
+## binning is the most complex thing we will do. 
+
 ## we have three binning software to try.
 ## concoct, metabat2, and VAMB.
-
-## binning is the most complex thing we will do. 
 
 ## so let's make some directories to stay organized.
 
@@ -431,8 +429,6 @@ minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz
 ## This takes some time, maybe 20 minutes
 minimap2 -t 25 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 25 > illumReadsAligned2Contigs.bam
 
-## 12:22
-
 ## once we have our reads aligned to our metagenome assembly, run vamb itself
 
 conda deactivate
@@ -458,20 +454,19 @@ vamb --outdir vambOut \
 ## we can select from among these 
 ## and refine them with DAS tools:
 
-
 ## activate conda
 conda deactivate
 conda activate das_tool
 
 ## make our output directory:
 mkdir -p /vol/danBot/zymoRefineBins/illumina
-
 cd /vol/danBot/zymoRefineBins/illumina
 
 ## define variables
 metabatBins=/vol/danBot/zymoBinning/illumina/metabat/final.contigs.fa.metabat-bins-20230308_095156/ ## this will be different for you!!!
 concoctBins=/vol/danBot/zymoBinning/illumina/concoct/fasta_bins/
 vambBins=/vol/danBot/zymoBinning/illumina/vamb/vambOut/bins/
+illuminaAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
 
 ## for each binner, we need a table to tell das_tools
 ## which contig belogs to which bin
@@ -482,14 +477,37 @@ Fasta_to_Contig2Bin.sh \
     -i $metabatBins \
     > metabat.contigs2bin.tsv
 
+head metabat.contigs2bin.tsv
+
 ## concoct:
 Fasta_to_Contig2Bin.sh \
     -e fa \
     -i $concoctBins \
     > concoct.contigs2bin.tsv
 
+head concoct.contigs2bin.tsv ## that looks weird
 ## sometimes we have to clean this concoct table up with some BASH terminal magic
 paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
 
 ## vamb
+Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+head vamb.contigs2bin.tsv ## also looks weird
+
+## we need to cut the first three letters out of or so...
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+
+## with these we can run DAS tool to refine bins:
+
+DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $illuminaAssembly \
+    -t 25 \
+    --write_bins \
+    -o zymoMVilluminaBinsRefined
+
+## can you find your bins? How many are there?
 
