@@ -1145,6 +1145,8 @@ grep -n -B 2 -A 2 "^$" $file ## not found when we look in the pre-cutadapt
 ## yeah, looks like a lot of empty reads after 
 
 ## just curious, do we get the same result from the raw file?
+
+
 reads=/vol/testNotSoBig/datasets/zymoMC/nanopore/ZymoNP_trimmed_filteredEnds.fastq
 
 ### check out the sludge data ### 
@@ -4015,3 +4017,36 @@ wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical20
 
 ## we need to check out qiime pipeline
 
+## some emergency file transfers
+file=/home/ubuntu/backups/zymoNanoAssembly.fasta
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P 30381 $file ubuntu@129.70.51.6:/vol/danBot/
+
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P 30284 MetaPhlanProfiled_zymoIllu.txt ubuntu@129.70.51.6:/vol/danBot/
+
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30284 zymoIlluAssembly.fasta ubuntu@129.70.51.6:/vol/danBot/
+
+
+#### run nanopore binning for the class ####
+
+# mkdir /vol/danBot/ZymoBinning/nanopore
+
+
+### we need to add the refining script somewhere they can use without problems
+
+
+julia
+anja
+maria
+rebekka
+susanne
+
+milan
+
+cd /home/ubuntu/.local/bin
+wget https://raw.githubusercontent.com/cmks/DAS_Tool/master/src/Fasta_to_Contig2Bin.sh
+chmod 777 Fasta_to_Contig2Bin.sh
+
+cd /vol
+Fasta_to_Contig2Bin.sh
+
+## okay, think that worked

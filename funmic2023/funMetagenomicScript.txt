@@ -122,6 +122,7 @@ conda activate metaphlan
 
 ## make your output directory
 mkdir /vol/danBot/zymoMCcommunityProfile
+
 cd /vol/danBot/zymoMCcommunityProfile
 
 ## set your variables
@@ -151,15 +152,31 @@ conda deactivate
 conda activate graphlan
 
 ## they have a script for modifying their data:
-export2graphlan.py -i MetaPhlanProfiled_zymoIllu.txt -t merged_abundance.tree.txt -a merged_abundance.annot.txt
+
+## so try full suggested settings:
+export2graphlan.py -i MetaPhlanProfiled_zymoIllu.txt \
+  --skip_rows 1,2 \
+  --tree merged_abundance.tree.txt \
+  --annotation merged_abundance.annot.txt \
+  --most_abundant 100 \
+  --abundance_threshold 1 \
+  --least_biomarkers 10 \
+  --annotations 3,4,5,6 \
+  --external_annotations 7
+
+
 graphlan_annotate.py --annot merged_abundance.annot.txt merged_abundance.tree.txt merged_abundance.xml
+
 graphlan.py --dpi 600 merged_abundance.xml merged_abundance.png --external_legends
 
 ## get it local
 file=/vol/danBot/zymoMCcommunityProfile/merged_abundance.png
-#file=/vol/danBot/zymoMCcommunityProfile/merged_abundance_legend.png
+
+file=/vol/danBot/zymoMCcommunityProfile/merged_abundance_legend.png
+
 key=/home/daniel/.ssh/funmic2023
 scp -i $key -P 30500 -r ubuntu@129.70.51.6:$file .
+
 
 #### illumina assembly ####
 
@@ -177,6 +194,10 @@ seq1=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq
 seq2=/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq
 outdir=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina
 
+cd vol/danBot/assemblies/zymoMC/megahitZymoIllumina
+
+cd $outdir
+
 ## run the actual command
 nohup megahit -1 $seq1 \
         -2 $seq2 \
@@ -189,7 +210,7 @@ nohup megahit -1 $seq1 \
 
 ## activate conda environment
 
-conda deactivate
+#conda deactivate
 conda activate metaquast
 
 ## make our output directory:
@@ -198,7 +219,13 @@ mkdir -p /vol/danBot/zymoMetaquast/nanopore
 cd /vol/danBot/zymoMetaquast/nanopore
 
 ## define our path variables
+
 zymoMCnanoAssembly=/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta
+## or maybe 
+#zymoMCnanoAssembly=/vol/danBot/zymoNanoporeAssembly/assembly.fasta
+## or maybe (julia)
+#zymoMCnanoAssembly=/vol/danBot/zymoNanoAssembly.fasta
+## and our output directory
 zymoMCnanoMetaquastOut=/vol/danBot/zymoMetaquast/nanopore/
 
 ## run the command
@@ -206,10 +233,15 @@ nohup metaquast -t 12 \
           -o $zymoMCnanoMetaquastOut \
           $zymoMCnanoAssembly &
 
+less nohup.out
+
+
 
 ### metaquast illumina assembly ###
 
-## conda activated already
+
+#conda deactivate
+conda activate metaquast
 
 ## make our output directory:
 mkdir /vol/danBot/zymoMetaquast/illumina
@@ -221,23 +253,243 @@ zymoMCilluAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.conti
 zymoMCilluMetaquastOut=/vol/danBot/zymoMetaquast/illumina
 
 ## run the command
-nohup metaquast -t 12 \
+nohup metaquast -t 25 \
           -o $zymoMCilluMetaquastOut \
           $zymoMCilluAssembly &
 
 ## get these local:
 
+cd /vol/danBot 
+
+file=/vol/danBot/zymoMetaquast/nanopore
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 -r ubuntu@129.70.51.6:$file .
 
 #### binning ####
 
 ## we have three binning software to try.
+## concoct, metabat2, and VAMB.
 
-## concoct, metabat2, and VAMB
+## binning is the most complex thing we will do. 
 
-## two of them require an alignment of our 
-## raw reads back to our assembly
+## so let's make some directories to stay organized.
 
-## we need this for both our illumina and our
-## nanopore data
+mkdir /vol/danBot/zymoBinning
+                      
+mkdir /vol/danBot/zymoBinning/illumina
+                      
+mkdir /vol/danBot/zymoBinning/nanopore
 
-## start with nanopore reads
+## binning software requires that all raw reads get 
+## aligned back to our assembly.
+
+## this is built into VAMB, but the other two 
+## need us to do this as a separate step
+
+## start binning our zymoMC illumina data:
+
+## activate conda environment
+conda deactivate
+conda activate alignmentTools
+
+## make our output directory:
+mkdir /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning
+
+cd /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning
+
+## make our variables. Remember that your illumina assembly may not be where mine is.
+illuminaAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
+reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
+outdir="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning"
+
+## for our alignments we use bowtie, which needs an index of our assembly
+bowtie2-build $illuminaAssembly $outdir/zymoIlluminaAssembly
+
+## do the alignment. This takes a long time, 20-30 mins. Check top.
+nohup bowtie2 \
+  -x $outdir/zymoIlluminaAssembly \
+  -1 $reads1 -2 $reads2 \
+  -S rawReads2Contigs.sam \
+  --threads 25 \
+  --local &
+
+## can look at this alignment file if you like:
+head rawReads2Contigs.sam
+
+tail -n 1 rawReads2Contigs.sam
+
+## sort it
+samtools sort -l 1 \
+    -@25 \
+    -o rawReads2ContigsSorted.bam \
+    -O BAM \
+    rawReads2Contigs.sam
+
+## concoct needs indexing of this alignment
+samtools index rawReads2ContigsSorted.bam 
+
+
+## these reads-to-contigs alignments should now be available to 
+## our binning software packages. 
+
+### binning zymoMC illumina reads with metabat ###
+
+## activate our conda environment
+
+conda deactivate
+conda activate metabat2
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/illumina/metabat
+cd /vol/danBot/zymoBinning/illumina/metabat
+
+## define our variables
+illuminaAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+bam="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+runMetaBat.sh $illuminaAssembly $bam 
+
+## can you find your bins? how many did metabat create from your illumina assembly?
+
+## onto the next binning software
+
+
+### binning with zymoMC illumina reads with concoct ###
+
+
+## activate our concoct environment
+conda deactivate 
+conda activate concoct
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/illumina/concoct
+cd /vol/danBot/zymoBinning/illumina/concoct
+
+## define our variables
+illuminaAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+readAlignments="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+outdir="/vol/danBot/zymoBinning/illumina/concoct"
+
+## run the software
+## concoct has several steps, each with it's own script:
+
+cut_up_fasta.py $illuminaAssembly -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+
+concoct_coverage_table.py concoctContigs_10K.bed $readAlignments > coverage_table.tsv
+
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 25 \
+  -b $outdir
+
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+
+mkdir fasta_bins
+
+extract_fasta_bins.py $illuminaAssembly clustering_merged.csv --output_path fasta_bins/
+
+## concoct gives numerical numbers for names, which upsets some software downstream
+## rename, with some BASH terminal magic:
+
+cd fasta_bins
+for i in *; do
+mv $i "concoct_$i"
+done
+
+## how many bins did concoct create from your illumina assembly?
+
+### binning with zymoMC illumina reads with VAMB ###
+
+## activate conda environment
+conda deactivate 
+conda activate vamb
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/illumina/vamb 
+cd /vol/danBot/zymoBinning/illumina/vamb 
+
+## define our variables 
+illuminaAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
+reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
+
+## VAMB requires a different format for the alignment of 
+## read than we used above for metabat and concoct
+
+## vamb has a custom script to start it off:
+concatenate.py illumcatalogue.fna.gz $illuminaAssembly
+
+## they use different aligner, minimap2, so back to our alignment environment
+conda deactivate
+conda activate alignmentTools
+
+## make an index with minimap
+minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz 
+
+## map our reads to metagenome assembly with minimap and samtools
+## This takes some time, maybe 20 minutes
+minimap2 -t 25 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 25 > illumReadsAligned2Contigs.bam
+
+## 12:22
+
+## once we have our reads aligned to our metagenome assembly, run vamb itself
+
+conda deactivate
+conda activate vamb
+
+vamb --outdir vambOut \
+  --fasta illumcatalogue.fna.gz \
+  --bamfiles illumReadsAligned2Contigs.bam \
+  -t 8 \
+  -o C \
+  --minfasta 200000
+
+## -t 8 is for very simple communities, this number can be much higher
+
+## can you find your bins? how many?
+
+## and binning is done! 
+## I will do the nanopore binning and send you the results so we can compare.
+
+#### bin refining ####
+
+## now we have three sets of bins
+## we can select from among these 
+## and refine them with DAS tools:
+
+
+## activate conda
+conda deactivate
+conda activate das_tool
+
+## make our output directory:
+mkdir -p /vol/danBot/zymoRefineBins/illumina
+
+cd /vol/danBot/zymoRefineBins/illumina
+
+## define variables
+metabatBins=/vol/danBot/zymoBinning/illumina/metabat/final.contigs.fa.metabat-bins-20230308_095156/ ## this will be different for you!!!
+concoctBins=/vol/danBot/zymoBinning/illumina/concoct/fasta_bins/
+vambBins=/vol/danBot/zymoBinning/illumina/vamb/vambOut/bins/
+
+## for each binner, we need a table to tell das_tools
+## which contig belogs to which bin
+
+## metabat
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+## concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+## sometimes we have to clean this concoct table up with some BASH terminal magic
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+
+## vamb
+
