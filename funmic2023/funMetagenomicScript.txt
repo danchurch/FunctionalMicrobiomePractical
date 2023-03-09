@@ -507,7 +507,8 @@ DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs
     -c $illuminaAssembly \
     -t 25 \
     --write_bins \
-    -o zymoMVilluminaBinsRefined
+    -o zymoMCilluminaBinsRefined
 
 ## can you find your bins? How many are there?
+
 
