@@ -295,6 +295,21 @@ mkdir /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning
 
 cd /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning
 
+
+
+
+mv rawReads2Contigs.sam /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/
+
+mv rawReads2Contigs.sam $outdir
+
+echo $outdir
+
+cd /vol/danBot 
+find . -name rawReads2Contigs.sam
+
+
+
+
 ## make our variables. Remember that your illumina assembly may not be where mine is.
 illuminaAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
 reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
@@ -309,10 +324,11 @@ nohup bowtie2 \
   -x $outdir/zymoIlluminaAssembly \
   -1 $reads1 -2 $reads2 \
   -S rawReads2Contigs.sam \
-  --threads 25 \
+  --threads 12 \
   --local &
 
 ## can look at this alignment file if you like:
+
 head rawReads2Contigs.sam
 
 tail -n 1 rawReads2Contigs.sam
@@ -427,7 +443,7 @@ minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz
 
 ## map our reads to metagenome assembly with minimap and samtools
 ## This takes some time, maybe 20 minutes
-minimap2 -t 25 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 25 > illumReadsAligned2Contigs.bam
+minimap2 -t 12 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 12 > illumReadsAligned2Contigs.bam
 
 ## once we have our reads aligned to our metagenome assembly, run vamb itself
 
@@ -510,5 +526,23 @@ DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs
     -o zymoMCilluminaBinsRefined
 
 ## can you find your bins? How many are there?
+## look at the bins/genomes that the nanopore generated?
+
+## checkM
+
+conda deactivate
+
+conda activate checkm
+
+zymoMCilluminaBins=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins
+
+## check needs to find our bin on the tree of life
+checkm lineage_wf -t 26 -x fa $zymoMCilluminaBins checkMout &
+
+checkMout="/vol/danBot/zymoRefineBins/illumina/checkMout"
+
+zymoIlluminaMarkers=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout/lineage.ms
+
+checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
 

@@ -4178,7 +4178,6 @@ for i in *; do
 mv $i "concoct_$i"
 done
 
-## not run ##
 
 ### binning with zymoMC illumina reads with VAMB ###
 
@@ -4207,10 +4206,11 @@ minimap2 -d nanocatalogue.mmi nanocatalogue.fna.gz
 
 minimap2 -t 25 -N 5 -ax sr nanocatalogue.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 25 > nanoReadsAligned2Contigs.bam 
 
+
 conda deactivate
 conda activate vamb
 
-vamb --outdir vambOut --fasta zymoNanoCatalogue.fna.gz --bamfiles zymoNanoVamb_ReadsAligned2Contigs.bam -t 8 -o C --minfasta 200000 &
+vamb --outdir vambOut --fasta nanocatalogue.fna.gz --bamfiles nanoReadsAligned2Contigs.bam -t 8 -o C --minfasta 200000 
 
 ### nanopore zymomc bin refining  ###
 
@@ -4220,6 +4220,7 @@ vamb --outdir vambOut --fasta zymoNanoCatalogue.fna.gz --bamfiles zymoNanoVamb_R
 ## we can select from among these
 ## and refine them with DAS tools:
 
+
 ## activate conda
 conda deactivate
 conda activate das_tool
@@ -4228,12 +4229,18 @@ conda activate das_tool
 mkdir -p /vol/danBot/zymoRefineBins/nanopore
 cd /vol/danBot/zymoRefineBins/nanopore
 
+## not run ##
+
 ## define variables
-metabatBins=/vol/danBot/zymoBinning/nanopore/metabat/_________ ## this will be different for y
-ou!!!
+metabatBins=/vol/danBot/zymoBinning/nanopore/metabat/assembly.fasta.metabat-bins-20230308_155404
 concoctBins=/vol/danBot/zymoBinning/nanopore/concoct/fasta_bins/
 vambBins=/vol/danBot/zymoBinning/nanopore/vamb/vambOut/bins/
 nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+
+ls $metabatBins
+ls $concoctBins
+ls $vambBins
+ls $nanoporeAssembly
 
 ## for each binner, we need a table to tell das_tools
 ## which contig belogs to which bin
@@ -4252,9 +4259,11 @@ Fasta_to_Contig2Bin.sh \
     -i $concoctBins \
     > concoct.contigs2bin.tsv
 
-head concoct.contigs2bin.tsv ## that looks weird
+head concoct.contigs2bin.tsv ## that looks okay
+
 ## sometimes we have to clean this concoct table up with some BASH terminal magic
-paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+## paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+## but this nanopore concoct abundance table looks okay to me. Not sure why we need this and sometimes we don't.
 
 ## vamb
 Fasta_to_Contig2Bin.sh \
@@ -4262,20 +4271,60 @@ Fasta_to_Contig2Bin.sh \
     -i $vambBins \
     > vamb.contigs2bin.tsv
 
-head vamb.contigs2bin.tsv ## also looks weird
+head vamb.contigs2bin.tsv ## "S1C" is appended, like before, need to get rid of these
 
 ## we need to cut the first three letters out of or so...
 cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
 
+head vamb.contigs2bin_edited.tsv ## better
+
 ## with these we can run DAS tool to refine bins:
 
-DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+DAS_Tool  -i concoct.contigs2bin.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
     -l concoct,metabat,vamb \
-    -c $illuminaAssembly \
+    -c $nanoporeAssembly \
     -t 25 \
     --write_bins \
     -o zymoMCnanoBinsRefined
 
-
 #mv zymoMVilluminaBinsRefined zymoMCilluminaBinsRefined
 
+ls /vol/danBot/zymoRefineBins/nanopore/zymoMCnanoBinsRefined_DASTool_bins
+
+## okay, put these on the student computers, then powerpoint, then checkm/phylophlan code
+
+## we need to put the metabat, concoct, vamb
+## how to do this? 
+
+## mkdir the following directory on all computers:
+
+julia
+anja
+maria
+rebekka
+susanne
+milan
+
+#mkdir "/vol/danBot/zymoBinning/"
+mkdir "/vol/danBot/zymoRefineBins/"
+exit
+
+## set up file transfer to all students 
+
+#file="/vol/danBot/zymoBinning/nanopore/"
+file="/vol/danBot/zymoRefineBins/nanopore"
+destination="/vol/danBot/zymoRefineBins/"
+# julia
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30381 $file ubuntu@129.70.51.6:$destination
+#anja
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30452  $file ubuntu@129.70.51.6:$destination &
+# maria
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:$destination &
+#rebekka
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30372  $file ubuntu@129.70.51.6:$destination &
+# susanne
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30461  $file ubuntu@129.70.51.6:$destination &
+# milan
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30284  $file ubuntu@129.70.51.6:$destination &
+
+## 
