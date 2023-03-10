@@ -3688,6 +3688,11 @@ zymoIlluminaMarkers=/vol/danBot/refining/zymoMC/illumina/checkMout/lineage.ms
 checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
 
+
+
+
+
+
 ########### barcoding ############
 
 ## let's get the metabarcoding together
@@ -4327,4 +4332,40 @@ scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30461  $file ubuntu@129.70.51.6:$d
 # milan
 scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30284  $file ubuntu@129.70.51.6:$destination &
 
-## 
+
+destination="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/"
+file="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/rawReads2Contigs.sam"
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:$destination &
+
+
+destination="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/"
+file="/vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+scp -r -i /home/ubuntu/.ssh/danbotFuncomp -P  30372  $file ubuntu@129.70.51.6:$destination 
+
+
+
+### checkm nanopore zymo ####
+
+conda deactivate
+
+conda activate checkm
+
+zymoMCnanoporeBins=/vol/danBot/zymoRefineBins/nanopore/zymoMCnanoBinsRefined_DASTool_bins/
+
+## check needs to find our bin on the tree of life
+checkm lineage_wf -t 26 -x fa $zymoMCnanoporeBins checkMout &
+
+## we can put our checkm outputs here
+
+checkMout="/vol/danBot/zymoRefineBins/nanopore/checkMout/"
+zymoMCnanoporeMarkers=/vol/danBot/zymoRefineBins/nanopore/checkMout/lineage.ms
+
+echo $zymoMCnanoporeMarkers 
+echo $checkMout 
+
+checkm qa $zymoMCnanoporeMarkers $checkMout > zymoIllCheckMout.txt
+
+## I will move this folder, to get it out of our bins folder. You can do this if you like, or keep it with your bins.
+
+#### 
+

@@ -476,6 +476,7 @@ conda activate das_tool
 
 ## make our output directory:
 mkdir -p /vol/danBot/zymoRefineBins/illumina
+
 cd /vol/danBot/zymoRefineBins/illumina
 
 ## define variables
@@ -528,21 +529,134 @@ DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs
 ## can you find your bins? How many are there?
 ## look at the bins/genomes that the nanopore generated?
 
-## checkM
+#### checkM ####
 
+## let's see how we did with checkM 
+
+### illumina checkM ###
+
+## conda environment
 conda deactivate
-
 conda activate checkm
 
+## we can put our checkm outputs here
+mkdir /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout
+cd /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/
+
+## variables
+
+checkMout="/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout"
 zymoMCilluminaBins=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins
 
 ## check needs to find our bin on the tree of life
-checkm lineage_wf -t 26 -x fa $zymoMCilluminaBins checkMout &
+checkm lineage_wf -t 27 -x fa $zymoMCilluminaBins checkMout &
 
-checkMout="/vol/danBot/zymoRefineBins/illumina/checkMout"
-
-zymoIlluminaMarkers=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout/lineage.ms
+## we can put our checkm outputs here
+zymoIlluminaMarkers=/vol/danBot/zymoRefineBins/illumina/checkMout/lineage.ms
 
 checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
+## edit:
+## I will move this folder to a spot I think makes more sense, to get it out of our bins folder. 
+## You can do this if you like, or keep it with your bins.
 
+## please make sure your variables are defined.
+echo $checkMout ## does it look correct?
+ls $checkMout ## does this exist? are the files there?
+
+## if so, moving this out of our bin folder
+mv $checkMout /vol/danBot/zymoRefineBins/illumina/
+
+### nanopore checkM ###
+
+## we can repeat the checkM process with 
+## my results from binning and refining nanopore
+
+## conda environment
+conda deactivate
+conda activate checkm
+
+
+## define some variables
+zymoMCnanoporeBins="/vol/danBot/zymoRefineBins/nanopore/zymoMCnanoBinsRefined_DASTool_bins/"
+checkMout="/vol/danBot/zymoRefineBins/nanopore/checkMout/"
+zymoMCnanoporeMarkers="/vol/danBot/zymoRefineBins/nanopore/checkMout/lineage.ms"
+
+## check needs to find our bin on the tree of life
+checkm lineage_wf -t 26 -x fa $zymoMCnanoporeBins checkMout &
+
+
+checkm qa $zymoMCnanoporeMarkers $checkMout > zymoIllCheckMout.txt
+
+## compare your results to the illumina results!
+
+
+
+### assigning taxonomy with phylophlan ###
+
+## now let's try to get some taxonomic assignments
+
+## phylophlan illumina data
+
+## conda environment
+conda deactivate
+conda activate phylophlan
+
+## make our outputs folder
+mkdir /vol/danBot/zymoTaxonomy
+cd /vol/danBot/zymoTaxonomy
+mkdir illumina  ## make one later for nanopore
+
+## if you get lost and  need to get back here:
+cd /vol/danBot/zymoTaxonomy/illumina
+
+
+## define some variables 
+MAGs="/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins"
+phylophlanDB="/vol/danBot/phylophlan_databases"
+
+## run phylophlan
+## as always, can check "phylophlan_metagenomic --help" for details on options and settings
+
+phylophlan_metagenomic \
+  -i $MAGs \
+  --database_folder $phylophlanDB \
+  -e fa \
+  -d SGB.Jul20 \
+  -o phylophlanOut_ZymoMCillumina \
+  --nproc 25 \
+  -n 1 \
+  --verbose 
+
+## look at the text that results - does it make sense?
+
+## phylophlan nanopore data
+
+## conda environment
+conda deactivate
+conda activate phylophlan
+
+## make our outputs folder
+mkdir /vol/danBot/zymoTaxonomy/nanopore 
+
+cd /vol/danBot/zymoTaxonomy/nanopore 
+
+
+## define some variables 
+MAGs="/vol/danBot/zymoRefineBins/nanopore/zymoMCnanoBinsRefined_DASTool_bins"
+phylophlanDB="/vol/danBot/phylophlan_databases"
+
+## run phylophlan
+## as always, can check "phylophlan_metagenomic --help" for details on options and settings
+
+phylophlan_metagenomic \
+  -i $MAGs \
+  --database_folder $phylophlanDB \
+  -e fa \
+  -d SGB.Jul20 \
+  -o phylophlanOut_ZymoMCnanopore \
+  --nproc 25 \
+  -n 1 \
+  --verbose 
+
+## and how does this look, compared to our illumina data?
