@@ -660,3 +660,121 @@ phylophlan_metagenomic \
   --verbose 
 
 ## and how does this look, compared to our illumina data?
+
+
+
+#### gene prediction and metabolic pathways ####
+
+## we will take a quick, very incomplete look at the 
+## metabolic potential of our metagenome and one of our 
+## mags
+
+## first we predict genes in our genome or metagenome
+## using the prodigal program, then we 
+## give the resulting amino acid predictions to 
+## the online tools GhostKOALA and BlastKOALA
+
+## GhostKOALA is intended for metagenomes
+## BlastKOALA is intended for genomes
+
+## start with our illumina metagenome:
+
+## conda environment
+conda deactivate
+conda activate prodigal
+
+## working directory
+mkdir -p /vol/danBot/zymoMCgenePredictions/metagenome/illumina
+cd /vol/danBot/zymoMCgenePredictions/metagenome/illumina
+
+## variables
+
+## remember that your illumina assembly may be in a different spot:
+metagenomeAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
+
+## run program
+
+## check help file for prodigal
+prodigal -h
+
+prodigal \
+  -a zymoMCilluminaMetagenome.genes.faa \
+  -d zymoMCilluminaMetagenome.genes.fna \
+  -f gff \
+  -o zymoMCilluminaMetagenome.genes.gff \
+  -i $metagenomeAssembly
+
+## now get these file local.
+## as always, log out of de.NBI, go to a directory on your home linux 
+## where you want to receive your files
+
+file=/vol/danBot/zymoMCgenePredictions/metagenome/illumina/
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+
+## now we can give these amina acid gene predictions ("faa" file)
+## to ghostKoala
+
+## ghostKoala is here:
+https://www.kegg.jp/ghostkoala/ 
+
+## go there with your local web browser and upload your .faa file
+
+## they will send you an email requesting confirmation, don't miss it 
+## or your job request will be ignored. 
+
+## can you repeat the above with the nanopore metagenome assembly?
+
+### MAG gene prediction and annotation ###
+
+## we can use a very similar pipeline to examine our MAGs
+## we will pick one. Look at your phylophlan outputs, and pick 
+## one that interests you: 
+
+less /vol/danBot/zymoTaxonomy/illumina/phylophlanOut_ZymoMCillumina.tsv
+
+## I will pick my Listeria MAG..."S1C47"
+
+## in the following script, be careful: I may not have the same bin/MAG file names as you do!  
+
+## conda environment
+conda deactivate
+conda activate prodigal
+
+## working directory
+mkdir -p /vol/danBot/zymoMCgenePredictions/MAG/illumina
+cd /vol/danBot/zymoMCgenePredictions/MAG/illumina
+
+## variables
+
+## find your MAG that you are interested in. 
+## remember that your MAG names may be different, or in a different directory:
+MAG=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/S1C47.fa
+MAGname="S1C47"
+
+## run program
+
+## check help file for prodigal
+prodigal -h
+
+prodigal \
+  -a $MAGname.genes.faa \
+  -d $MAGname.genes.fna \
+  -f gff \
+  -o $MAGname.genes.gff \
+  -i $MAG
+
+## get these onto your local computer with scp as above and as always. 
+
+## now we can give these amina acid gene predictions to BlastKoala
+
+## BlastKoala is here:
+https://www.kegg.jp/blastkoala/
+
+## go there with your local web browser and upload your .faa file
+
+## they will send you an email requesting confirmation, don't miss it 
+## or your job request will be ignored. 
+
+
+
