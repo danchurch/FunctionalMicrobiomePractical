@@ -272,7 +272,19 @@ conda update -n base -c defaults conda
 
 conda create -n readQC -c bioconda cutadapt fastqc bbmap seqtk
 
-#conda create -n readQCnv -c bioconda cutadapt fastqc bbmap seqtk
+conda install -c bioconda trim_galore
+
+## is it too late to add trim_galore?
+
+#conda create -n readQCnv -c bioconda cutadapt fastqc bbmap seqtk 
+
+conda install trim-galore
+
+#conda install trim-galore
+
+conda activate readQC
+trim_galore --help
+
 
 ### vsearch ###
 conda create -n vsearch -c bioconda vsearch
@@ -592,6 +604,10 @@ wget https://data.qiime2.org/distro/core/qiime2-2022.11-py38-linux-conda.yml
 conda env create -n qiime2 --file qiime2-2022.11-py38-linux-conda.yml
 
 #conda rename -n qiime2-2022.11 qiime2
+
+## prodigal gene prediction
+
+conda create -n prodigal -c bioconda prodigal
 
 
 
@@ -4367,5 +4383,406 @@ checkm qa $zymoMCnanoporeMarkers $checkMout > zymoIllCheckMout.txt
 
 ## I will move this folder, to get it out of our bins folder. You can do this if you like, or keep it with your bins.
 
-#### 
+#### prodigal setup ###
+
+## forgot to put prodigal on their computers...
+## add to installs above
+
+
+##### qiime try 2 #####
+
+## qiime got buried in all the other tasks
+
+## start over. first, where is the data?
+
+
+/vol/danBot/datasets/metabarcoding
+
+## we need to make manifest and metadata tables for these
+
+## working locally:
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/metabarcode2023
+
+## last year this looked like this:
+
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2022/sipData/SIP_manifest.tsv"
+
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2022/sipData/SIP_metadata.tsv"
+
+
+## we can probably re-use these, and just add Milan's data back onto them.
+
+## milan's metadata looks like this:
+seq_id  sample_id   Fractions   Treatment
+Oemik-001254    12C6    6   12C
+Oemik-001255    12C7    7   12C
+Oemik-001256    12C8    8   12C
+Oemik-001257    12C9    9   12C
+Oemik-001258    13C5    5   13C
+Oemik-001259    13C6    6   13C
+Oemik-001260    13C7    7   13C
+Oemik-001261    13C8    8   13C
+Oemik-001262    13C9    9   13C
+
+## milan's treatment was acetate. This should be appended to the sample-id somehow.
+## to match last year's format, we need headers to match:
+## sample_name, Substrate, Label, and Fraction
+## seq_id will have to be moved to the manifest:
+
+sample_name Substrate   Label   Fraction
+12A6    acet    12C  6   
+12A7    acet    12C  7   
+12A8    acet    12C  8   
+12A9    acet    12C  9   
+13A5    acet    13C  5   
+13A6    acet    13C  6   
+13A7    acet    13C  7   
+13A8    acet    13C  8   
+13A9    acet    13C  9   
+
+## if we add this to our existing metadata, looks like this in csv
+
+sample_name,Substrate,Label,Fraction
+12A6,acet,12C,6   
+12A7,acet,12C,7   
+12A8,acet,12C,8   
+12A9,acet,12C,9   
+12G6,gluc,12C,6
+12G7,gluc,12C,7
+12G8,gluc,12C,8
+12G9,gluc,12C,9
+12G10,gluc,12C,10
+12G11,gluc,12C,11
+13A5,acet,13C,5   
+13A6,acet,13C,6   
+13A7,acet,13C,7   
+13A8,acet,13C,8   
+13A9,acet,13C,9   
+13G6,gluc,13C,6
+13G7,gluc,13C,7
+13G8,gluc,13C,8
+13G9,gluc,13C,9
+13G10,gluc,13C,10
+13G11,gluc,13C,11
+12M6,meOH,12C,6
+12M7,meOH,12C,7
+12M8,meOH,12C,8
+12M9,meOH,12C,9
+12M10,meOH,12C,10
+12M11,meOH,12C,11
+13M6,meOH,13C,6
+13M7,meOH,13C,7
+13M8,meOH,13C,8
+13M9,meOH,13C,9
+13M10,meOH,13C,10
+13M11,meOH,13C,11
+
+## using csv for the moment, trust it more
+
+## to change to tsv, use csvtool?
+csvtool -t COMMA -u TAB cat sipMeta2023.csv > sipMeta2023.tsv
+
+## looks promising. And the manifest file?
+csvtool -t TAB -u COMMA cat SIP_manifest.tsv > SIP_manifest2022.csv
+
+
+## it is awkward to work with two folders of files. let's combine
+
+
+
+## this looks like this, with milans files added in. note that we will have to 
+## match the "_trimmed.fq.gz" as output from trimming
+
+sample-id,absolute-filepath
+12G6, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000480_S60_L001_R1_001_trimmed.fq.gz
+12G7, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000481_S61_L001_R1_001_trimmed.fq.gz
+12G8, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000482_S62_L001_R1_001_trimmed.fq.gz
+12G9, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000483_S63_L001_R1_001_trimmed.fq.gz
+12G10,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000484_S64_L001_R1_001_trimmed.fq.gz
+12G11,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000485_S65_L001_R1_001_trimmed.fq.gz
+13G6, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000486_S77_L001_R1_001_trimmed.fq.gz
+13G7, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000487_S67_L001_R1_001_trimmed.fq.gz
+13G8, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000488_S68_L001_R1_001_trimmed.fq.gz
+13G9, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000489_S69_L001_R1_001_trimmed.fq.gz
+13G10,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000490_S70_L001_R1_001_trimmed.fq.gz
+13G11,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000491_S71_L001_R1_001_trimmed.fq.gz
+12M6, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000492_S72_L001_R1_001_trimmed.fq.gz
+12M7, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000493_S73_L001_R1_001_trimmed.fq.gz
+12M8, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000494_S74_L001_R1_001_trimmed.fq.gz
+12M9, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000495_S75_L001_R1_001_trimmed.fq.gz
+12M10,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000496_S76_L001_R1_001_trimmed.fq.gz
+12M11,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000497_S84_L001_R1_001_trimmed.fq.gz
+13M6, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000498_S78_L001_R1_001_trimmed.fq.gz
+13M7, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000499_S79_L001_R1_001_trimmed.fq.gz
+13M8, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000500_S80_L001_R1_001_trimmed.fq.gz
+13M9, /vol/danBot/datasets/metabarcoding/old16S/Oemik-000501_S81_L001_R1_001_trimmed.fq.gz
+13M10,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000502_S82_L001_R1_001_trimmed.fq.gz
+13M11,/vol/danBot/datasets/metabarcoding/old16S/Oemik-000503_S83_L001_R1_001_trimmed.fq.gz
+
+
+
+## milans manifest alone would look like this:
+sample-id,absolute-filepath
+12A6,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001254_S91_L001_R1_001.fastq.gz
+12A7,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001255_S92_L001_R1_001.fastq.gz
+12A8,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001256_S93_L001_R1_001.fastq.gz
+12A9,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001257_S94_L001_R1_001.fastq.gz
+13A5,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001258_S95_L001_R1_001.fastq.gz
+13A6,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001259_S96_L001_R1_001.fastq.gz
+13A7,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001260_S97_L001_R1_001.fastq.gz
+13A8,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001261_S98_L001_R1_001.fastq.gz
+13A9,/vol/danBot/datasets/metabarcoding/new16S/Oemik-001262_S99_L001_R1_001.fastq.gz
+
+## assuming we match the file endings after trimming, combo manifest file should look like this:
+
+## edited to match the outputs from trim galore this year:
+sample-id,absolute-filepath
+12A6,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001254_S91_L001_R1_001_trimmed_fastqc.zip
+12A7,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001255_S92_L001_R1_001_trimmed_fastqc.zip
+12A8,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001256_S93_L001_R1_001_trimmed_fastqc.zip
+12A9,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001257_S94_L001_R1_001_trimmed_fastqc.zip
+13A5,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001258_S95_L001_R1_001_trimmed_fastqc.zip
+13A6,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001259_S96_L001_R1_001_trimmed_fastqc.zip
+13A7,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001260_S97_L001_R1_001_trimmed_fastqc.zip
+13A8,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001261_S98_L001_R1_001_trimmed_fastqc.zip
+13A9,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-001262_S99_L001_R1_001_trimmed_fastqc.zip
+12G6,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000480_S60_L001_R1_001_trimmed_fastqc.zip
+12G7,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000481_S61_L001_R1_001_trimmed_fastqc.zip
+12G8,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000482_S62_L001_R1_001_trimmed_fastqc.zip
+12G9,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000483_S63_L001_R1_001_trimmed_fastqc.zip
+12G10,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000484_S64_L001_R1_001_trimmed_fastqc.zip
+12G11,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000485_S65_L001_R1_001_trimmed_fastqc.zip
+13G6,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000486_S77_L001_R1_001_trimmed_fastqc.zip
+13G7,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000487_S67_L001_R1_001_trimmed_fastqc.zip
+13G8,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000488_S68_L001_R1_001_trimmed_fastqc.zip
+13G9,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000489_S69_L001_R1_001_trimmed_fastqc.zip
+13G10,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000490_S70_L001_R1_001_trimmed_fastqc.zip
+13G11,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000491_S71_L001_R1_001_trimmed_fastqc.zip
+12M6,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000492_S72_L001_R1_001_trimmed_fastqc.zip
+12M7,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000493_S73_L001_R1_001_trimmed_fastqc.zip
+12M8,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000494_S74_L001_R1_001_trimmed_fastqc.zip
+12M9,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000495_S75_L001_R1_001_trimmed_fastqc.zip
+12M10,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000496_S76_L001_R1_001_trimmed_fastqc.zip
+12M11,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000497_S84_L001_R1_001_trimmed_fastqc.zip
+13M6,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000498_S78_L001_R1_001_trimmed_fastqc.zip
+13M7,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000499_S79_L001_R1_001_trimmed_fastqc.zip
+13M8,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000500_S80_L001_R1_001_trimmed_fastqc.zip
+13M9,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000501_S81_L001_R1_001_trimmed_fastqc.zip
+13M10,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000502_S82_L001_R1_001_trimmed_fastqc.zip
+13M11,/vol/danBot/sipMetabarcode/trimmedSIPreads/Oemik-000503_S83_L001_R1_001_trimmed_fastqc.zip
+
+## change to tabs
+csvtool -t COMMA -u TAB cat sipManifest2023.csv > sipManifest2023.tsv
+
+ls /home/daniel/Documents/teaching/functionalMicrobiomes/metabarcode2023/sipManifest2023.tsv
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/metabarcode2023/
+
+## put this on our repo
+mv sipManifest2023.tsv /home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical2022_repo/funmic2023/metabarcodeTables/
+
+mv sipMeta2023.tsv /home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical2022_repo/funmic2023/metabarcodeTables/
+
+## let's change this in everyone's computer
+cd /vol/danBot/datasets/metabarcoding
+mkdir combined16S/
+cp -r old16S/* combined16S/
+cp -r new16S/* combined16S/
+rm -r /vol/danBot/datasets/metabarcoding/combined16S/FastQC 
+ls /vol/danBot/datasets/metabarcoding/combined16S/ -l | wc -l ## should be 34
+
+## that old fastqc is going to cause problems
+
+julia
+rm /vol/danBot/zymoRefineBins/*fastq
+exit
+
+anja
+rm /vol/danBot/zymoRefineBins/*fastq
+exit
+
+maria
+rm /vol/danBot/zymoRefineBins/*fastq
+exit
+
+rebekka
+rm /vol/danBot/zymoRefineBins/*fastq
+exit
+
+susanne
+rm /vol/danBot/zymoRefineBins/*fastq
+exit
+
+milan
+rm /vol/danBot/zymoRefineBins/*fastq
+exit
+
+cd /vol/danBot/datasets/metabarcoding/old16S/FastQC
+
+## and never mind, these probably need separate quality control...
+
+## unless they have exactly the same clipping requirements. Check first...
+
+## we're also going to need a concatenated fastq of all of the new files, 
+## same for the old files, because they have to be addressed differently
+## (maybe)
+
+## to do this:
+
+cd /vol/danBot/datasets/metabarcoding
+
+new16S=/vol/danBot/datasets/metabarcoding/new16S
+old16S=/vol/danBot/datasets/metabarcoding/old16S
+
+gunzip $new16S/*
+cat $new16S/* > /vol/danBot/datasets/metabarcoding/allNew16Sraw.fastq
+
+## funny, only 228,854 reads from milan's files?
+
+gunzip $old16S/*
+cat $old16S/* > /vol/danBot/datasets/metabarcoding/allOld16Sraw.fastq
+
+## and only 668,529 reads from the old class studies. huh, pretty low numbers
+
+## should we give them this file? or have them run this?
+
+## give them the file, we won't have much time.
+
+
+
+#file="/vol/danBot/datasets/metabarcoding/allOld16Sraw.fastq"
+file="/vol/danBot/datasets/metabarcoding/allNew16Sraw.fastq"
+destination="/vol/danBot/datasets/metabarcoding"
+# julia
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30381 $file ubuntu@129.70.51.6:$destination &
+#anja
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30452  $file ubuntu@129.70.51.6:$destination &
+# maria
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:$destination &
+#rebekka
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30372  $file ubuntu@129.70.51.6:$destination &
+# susanne
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30461  $file ubuntu@129.70.51.6:$destination &
+# milan
+scp -i /home/ubuntu/.ssh/danbotFuncomp -P  30284  $file ubuntu@129.70.51.6:$destination &
+
+
+## just curious, what does the combined readset look like if we concat and fastqc it?
+
+## okay, now back up, start with fastqc
+
+/vol/danBot/datasets/metabarcoding/combined16S.fastq
+
+
+######## read quality #############
+
+## a quick tour of the data
+## our reads are here:
+cd /vol/danBot/datasets/metabarcoding; ls -l
+
+## we have two datasets, one from a bayreuth soil from last year's practical course
+## and the second is new data that Milan created for us:
+
+## I have copied all the fastq files from both old and new into a single directory here:
+ls /vol/danBot/datasets/metabarcoding/combined16S
+
+## I've combined all the old16S data into a single fastq file to check total quality,
+## and and the new16S data in another single fastq file:
+cd /vol/danBot/datasets/metabarcoding; ls *fastq -l
+
+## we will use these combined fastq files for quality checks
+
+## activate conda environment
+conda deactivate
+conda activate readQC
+
+## makes some directories
+##working directory for metabarcoding pipeline,
+## and within this, a readQC working directory, in one command
+
+mkdir -p /vol/danBot/sipMetabarcode/sipReadQC
+cd /vol/danBot/sipMetabarcode/sipReadQC
+
+## we also need an output directory in this for the fastqc outputs
+## first we are looking at the unmodified ("raw") reads:
+mkdir /vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports
+
+## for quality, and the new16S into another. Let's check them both:
+
+## variables 
+allNew16S="/vol/danBot/datasets/metabarcoding/allNew16Sraw.fastq"
+allOld16S="/vol/danBot/datasets/metabarcoding/allOld16Sraw.fastq"
+allCombo16S="/vol/danBot/datasets/metabarcoding/combined16S.fastq"
+outdir="/vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports"
+
+## generate our raw-read fastqc reports 
+fastqc -o $outdir -t 20 $allNew16S 
+fastqc -o $outdir -t 20 $allOld16S
+fastqc -o $outdir -t 20 $allCombo16S
+
+## get these locally and look at them with your web browser
+file=/vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+
+## look at the qc reports. do they tell you anything?
+## what do you think about the presence or absence of 16S primers?
+
+## python, length of primers?
+len("GTGYCAGCMGCCGCGGTAA") ## 19
+len("GGACTACNVGGGTWTCTAAT") ## 20
+## makes sense
+
+## I think we can trim these together, at once
+## so trim it...
+
+ls /vol/danBot/datasets/metabarcoding/combined16S
+
+conda activate readQC
+
+## we want to trim the first 20 reads off, and only long reads (>200 bp)
+## for this we need read trimming software. Let's clip all the old and new
+## reads together
+
+## activate conda
+conda deactivate
+conda activate readQC
+
+## make output directory
+mkdir /vol/danBot/sipMetabarcode/trimmedSIPreads
+
+cd /vol/danBot/sipMetabarcode/trimmedSIPreads
+
+## define variables 
+sipRawReads=/vol/danBot/datasets/metabarcoding/combined16S
+output=/vol/danBot/sipMetabarcode/trimmedSIPreads 
+
+trim_galore \
+  --cores 8 \
+  -o $output \
+  --clip_R1 20 \
+  --fastqc \
+  --illumina \
+  --length 200 \
+  $sipRawReads/*fastq.gz
+
+## these come with fastqc reports. You can look at these
+## to see the effect that trimming and filtering short 
+## reads has had on the data
+
+file=/vol/danBot/sipMetabarcode/trimmedSIPreads/*html
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+
+## let's get these into reads into qiime and learn about
+## denoising
+
+conda activate qiime2_env
+
+mkdir /vol/danBot/sipMetabarcode/qiime
+
+cd /vol/danBot/sipMetabarcode/qiime
+
+## let's get some extra files from the class repository:
 
