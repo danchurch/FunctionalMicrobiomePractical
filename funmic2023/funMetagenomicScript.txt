@@ -556,18 +556,9 @@ zymoIlluminaMarkers=/vol/danBot/zymoRefineBins/illumina/checkMout/lineage.ms
 
 checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
-## edit:
-## I will move this folder to a spot I think makes more sense, to get it out of our bins folder. 
-## You can do this if you like, or keep it with your bins.
-
-## please make sure your variables are defined.
-echo $checkMout ## does it look correct?
-ls $checkMout ## does this exist? are the files there?
-
-## if so, moving this out of our bin folder
-mv $checkMout /vol/danBot/zymoRefineBins/illumina/
 
 ### nanopore checkM ###
+
 
 ## we can repeat the checkM process with 
 ## my results from binning and refining nanopore
@@ -585,11 +576,13 @@ zymoMCnanoporeMarkers="/vol/danBot/zymoRefineBins/nanopore/checkMout/lineage.ms"
 ## check needs to find our bin on the tree of life
 checkm lineage_wf -t 26 -x fa $zymoMCnanoporeBins checkMout &
 
-
-checkm qa $zymoMCnanoporeMarkers $checkMout > zymoIllCheckMout.txt
+checkm qa $zymoMCnanoporeMarkers $checkMout > zymoNanoCheckMout.txt
 
 ## compare your results to the illumina results!
+## we can look at these side-by-side
+less /vol/danBot/zymoRefineBins/nanopore/checkMout/zymoIllCheckMout.txt
 
+less /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout/zymoIllCheckMout.txt
 
 
 ### assigning taxonomy with phylophlan ###
