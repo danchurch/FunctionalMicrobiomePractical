@@ -1,0 +1,303 @@
+#### metabarcoding - an introduction ####
+
+## a quick tour of the data
+## our reads are here:
+
+cd /vol/danBot/datasets/metabarcoding/combined16S; ls 
+
+## we actually have two datasets, one from a bayreuth soil from last year's practical course
+## and the second is new data that Milan donated, from an acetate experiment, on a different 
+## soil. 
+
+## a single fastq file that incorporates all of the samples is here:
+cd /vol/danBot/datasets/metabarcoding; ls 
+## we'll use this to check the quality of the reads
+
+### quality check/control of reads ###
+
+## we will use these combined fastq files for quality checks
+
+## activate conda environment
+
+conda deactivate
+conda activate readQC
+
+## make some directories
+##working directory for metabarcoding pipeline,
+## and within this, a readQC working directory, in one command
+
+mkdir -p /vol/danBot/sipMetabarcode/sipReadQC
+cd /vol/danBot/sipMetabarcode/sipReadQC
+
+## we also need an output directory in this for the fastqc outputs
+## first we are looking at the unmodified ("raw") reads:
+mkdir /vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports
+
+allCombo16S="/vol/danBot/datasets/metabarcoding/combined16S.fastq"
+outdir="/vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports"
+
+fastqc -o $outdir -t 20 $allCombo16S
+
+## get this local and look at them with your web browser
+
+## local computer ##
+file=/vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+## local computer ##
+
+## let's look at these and make some qc decisions.
+## they look different than other data we have 
+## used so far. Why? How?
+
+conda activate readQC
+
+## to act on our decisions, we need read trimming software. 
+## we'll use trim_galore:
+
+## activate conda
+conda deactivate
+conda activate readQC
+
+## make output directory
+
+mkdir /vol/danBot/sipMetabarcode/trimmedSIPreads
+
+cd /vol/danBot/sipMetabarcode/trimmedSIPreads
+
+## define some variables
+sipRawReads=/vol/danBot/datasets/metabarcoding/combined16S
+output=/vol/danBot/sipMetabarcode/trimmedSIPreads
+
+## run it
+trim_galore \
+  --cores 8 \
+  -o $output \
+  --clip_R1 20 \
+  --fastqc \
+  --illumina \
+  --length 200 \
+  $sipRawReads/*fastq.gz
+
+## these come with fastqc reports. You can look at these
+## to see the effect that trimming and filtering short
+## reads has had on the data
+
+## local computer ##
+file=/vol/danBot/sipMetabarcode/trimmedSIPreads/*html
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+## local computer ##
+
+## let's get these into reads into qiime and learn about...
+
+### denoising ###
+
+## activate our environment
+conda activate qiime2
+
+## make our working directory
+mkdir /vol/danBot/sipMetabarcode/qiime
+cd /vol/danBot/sipMetabarcode/qiime
+
+## we need some extra files from the class repository:
+
+## a manifest file that explains where our files are
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2023/metabarcodeTables/sipManifest2023.tsv"
+
+## and a metadata file that explains our experimental setup:
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical2022/main/funmic2023/metabarcodeTables/sipMeta2023.tsv"
+
+## vars
+manifest=/vol/danBot/sipMetabarcode/qiime/sipManifest2023.tsv
+metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
+outdir=/vol/danBot/sipMetabarcode/qiime
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path sipManifest2023.tsv \
+  --output-path SIPreads_qiime \
+  --input-format SingleEndFastqManifestPhred33V2
+
+## now let's try getting ASV's out of this:
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs SIPreads_qiime.qza \
+  --p-trunc-len 0 \
+  --p-n-threads 10 \
+  --o-table dada2_table.qza \
+  --o-representative-sequences dada2_rep_set.qza \
+  --o-denoising-stats dada2_stats.qza
+
+## qiime can make some tables and graphics for us to use
+## to understand what just happened:
+
+
+qiime metadata tabulate \
+  --m-input-file dada2_stats.qza \
+  --o-visualization dada2_stats_bymetadata.qzv
+
+
+qiime feature-table summarize \
+  --i-table dada2_table.qza \
+  --m-sample-metadata-file sipMeta2023.tsv \
+  --o-visualization dada2_featureTableSummary_visualization.qzv
+
+qiime feature-table tabulate-seqs \
+  --i-data dada2_rep_set.qza \
+  --o-visualization dada2_rep_set.qzv
+
+## let's organize these outputs a bit
+
+mkdir dada2visualizations
+mv dada2_stats_bymetadata.qzv dada2_featureTableSummary_visualization.qzv dada2_rep_set.qzv dada2visualizations/
+
+mkdir dada2OutPut
+mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut
+
+## get them local and look at them!
+
+## local computer ##
+file=/vol/danBot/sipMetabarcode/qiime/dada2visualizations
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+
+## put the visualizations here:
+https://view.qiime2.org/
+## local computer ##
+
+### rarefaction and alpha/beta diversity ###
+
+## back onto denbi
+
+conda activate qiime2
+
+## make sure I'm back in my qiime WD:
+
+cd /vol/danBot/sipMetabarcode/qiime
+
+dada2_table=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
+
+qiime diversity alpha-rarefaction \
+  --i-table $dada2_table \
+  --o-visualization alpha_rarefaction_curves.qzv \
+  --m-metadata-file $metadata \
+  --p-max-depth 10000
+
+## get it local and let's talk about it
+
+## local computer ###
+file=/vol/danBot/sipMetabarcode/qiime/alpha_rarefaction_curves.qzv
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+## local computer ###
+
+## now on to...
+
+
+###assigning phylogeny and taxonomy###
+
+## a first step for any phylogenetic
+## analysis would be to generate a tree
+
+
+## working directory
+mkdir /vol/danBot/sipMetabarcode/qiime/aligned2Tree/
+
+cd /vol/danBot/sipMetabarcode/qiime/aligned2Tree/
+
+repSet=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences $repSet \
+  --o-alignment aligned_dada2_rep_set.qza \
+  --o-masked-alignment masked_aligned_dada2_rep_set.qza \
+  --o-tree unrooted_tree.qza \
+  --o-rooted-tree rooted_tree.qza \
+  --p-n-threads 10 \
+  --verbose
+
+## once we have this tree, it can be used to do diversity-based 
+## distance metrics like unifrac
+
+cd /vol/danBot/sipMetabarcode/qiime
+
+repSet=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
+dada2_table=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
+rootedTree=/vol/danBot/sipMetabarcode/qiime/aligned2Tree/rooted_tree.qza
+
+qiime diversity core-metrics-phylogenetic \
+  --i-table $dada2_table \
+  --i-phylogeny $rootedTree \
+  --m-metadata-file $metadata \
+  --p-sampling-depth 5500 \
+  --output-dir core-metrics-results
+
+## get it local, look at it, talk about it
+
+## local computer ##
+file=/vol/danBot/sipMetabarcode/qiime/core-metrics-results
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+## local computer ##
+
+### last metabarcoding task: assign taxonomy ###
+
+conda activate qiime2
+
+mkdir /vol/danBot/sipMetabarcode/qiime/taxClassification
+cd /vol/danBot/sipMetabarcode/qiime/taxClassification
+
+## we need to get the algorithm for assigning taxonomy
+## as part of this, we have to choose our database of 
+## taxonomy. We will use the well-known Silva 16S database,
+## and one of their standard classifiers:
+
+wget https://data.qiime2.org/2022.2/common/silva-138-99-515-806-nb-classifier.qza
+
+repSet=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
+ourClassifier=/vol/danBot/sipMetabarcode/qiime/taxClassification/silva-138-99-515-806-nb-classifier.qza
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier $ourClassifier \
+  --i-reads $repSet \
+  --p-n-jobs 10 \
+  --o-classification dada2_rep_set_classified.qza
+
+
+qiime metadata tabulate \
+  --m-input-file dada2_rep_set_classified.qza \
+  --o-visualization taxonomy.qzv
+
+## to make a nice visualization out of this...
+
+
+repSetClassified=/vol/danBot/sipMetabarcode/qiime/taxClassification/dada2_rep_set_classified.qza
+dada2_table=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
+dada2Reps=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
+
+qiime taxa barplot \
+  --i-table $dada2_table \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization all_taxa_bar_plots.qzv
+
+## get this locally, as per usual, and look at it.
+## make downloading easier, let's clean up our taxonomic classifier
+
+## if you're not already in there:
+cd /vol/danBot/sipMetabarcode/qiime/taxClassification
+
+rm silva-138-99-515-806-nb-classifier.qza
+
+## local computer ##
+file=/vol/danBot/sipMetabarcode/qiime/taxClassification/
+key=/home/daniel/.ssh/funmic2023
+scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+## local computer ##
+
+
+## end!
