@@ -4706,7 +4706,6 @@ cd /vol/danBot/sipMetabarcode/sipReadQC
 ## first we are looking at the unmodified ("raw") reads:
 mkdir /vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports
 
-## for quality, and the new16S into another. Let's check them both:
 
 ## variables 
 allNew16S="/vol/danBot/datasets/metabarcoding/allNew16Sraw.fastq"
@@ -4897,6 +4896,8 @@ qiime phylogeny align-to-tree-mafft-fasttree \
 cd /vol/danBot/sipMetabarcode/qiime
 cd /vol/studentFunMic1Vol/qiime2WD
 
+## not run ##
+
 repSet=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
 dada2_table=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_table.qza
 metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
@@ -4934,15 +4935,57 @@ qiime feature-classifier classify-sklearn \
   --p-n-jobs 10 \
   --o-classification dada2_rep_set_classified.qza
 
-## not run ##
 qiime metadata tabulate \
   --m-input-file dada2_rep_set_classified.qza \
   --o-visualization taxonomy.qzv
 
+
+##  
+repSetClassified=/vol/danBot/sipMetabarcode/qiime/taxClassification/dada2_rep_set_classified.qza
+dada2_table=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
+dada2Reps=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
+
+qiime taxa barplot \
+  --i-table $dada2_table \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization all_taxa_bar_plots.qzv
+
+## get this locally, as per usual, and look at it.
+## make downloading easier, let's clean up our taxonomic classifier
+
 ## local computer ##
-file=/vol/danBot/sipMetabarcode/qiime/core-metrics-results
+file=/vol/danBot/sipMetabarcode/qiime/taxClassification/
 key=/home/daniel/.ssh/funmic2023
 scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
 ## local computer ##
+
+
+## end of script for them
+
+## clean up 
+
+## okay, so to be clear, we just need the combined dataset
+## and a combined fastq. let's get rid of everything else
+
+## also looks like they need a summary fastq for the combined dataset
+julia
+anja
+maria
+rebekka
+susanne
+milan
+
+cd /vol/danBot/datasets/metabarcoding/
+rm all16s.fastq
+cd /vol/danBot/datasets/metabarcoding/combined16S
+gunzip * 
+cat * > ../combined16S.fastq
+wc -l /vol/danBot/datasets/metabarcoding/combined16S.fastq
+gzip *
+exit
+
+## should be cleaner. Try making script.
 
 
