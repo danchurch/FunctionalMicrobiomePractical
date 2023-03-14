@@ -1,0 +1,212 @@
+#### run nanopore binning for the class ####
+
+# mkdir /vol/danBot/ZymoBinning/nanopore
+
+## we don't have time to run the full binning and refining for both illumina and nanopore
+
+## let's repeat here:
+
+## first step is align our raw reads back to the metagenome assembly
+
+## make our directories
+mkdir /vol/danBot/zymoBinning/nanopore
+mkdir /vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning
+
+cd /vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning
+
+## conda environment
+conda deactivate
+conda activate alignmentTools
+
+## variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+reads="/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq"
+
+## for our nanopore alignments we use minimap
+minimap2 -d zymoMCnanoAssembly.mmi $nanoporeAssembly # make index
+
+## make the alignments, takes ~1/2 hour
+minimap2 -t 25 -ax map-ont zymoMCnanoAssembly.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 25 > zymoMCnanoAligned2Contigs.bam
+
+
+## sort and index the alignment. nanopore takes much more time than the illumina reads
+samtools sort -l 1 \
+    -@25 \
+    -o zymoMCnanoAligned2ContigsSorted.bam \
+    -O BAM \
+    zymoMCnanoAligned2Contigs.bam
+
+## index it
+samtools index -@ 25 zymoMCnanoAligned2ContigsSorted.bam 
+
+
+## now to binning. Start with metabat
+
+conda deactivate
+conda activate metabat2
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/nanopore/metabat
+cd /vol/danBot/zymoBinning/nanopore/metabat
+
+## define our variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+bam="/vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning/zymoMCnanoAligned2ContigsSorted.bam"
+
+## run the program
+runMetaBat.sh $illuminaAssembly $bam
+
+## concoct ##
+
+
+## activate our concoct environment
+conda deactivate
+conda activate concoct
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/nanopore/concoct
+cd /vol/danBot/zymoBinning/nanopore/concoct
+
+## define our variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+readAlignments="/vol/danBot/zymoBinning/nanopore/readAlignmentsForBinning/zymoMCnanoAligned2ContigsSorted.bam"
+outdir="/vol/danBot/zymoBinning/nanopore/concoct"
+
+cut_up_fasta.py $nanoporeAssembly -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+
+concoct_coverage_table.py concoctContigs_10K.bed $readAlignments > coverage_table.tsv 
+
+
+
+ls $readAlignments
+
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 25 \
+  -b $outdir
+
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+
+mkdir fasta_bins
+
+extract_fasta_bins.py $nanoporeAssembly clustering_merged.csv --output_path fasta_bins/
+
+## concoct gives numerical numbers for names, which upsets some software downstream
+## rename, with some BASH terminal magic:
+
+cd fasta_bins
+for i in *; do
+mv $i "concoct_$i"
+done
+
+
+### binning with zymoMC nanopore reads with VAMB ###
+
+## activate conda environment
+conda deactivate
+conda activate vamb
+
+## make our output directory
+mkdir /vol/danBot/zymoBinning/nanopore/vamb
+cd /vol/danBot/zymoBinning/nanopore/vamb
+
+## define our variables
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+reads="/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq"
+
+concatenate.py nanocatalogue.fna.gz $nanoporeAssembly
+
+conda deactivate
+conda activate alignmentTools
+
+## make an index with minimap
+minimap2 -d nanocatalogue.mmi nanocatalogue.fna.gz
+
+## map our reads to metagenome assembly with minimap and samtools
+## This takes some time, maybe 20 minutes
+
+minimap2 -t 25 -N 5 -ax sr nanocatalogue.mmi --split-prefix mmsplit $reads | samtools view -F 3584 -b --threads 25 > nanoReadsAligned2Contigs.bam 
+
+
+conda deactivate
+conda activate vamb
+
+vamb --outdir vambOut --fasta nanocatalogue.fna.gz --bamfiles nanoReadsAligned2Contigs.bam -t 8 -o C --minfasta 200000 
+
+### nanopore zymomc bin refining  ###
+
+#### bin refining ####
+
+## now we have three sets of bins
+## we can select from among these
+## and refine them with DAS tools:
+
+
+## activate conda
+conda deactivate
+conda activate das_tool
+
+## make our output directory:
+mkdir -p /vol/danBot/zymoRefineBins/nanopore
+cd /vol/danBot/zymoRefineBins/nanopore
+
+## define variables
+metabatBins=/vol/danBot/zymoBinning/nanopore/metabat/assembly.fasta.metabat-bins-20230308_155404
+concoctBins=/vol/danBot/zymoBinning/nanopore/concoct/fasta_bins/
+vambBins=/vol/danBot/zymoBinning/nanopore/vamb/vambOut/bins/
+nanoporeAssembly="/vol/danBot/assemblies/zymoMC/nanopore/assembly.fasta"
+
+ls $metabatBins
+ls $concoctBins
+ls $vambBins
+ls $nanoporeAssembly
+
+## for each binner, we need a table to tell das_tools
+## which contig belogs to which bin
+
+## metabat
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+head metabat.contigs2bin.tsv
+
+## concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+head concoct.contigs2bin.tsv ## that looks okay
+
+## sometimes we have to clean this concoct table up with some BASH terminal magic
+## paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+## but this nanopore concoct abundance table looks okay to me. Not sure why we need this and sometimes we don't.
+
+## vamb
+Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+head vamb.contigs2bin.tsv ## "S1C" is appended, like before, need to get rid of these
+
+## we need to cut the first three letters out of or so...
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+
+head vamb.contigs2bin_edited.tsv ## better
+
+## with these we can run DAS tool to refine bins:
+
+DAS_Tool  -i concoct.contigs2bin.tsv,metabat.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l concoct,metabat,vamb \
+    -c $nanoporeAssembly \
+    -t 25 \
+    --write_bins \
+    -o zymoMCnanoBinsRefined
+
+#mv zymoMVilluminaBinsRefined zymoMCilluminaBinsRefined
+
+ls /vol/danBot/zymoRefineBins/nanopore/zymoMCnanoBinsRefined_DASTool_bins

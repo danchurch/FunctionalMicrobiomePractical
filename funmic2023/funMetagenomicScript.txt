@@ -72,8 +72,6 @@ fastqc -t 22 -o  $outdir $file  &
 ## so try starting another window for repeating with illumina data. 
 
 
-
-
 ## activate conda environment:
 conda activate readQC
 
@@ -741,6 +739,8 @@ less /vol/danBot/zymoTaxonomy/illumina/phylophlanOut_ZymoMCillumina.tsv
 ## I will pick my Listeria MAG..."S1C47"
 
 ## in the following script, be careful: I may not have the same bin/MAG file names as you do!  
+## my MAGs are here
+/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins
 
 ## conda environment
 conda deactivate
