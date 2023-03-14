@@ -709,9 +709,11 @@ prodigal \
 ## as always, log out of de.NBI, go to a directory on your home linux 
 ## where you want to receive your files
 
+## local computer ##
 file=/vol/danBot/zymoMCgenePredictions/metagenome/illumina/
 key=/home/daniel/.ssh/funmic2023
 scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
+## local computer ##
 
 ## now we can give these amina acid gene predictions ("faa" file)
 ## to ghostKoala
