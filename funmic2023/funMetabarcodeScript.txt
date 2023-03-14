@@ -10,7 +10,10 @@ cd /vol/danBot/datasets/metabarcoding/combined16S; ls
 ## soil. 
 
 ## a single fastq file that incorporates all of the samples is here:
-cd /vol/danBot/datasets/metabarcoding; ls 
+
+cd /vol/danBot/datasets/metabarcoding
+
+ls
 ## we'll use this to check the quality of the reads
 
 ### quality check/control of reads ###
@@ -41,6 +44,7 @@ fastqc -o $outdir -t 20 $allCombo16S
 ## get this local and look at them with your web browser
 
 ## local computer ##
+
 file=/vol/danBot/sipMetabarcode/sipReadQC/rawFASTQCreports
 key=/home/daniel/.ssh/funmic2023
 scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
@@ -79,6 +83,12 @@ trim_galore \
   --length 200 \
   $sipRawReads/*fastq.gz
 
+mkdir trimmedFastQC
+cp *html trimmedFastQC/
+
+
+cp -r trimmedFastQC/ /mnt/c/putfileshere
+
 ## these come with fastqc reports. You can look at these
 ## to see the effect that trimming and filtering short
 ## reads has had on the data
@@ -98,6 +108,7 @@ conda activate qiime2
 
 ## make our working directory
 mkdir /vol/danBot/sipMetabarcode/qiime
+
 cd /vol/danBot/sipMetabarcode/qiime
 
 ## we need some extra files from the class repository:
@@ -132,7 +143,6 @@ qiime dada2 denoise-single \
 ## qiime can make some tables and graphics for us to use
 ## to understand what just happened:
 
-
 qiime metadata tabulate \
   --m-input-file dada2_stats.qza \
   --o-visualization dada2_stats_bymetadata.qzv
@@ -153,7 +163,7 @@ mkdir dada2visualizations
 mv dada2_stats_bymetadata.qzv dada2_featureTableSummary_visualization.qzv dada2_rep_set.qzv dada2visualizations/
 
 mkdir dada2OutPut
-mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut
+mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut/
 
 ## get them local and look at them!
 
@@ -193,6 +203,8 @@ key=/home/daniel/.ssh/funmic2023
 scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
 ## local computer ###
 
+## put the visualizations here:
+https://view.qiime2.org/
 ## now on to...
 
 
@@ -248,6 +260,7 @@ scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
 conda activate qiime2
 
 mkdir /vol/danBot/sipMetabarcode/qiime/taxClassification
+
 cd /vol/danBot/sipMetabarcode/qiime/taxClassification
 
 ## we need to get the algorithm for assigning taxonomy

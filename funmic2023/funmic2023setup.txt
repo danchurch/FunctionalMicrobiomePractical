@@ -4988,4 +4988,8 @@ exit
 
 ## should be cleaner. Try making script.
 
+## let's catch up julia - she needs refined bins, and maybe phylophlan 
+## outputs to run the KEGG pathways annotation our metaphlan is all 
+## messed up, clean up and redo the metaphlan scripts
+
 

@@ -540,22 +540,30 @@ conda deactivate
 conda activate checkm
 
 ## we can put our checkm outputs here
+
 mkdir /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout
+
 cd /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/
 
 ## variables
 
+## we can put our checkm outputs here
 checkMout="/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout"
 zymoMCilluminaBins=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins
+
+checkm lineage_wf -h
 
 ## check needs to find our bin on the tree of life
 checkm lineage_wf -t 27 -x fa $zymoMCilluminaBins checkMout &
 
-## we can put our checkm outputs here
+## this makes this lineage (marker) file
 zymoIlluminaMarkers=/vol/danBot/zymoRefineBins/illumina/checkMout/lineage.ms
 
 checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
+## so my zymo illumina checkMresults are here:
+
+less /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout/zymoIllCheckMout.txt
 
 ### nanopore checkM ###
 
@@ -580,10 +588,10 @@ checkm qa $zymoMCnanoporeMarkers $checkMout > zymoNanoCheckMout.txt
 
 ## compare your results to the illumina results!
 ## we can look at these side-by-side
-less /vol/danBot/zymoRefineBins/nanopore/checkMout/zymoIllCheckMout.txt
 
-less /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout/zymoIllCheckMout.txt
+less /vol/danBot/zymoRefineBins/illumina/checkMout/zymoIllCheckMout.txt
 
+less /vol/danBot/zymoRefineBins/nanopore/checkMout/zymoNanoCheckMout.txt
 
 ### assigning taxonomy with phylophlan ###
 
