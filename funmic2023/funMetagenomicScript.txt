@@ -539,17 +539,16 @@ DAS_Tool  -i concoct.contigs2bin_edited.tsv,metabat.contigs2bin.tsv,vamb.contigs
 conda deactivate
 conda activate checkm
 
-## we can put our checkm outputs here
 
-mkdir /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout
-
-cd /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/
 
 ## variables
 
 ## we can put our checkm outputs here
-checkMout="/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout"
+checkMout="/vol/danBot/zymoRefineBins/illumina/checkMout"
 zymoMCilluminaBins=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins
+
+## but checkM will make this directory. Let's work here:
+cd /vol/danBot/zymoRefineBins/illumina
 
 checkm lineage_wf -h
 
@@ -563,10 +562,9 @@ checkm qa $zymoIlluminaMarkers $checkMout > zymoIllCheckMout.txt
 
 ## so my zymo illumina checkMresults are here:
 
-less /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/checkMout/zymoIllCheckMout.txt
+less /vol/danBot/zymoRefineBins/illumina/checkMout/zymoIllCheckMout.txt
 
 ### nanopore checkM ###
-
 
 ## we can repeat the checkM process with 
 ## my results from binning and refining nanopore
@@ -575,11 +573,14 @@ less /vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins/
 conda deactivate
 conda activate checkm
 
-
 ## define some variables
 zymoMCnanoporeBins="/vol/danBot/zymoRefineBins/nanopore/zymoMCnanoBinsRefined_DASTool_bins/"
 checkMout="/vol/danBot/zymoRefineBins/nanopore/checkMout/"
 zymoMCnanoporeMarkers="/vol/danBot/zymoRefineBins/nanopore/checkMout/lineage.ms"
+
+## checkm will make that output directory for us, so let's work here:
+
+cd /vol/danBot/zymoRefineBins/nanopore/
 
 ## check needs to find our bin on the tree of life
 checkm lineage_wf -t 26 -x fa $zymoMCnanoporeBins checkMout &
@@ -719,6 +720,7 @@ scp -r -i $key -P 30500 ubuntu@129.70.51.6:$file .
 ## to ghostKoala
 
 ## ghostKoala is here:
+
 https://www.kegg.jp/ghostkoala/ 
 
 ## go there with your local web browser and upload your .faa file
@@ -779,5 +781,4 @@ https://www.kegg.jp/blastkoala/
 ## they will send you an email requesting confirmation, don't miss it 
 ## or your job request will be ignored. 
 
-
-
+##    

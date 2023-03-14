@@ -4992,4 +4992,17 @@ exit
 ## outputs to run the KEGG pathways annotation our metaphlan is all 
 ## messed up, clean up and redo the metaphlan scripts
 
+## the illumina mags on danBot are here:
+file=/vol/danBot/zymoRefineBins/illumina/zymoMCilluminaBinsRefined_DASTool_bins
+## we want to put them here maria's computer:
+destination=/vol/danBot/zymoRefineBins
+scp -ri /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:$destination 
 
+## she might also want my phylophlan outputs:
+## the illumina mags on danBot are here:
+file=/vol/danBot/zymoTaxonomy/
+## we want to put them here maria's computer:
+destination=/vol/danBot/
+scp -ri /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:$destination 
+
+## she has mags, taxonomy
