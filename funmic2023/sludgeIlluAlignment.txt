@@ -1,0 +1,25 @@
+## indexing ##
+conda deactivate 
+conda activate alignmentTools 
+indexWD="/vol/danBot/binning/sludge/minimapIndices/"
+cont="/vol/danBot/assemblies/sludge/illumina/final.contigs.fa"
+reads1="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R1.fastq"
+reads2="/vol/danBot/datasets/sludge/illumina/recombinedSludgeIllumina/recombinedSludgeIllumina_R2.fastq"
+cd $indexWD
+
+minimap2 -d sludgeIlluAssembly.mmi $cont # make index
+
+minimap2 -t 15 -ax sr sludgeIlluAssembly.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 15 > sludgeIlluAligned2Contigs.bam &
+
+## do we need this?: yes
+samtools sort -l 1 \
+    -@15 \
+    -o sludgeIlluReads2ContigsSorted.bam \
+    -O BAM \
+    sludgeIlluAligned2Contigs.bam
+## quick
+
+## oops
+#mv zymoNanoReads2ContigsSorted.bam sludgeIlluReads2ContigsSorted.bam
+
+samtools index -@ 15 sludgeIlluReads2ContigsSorted.bam ## do we need this? yes. with lots of cores is very quick
