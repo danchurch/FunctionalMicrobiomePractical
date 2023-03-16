@@ -796,6 +796,7 @@ seqtk seq -l 0 sludgeIlluminaMetagenome.genes.faa > genes_noLineBreaks.faa
 ## split up so that no file has more than 1 million, or 500,000 features
 split -d -l 1000000 genes_noLineBreaks.faa  metagenomePart
 
-## this should make several files
+## this should make several files, each of which is a piece of your
+## metagenome. 
 
-
+## try submitting one or two to ghostkoala, as you have time.
