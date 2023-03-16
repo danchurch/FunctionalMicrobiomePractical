@@ -784,13 +784,15 @@ https://www.kegg.jp/blastkoala/
 
 ##### note about submitting metagenomes to ghostkoala ####
 
-## ghostkoala won't accept a file with more than 
-## 
+## ghostkoala won't accept a file with more than 500,000 
+## features (sequences), or a file of larger than 300 megabytes
+
+## this means that we might have to break up our gene predictions  
 
 ## seqtk tools are here
 conda activate alignmentTools
 
-## get rid of extra line breaks
+## get rid of extra line breaks, so each feature is 2 lines
 seqtk seq -l 0 sludgeIlluminaMetagenome.genes.faa > genes_noLineBreaks.faa
 
 ## split up so that no file has more than 1 million, or 500,000 features
