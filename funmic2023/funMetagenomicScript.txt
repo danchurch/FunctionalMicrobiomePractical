@@ -296,14 +296,14 @@ cd /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning
 
 
 
-mv rawReads2Contigs.sam /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/
-
-mv rawReads2Contigs.sam $outdir
-
-echo $outdir
-
-cd /vol/danBot 
-find . -name rawReads2Contigs.sam
+#mv rawReads2Contigs.sam /vol/danBot/zymoBinning/illumina/readAlignmentsForBinning/
+#
+#mv rawReads2Contigs.sam $outdir
+#
+#echo $outdir
+#
+#cd /vol/danBot 
+#find . -name rawReads2Contigs.sam
 
 
 
@@ -420,6 +420,7 @@ conda activate vamb
 ## make our output directory
 mkdir /vol/danBot/zymoBinning/illumina/vamb 
 cd /vol/danBot/zymoBinning/illumina/vamb 
+
 
 ## define our variables 
 illuminaAssembly="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
@@ -781,4 +782,20 @@ https://www.kegg.jp/blastkoala/
 ## they will send you an email requesting confirmation, don't miss it 
 ## or your job request will be ignored. 
 
-##    
+##### note about submitting metagenomes to ghostkoala ####
+
+## ghostkoala won't accept a file with more than 
+## 
+
+## seqtk tools are here
+conda activate alignmentTools
+
+## get rid of extra line breaks
+seqtk seq -l 0 sludgeIlluminaMetagenome.genes.faa > genes_noLineBreaks.faa
+
+## split up so that no file has more than 1 million, or 500,000 features
+split -d -l 1000000 genes_noLineBreaks.faa  metagenomePart
+
+## this should make several files
+
+

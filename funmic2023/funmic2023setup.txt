@@ -1473,9 +1473,15 @@ cd /vol/danBot/binning/zymoMC/illumina/vamb
 
 ## they run a cataloging program on their assemblies. Not sure if I need to do this but...
 
-cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
-reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
-reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
+#cont="/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa"
+#reads1="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_1.fastq"
+#reads2="/vol/danBot/datasets/zymoMC/illumina/ERR7255689_2.fastq"
+
+## for sludge:
+cd /vol/danBot/datasets/sludge/illumina
+cont="/home/ubuntu/backups/sludgeIlluminaAssembly.fa"
+reads1="/vol/danBot/datasets/sludge/illumina/sludgeIllumina_R1.fastq"
+reads2="/vol/danBot/datasets/sludge/illumina/sludgeIllumina_R2.fastq"
 
 concatenate.py illumcatalogue.fna.gz $cont
 
@@ -1486,8 +1492,9 @@ conda activate alignmentTools
 minimap2 -d illumcatalogue.mmi illumcatalogue.fna.gz # make index, quick
 
 ## align reads to metagenome
-minimap2 -t 8 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 18 > illumReadsAligned2Contigs.bam
+minimap2 -t 18 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $reads2 | samtools view -F 3584 -b --threads 18 > illumReadsAligned2Contigs.bam
 ## maybe ten minutes
+
 ## use more cores.
 
 ## I wonder if we could use minimap instead of bowtie above? seems much faster, and samtools seems to 
@@ -1497,10 +1504,16 @@ minimap2 -t 8 -N 5 -ax sr illumcatalogue.mmi --split-prefix mmsplit $reads1 $rea
 conda deactivate 
 conda activate vamb
 
-vamb --outdir vambOut --fasta sludgeIlluCatalogue.fna.gz --bamfiles sludgeIlluVamb_ReadsAligned2Contigs.bam -o C --minfasta 200000 
+vamb --outdir vambOut \
+  --fasta illumcatalogue.fna.gz \
+  --bamfiles illumReadsAligned2Contigs.bam \
+  -o C \
+  --minfasta 200000 
+## started 9:30
 
 
 cd /vol/danBot/binning/sludge/illumina/vamb/vambOut/bins
+
 ls | wc -l  ## 88 bins
 
 ## see here, btw
@@ -4097,7 +4110,7 @@ mv illumina/ zymoMetaquastIllumina/
 
 
 
-#### run nanopore binning for the class ####
+### run nanopore binning for the class ####
 
 # mkdir /vol/danBot/ZymoBinning/nanopore
 
@@ -4200,7 +4213,7 @@ mv $i "concoct_$i"
 done
 
 
-### binning with zymoMC illumina reads with VAMB ###
+### binning with zymoMC nanopore reads with VAMB ###
 
 ## activate conda environment
 conda deactivate
@@ -5006,3 +5019,107 @@ destination=/vol/danBot/
 scp -ri /home/ubuntu/.ssh/danbotFuncomp -P  30355  $file ubuntu@129.70.51.6:$destination 
 
 ## she has mags, taxonomy
+
+################
+
+## metaphlan on illumina sludge, take a look
+
+mkdir /vol/danBot/sludgeMCcommunityProfile
+
+cd /vol/danBot/sludgeMCcommunityProfile
+
+## set your variables
+metaphlanMarkerDB=/vol/danBot/metaphlanDB
+seq1=/vol/danBot/datasets/sludge/illumina/sludgeIllumina_R1.fastq
+seq2=/vol/danBot/datasets/sludge/illumina/sludgeIllumina_R2.fastq
+
+## how can they get some quality metrics on their 
+## metagenome?
+
+## try quast with our illumina zymoMC
+
+conda activate metaquast
+
+assembly=/home/ubuntu/backups/zymoIlluAssembly.fasta
+
+
+quast $assembly
+
+## let's get rebekka some vamb bin out puts
+file=/vol/danBot/datasets/sludge/illumina/vambOut/
+dest=/vol/danBot/
+scp -r -P 30372 -i /home/ubuntu/.ssh/danbotFuncomp $file ubuntu@129.70.51.6:$dest
+## get marias concoct onto danBot
+
+cd /vol/danBot/mariaConcoct
+file=/vol/danBot/sludgeBinning/concoct/fasta_bins/
+scp -r -P 30355  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6:$file .
+
+mv fasta_bins/ concoct_fasta_bins/
+
+## put these on rebekka's computer:
+file=/vol/danBot/mariaConcoct/concoct_fasta_bins
+scp -r -P 30372  -i /home/ubuntu/.ssh/danbotFuncomp $file ubuntu@129.70.51.6:/vol/danBot
+
+## we need to replace rebekka's bins (3 software) and assembly
+
+## her bins are here:
+
+binningFiles=/vol/danBot/sludgeBinning
+assembly=/vol/danBot/assemblies/sludgeMegahit/sludgeAssembly
+
+mkdir /vol/danBot/mariaBackups
+
+cd /vol/danBot/mariaBackups
+
+
+## get them local:
+
+scp -r -P 30355  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6:$binningFiles .
+scp -r -P 30355  -i /home/ubuntu/.ssh/danbotFuncomp ubuntu@129.70.51.6:$assembly .
+
+
+## now put them onto rebekka's computer
+
+sludgeAssembly="/vol/danBot/mariaBackups/sludgeAssembly"
+sludgeBins="/vol/danBot/mariaBackups/sludgeBinning"
+destination="/vol/danBot/backupSludgeBins"
+
+scp -r -P 30372  -i /home/ubuntu/.ssh/danbotFuncomp $sludgeAssembly ubuntu@129.70.51.6:$destination 
+
+scp -r -P 30372  -i /home/ubuntu/.ssh/danbotFuncomp $sludgeBins ubuntu@129.70.51.6:$destination
+
+##### metagenome prep ######
+
+## we may need to break our metagenome assemblies into smaller pieces.
+
+assembly=/home/ubuntu/backups/sludgeIlluminaAssembly.fa
+
+## do we want to split before or after gene predictions?
+## let's try the gene predictions first:
+
+conda deactivate
+conda activate prodigal
+
+## working directory
+mkdir -p /vol/danBot/sludgeMCgenePredictions/metagenome/illumina
+cd /vol/danBot/zymoMCgenePredictions/metagenome/illumina
+
+## variables
+
+## remember that your illumina assembly may be in a different spot:
+
+metagenomeAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
+
+## check help file for prodigal
+prodigal -h
+
+prodigal \
+  -a zymoMCilluminaMetagenome.genes.faa \
+  -d zymoMCilluminaMetagenome.genes.fna \
+  -f gff \
+  -o zymoMCilluminaMetagenome.genes.gff \
+  -i $metagenomeAssembly
+
+
+
