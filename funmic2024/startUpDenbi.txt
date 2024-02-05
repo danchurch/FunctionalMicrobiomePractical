@@ -1,0 +1,43 @@
+## let's set up our denbi pilot machine for 2024
+
+ssh ubuntu@129.70.51.6 -p 30487
+
+## need to mount the volume...
+
+## following: https://simplevm.denbi.de/wiki/simple_vm/volumes/
+
+lsblk ## vdd
+
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE | egrep -v "^loop"
+
+blkid /dev/vdd ## not in there?
+
+## guess it is not yet formatted? 
+
+sudo mkfs.ext4 /dev/vdd
+
+sudo mkdir -p /vol/funMicStorage
+
+sudo mount /dev/vdd /vol/funMicStorage
+
+## add it to the fstab
+
+## get the UUID
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
+## add line to fstab 
+UUID=a29e2283-ddb8-477b-ae03-14d276642b7f       /vol/funMicStorage      auto    defaults        0       2
+## check after shutting down, seems stable
+
+### we need to get conda going ###
+
+wget https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh
+
+## works, but conda not being found, probably because I put it on the 
+## volume, so add to bashrc path def
+
+export PATH=/vol/funMicStorage/anaconda3/bin:$PATH
+
+## seems to work. 
+
+#### preliminary data #####
+

@@ -5103,23 +5103,69 @@ conda activate prodigal
 
 ## working directory
 mkdir -p /vol/danBot/sludgeMCgenePredictions/metagenome/illumina
-cd /vol/danBot/zymoMCgenePredictions/metagenome/illumina
+
+cd /vol/danBot/sludgeMCgenePredictions/metagenome/illumina
 
 ## variables
 
-## remember that your illumina assembly may be in a different spot:
-
-metagenomeAssembly=/vol/danBot/assemblies/zymoMC/megahitZymoIllumina/final.contigs.fa
+metagenomeAssembly=/home/ubuntu/backups/sludgeIlluminaAssembly.fa
 
 ## check help file for prodigal
 prodigal -h
 
 prodigal \
-  -a zymoMCilluminaMetagenome.genes.faa \
-  -d zymoMCilluminaMetagenome.genes.fna \
+  -a sludgeIlluminaMetagenome.genes.faa \
+  -d sludgeIlluminaMetagenome.genes.fna \
   -f gff \
-  -o zymoMCilluminaMetagenome.genes.gff \
+  -o sludgeIlluminaMetagenome.genes.gff \
   -i $metagenomeAssembly
+
+## how big is that? 
+
+ls -lh sludgeIlluminaMetagenome.genes.faa ## 405 mg
+## too big
+
+## its a classic fasta file, as long as we split it along
+## an even number, should be fine:
+
+cd /vol/danBot/sludgeMCgenePredictions/metagenome/illumina
+
+genes=/vol/danBot/sludgeMCgenePredictions/metagenome/illumina/sludgeIlluminaMetagenome.genes.faa 
+
+## to take down below 2,100,000 reads
+head -n 4200000 $genes > subsettedMetagenomeGenePredictions.faa
+
+tail -n +4200001 $genes > subsettedMetagenomeGenePredictions_partII.faa
+
+## 500,000 line limit means we should split up into 
+## 1,000,000  
+
+
+genes=/vol/danBot/sludgeMCgenePredictions/metagenome/illumina/sludgeIlluminaMetagenome.genes.faa 
+
+cp sludgeIlluminaMetagenome.genes.faa genes.faa
+
+
+
+
+conda activate alignmentTools
+
+## get rid of extra line breaks
+seqtk seq -l 0 sludgeIlluminaMetagenome.genes.faa > genes_noLineBreaks.faa 
+
+## split up so that no file has more than 1 million, or 500,000 features
+split -d -l 1000000 genes_noLineBreaks.faa  metagenomePart
+
+## this should create a lot of smaller files. You can submit a few to 
+## ghostkoala
+
+## local computer ##
+#file="/vol/danBot/sludgeMCgenePredictions/metagenome/illumina/subsettedMetagenomeGenePredictions.faa"
+file="/vol/danBot/sludgeMCgenePredictions/metagenome/illumina/subsettedMetagenomeGenePredictions_partII.faa"
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/genePred/metagenomes/sludge/nanopore
+key=/home/daniel/.ssh/funmic2023
+scp -i $key -P 30500 ubuntu@129.70.51.6:$file .
 
 
 
