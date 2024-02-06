@@ -39,5 +39,17 @@ export PATH=/vol/funMicStorage/anaconda3/bin:$PATH
 
 ## seems to work. 
 
+
 #### preliminary data #####
+
+
+
+
+## let's grab the zymogen mock community reads, as per last year:
+
+cd /vol/funMicStorage/datasets/
+
+nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz &
+nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz &
+
 
