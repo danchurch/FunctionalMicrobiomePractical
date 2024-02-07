@@ -39,11 +39,7 @@ export PATH=/vol/funMicStorage/anaconda3/bin:$PATH
 
 ## seems to work. 
 
-
 #### preliminary data #####
-
-
-
 
 ## let's grab the zymogen mock community reads, as per last year:
 
@@ -52,4 +48,22 @@ cd /vol/funMicStorage/datasets/
 nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz &
 nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz &
 
+## the dataset that Dmitri wants to use, kelp on beaches:
+https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJEB36085
+
+
+## made an accession list. put in on denbi
+
+## script:
+#####################
+#!/bin/bash
+
+cd /vol/funMicStorage/datasets/kelp
+for i in $(cat SraAccList.csv); do
+  echo $i
+  fastq-dump $i -O .
+done
+#####################
+
+nohup sh sraDownload.sh &
 
