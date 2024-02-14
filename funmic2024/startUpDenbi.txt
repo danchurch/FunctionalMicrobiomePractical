@@ -28,6 +28,10 @@ lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
 UUID=a29e2283-ddb8-477b-ae03-14d276642b7f       /vol/funMicStorage      auto    defaults        0       2
 ## check after shutting down, seems stable
 
+## how many cores do we have?
+
+lscpu -p ## looks like 14, one core/cpu
+
 ### we need to get conda going ###
 
 wget https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Linux-x86_64.sh
@@ -66,4 +70,375 @@ done
 #####################
 
 nohup sh sraDownload.sh &
+
+
+##################
+
+#### software installs ####
+
+## let's start on the installs
+
+## conda and mamba are working together now. 
+## to get mamba's solver into conda,
+## following this page: https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community
+
+conda update -n base conda
+conda install -n base conda-libmamba-solver
+conda config --set solver libmamba
+
+## get bioconda channel
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+## first environment: raw read processing 
+## Dimitri would like to use:
+conda create -n RawReadProcessing -c bioconda trim-galore bbmap seqtk phyloflash
+## I added seqtk
+
+## phyloFlash needs a database:
+
+conda activate RawReadProcessing
+
+cd /vol/funMicStorage/databases/phyloFlash
+
+phyloFlash.pl -check_env
+
+## as per: http://hrgv.github.io/phyloFlash/
+
+wget https://zenodo.org/record/7892522/files/138.1.tar.gz # 5.5 GB download
+tar -xzf 138.1.tar.gz
+
+phyloFlash.pl -dbhome /vol/funMicStorage/databases/phyloFlash/138.1 -lib TEST -CPUs 14 \
+ -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
+ -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
+ -almosteverything
+
+## next, assembler:
+conda create -n assembly -c bioconda megahit
+
+## let's add quast for assembly quality:
+## quast seems to rely on old versions of 
+## python, can't install it with our assembler,
+## probably would cause problems with other
+## newer software. Gets its own environment.
+
+conda create -n quast -c bioconda quast
+
+## check to make sure that didn't break our assembler
+
+## binning and refining
+
+conda create -n binning -c bioconda metabat2 vamb das_tool
+## ran without errors...
+
+## we also need the following, according to the vamb github repo:
+conda activate binning
+conda install -c pytorch pytorch torchvision cudatoolkit=10.2
+## but we don't have GPUs, so not sure why we need cuda
+## that did some weird downgrades...not a good sign...
+## remember to test these. Stuff in this environment is the most likely to fail.
+
+## genome quality checks:
+
+## following https://github.com/chklovski/CheckM2
+
+conda create -n magQC -c bioconda checkm2
+## get some weird typeError from tensorflow
+## so do lots of other folks: https://github.com/chklovski/CheckM2/issues/82
+conda remove -n magQC --all 
+
+## according to one answer, you have to make sure python isn't too old/new
+conda create -n magQC -c bioconda -c conda-forge checkm2 'python>=3.7, <3.9'
+
+conda activate magQC
+checkm2 -h
+
+nohup checkm2 database --download --path /vol/funMicStorage/databases/checkm2 &
+
+checkm2 testrun ## looks good
+
+ 
+#################################################################
+## denbi VM is misbehaving, they need to know what I have installed:
+conda env list
+conda list > allCondaPackages_FunMicVM.txt
+conda activate RawReadProcessing
+conda list >> allCondaPackages_FunMicVM.txt
+conda deactivate
+conda activate assembly          
+conda list >> allCondaPackages_FunMicVM.txt
+conda deactivate
+conda binning           
+conda list >> allCondaPackages_FunMicVM.txt
+conda deactivate
+
+## get it local.
+file=/home/ubuntu/allCondaPackages_FunMicVM.txt
+scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$file .
+#################################################################
+
+## for now, back to installations:
+
+## classify genomes with gtdbtk
+## following: https://ecogenomics.github.io/GTDBTk/installing/bioconda.html
+
+conda create -n gtdbtk -c conda-forge -c bioconda gtdbtk=2.1.1
+
+## try their script for getting the db:
+conda activate gtdbtk
+
+nohup download-db.sh ## was cut off, but looks right
+
+
+## annotations
+Prodigal https://github.com/hyattpd/Prodigal
+diamond https://github.com/bbuchfink/diamond
+EggNOG mapper https://github.com/eggnogdb/eggnog-mapper
+InterProScan https://github.com/ebi-pf-team/interproscan
+Prokka https://github.com/tseemann/prokka
+
+## try one big environment:
+
+conda create -n annotation -c bioconda -c conda-forge prodigal diamond eggnog-mapper interproscan prokka
+
+## databases and testing:
+
+## eggnog:
+
+conda activate annotation
+
+export EGGNOG_DATA_DIR=/vol/funMicStorage/databases/eggnog-mapper-data/
+
+## also EGGNOG_DATA_DIRneed to add that to bashrc?
+
+echo $EGGNOG_DATA_DIR
+
+## looks like. It's kind of complicated. Following:
+https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#macos-linux-save-env-variables
+
+conda activate annotation; echo $CONDA_PREFIX
+
+cd $CONDA_PREFIX
+
+mkdir -p ./etc/conda/activate.d
+mkdir -p ./etc/conda/deactivate.d
+touch ./etc/conda/activate.d/env_vars.sh
+touch ./etc/conda/deactivate.d/env_vars.sh
+
+vim ./etc/conda/activate.d/env_vars.sh ## to say:
+
+#############
+#!/bin/sh
+
+
+export EGGNOG_DATA_DIR=/vol/funMicStorage/databases/eggnog-mapper-data/
+###############
+
+vim ./etc/conda/deactivate.d/env_vars.sh
+
+##############
+#!/bin/sh
+
+unset EGGNOG_DATA_DIR
+##############
+
+## I guess that's what it takes to redefine a conda environment-specific
+## environmental variable every time...
+
+## anyway, having set the variable...download eggnog databases
+download_eggnog_data.py 
+
+## test InterProScan install
+./interproscan.sh ## runs without errors. Enough for now.
+
+## test Prokka install
+Prokka https://github.com/tseemann/prokka
+
+prokka --listdb
+## seems to work
+
+#### tree visualization ####
+
+## for arb, following:
+http://vc.arb-home.de/readonly/trunk/arb_INSTALL.txt
+
+wget --recursive \
+  --no-parent -nH --cut-dirs=2 \
+  http://download.arb-home.de/release/latest/
+
+## I guess we really just need the ubuntu installation script
+## there is none for ubuntu 22...try the one for ubuntu 20?
+## apt doesn't have arb7, btw, just arb6
+
+## let's try: arb-7.0.ubuntu2004-amd64.tgz 
+
+sudo bash arb_install.sh
+
+sudo bash /usr/arb/SH/arb_installubuntu4arb.sh arb
+
+ARB http://www.arb-home.de/downloads.html
+
+FastTree2
+
+## enable x11 forwarding in 
+sudo vim /etc/ssh/ssh_config
+## all the other instances will have to modified, when they come into being...
+
+## set the following:
+ForwardX11 yes
+ForwardX11Trusted yes
+
+## restart:
+sudo systemctl restart sshd
+
+## do we need set client (local) permissions?
+## nope. runs well, just make sure to use the -X flag
+## on the ssh command
+
+conda create -n fasttree -c bioconda fasttree
+
+conda activate fasttree
+
+
+#### metabarcoding data and software ####
+
+## our local file:
+sipData=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/16S_amps_SIP_2022.zip
+## put it here:
+barcodeDir=/vol/funMicStorage/datasets/metabarcoding/
+scp -i /home/daniel/.ssh -P 30487 -r $sipData ubuntu@129.70.51.6:$barcodeDir
+
+## also get the new milan data from alfons:
+file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/Oemik-Exp014.zip
+barcodeDir=/vol/funMicStorage/datasets/metabarcoding/
+scp -i /home/daniel/.ssh -P 30487 -r $file ubuntu@129.70.51.6:$barcodeDir
+
+## and his metadata
+file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/mapping.tsv
+barcodeDir=/vol/funMicStorage/datasets/metabarcoding/
+scp -i /home/daniel/.ssh -P 30487 -r $file ubuntu@129.70.51.6:$barcodeDir
+
+## we need just milan's reads:
+
+cd /vol/funMicStorage/datasets/metabarcoding/20230210_060720/Fastq
+
+milanReadDir=/vol/funMicStorage/datasets/metabarcoding/milanReads
+mv Oemik-001254* $milanReadDir
+mv Oemik-001255* $milanReadDir
+mv Oemik-001256* $milanReadDir
+mv Oemik-001257* $milanReadDir
+mv Oemik-001258* $milanReadDir
+mv Oemik-001259* $milanReadDir
+mv Oemik-001260* $milanReadDir
+mv Oemik-001261* $milanReadDir
+mv Oemik-001262* $milanReadDir 
+
+## that's our data. now install Qiime: https://docs.qiime2.org/2023.9/install/native/
+
+wget https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2023.9-py38-linux-conda.yml
+conda env create -n qiime2-amplicon-2023.9 --file qiime2-amplicon-2023.9-py38-linux-conda.yml
+conda rename -n qiime2-amplicon-2023.9 qiime
+conda activate qiime
+qiime --help ## works for the moment
+
+## I think we'll still need to get classifiers, silva etc
+## we'll come back to this. 
+
+########################################
+
+#### trials with mc data #######
+
+
+## how do they look?
+## let's get the quality, think about trimming, and run phyloflash
+
+conda activate RawReadProcessing
+
+## our mc data from zymogen/sereika is here:
+cd /vol/funMicStorage/datasets/zymo
+
+mkdir /vol/funMicStorage/rawReadQC
+
+outDir=/vol/funMicStorage/rawReadQC
+file="ERR7255689_1.fastq.gz"
+fastqc -t 10 \
+  -o /vol/funMicStorage/rawReadQC \
+  $file &> $outDir/$file"fastqcLog.txt" &
+
+## and R2:
+cd /vol/funMicStorage/datasets/zymo
+outDir=/vol/funMicStorage/rawReadQC
+file="ERR7255689_2.fastq.gz"
+fastqc -t 10 \
+  -o /vol/funMicStorage/rawReadQC \
+  $file &> $outDir/$file"fastqcLog.txt" &
+
+## get these locally:
+
+getFile=/vol/funMicStorage/rawReadQC/ERR7255689_?_fastqc.html
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
+scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## can these be viewed with x11 forwarding?
+
+cd /vol/funMicStorage/rawReadQC
+
+firefox ERR7255689_1_fastqc.html ## doesn't work for me. 
+
+## possible solutions (that didn't work for me):
+https://superuser.com/questions/310197/how-do-i-fix-a-cannot-open-display-error-when-opening-an-x-program-after-sshi
+https://www.thegeekstuff.com/2010/06/xhost-cannot-open-display/
+
+## for the moment, ARB works. Just download the other 
+## files for firefox, etc:
+
+##### phyloflash #####
+
+## following: https://hrgv.github.io/phyloFlash/usage.html
+
+conda activate RawReadProcessing
+
+phyloFlash.pl -h
+
+cd /vol/funMicStorage/phyloFlashOut
+fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
+fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
+phyloDB=/vol/funMicStorage/databases/phyloFlash/138.1
+\time phyloFlash.pl \
+  -lib zymoPhyloFlashOut \
+  -read1 $fast1 \
+  -read2 $fast2 \
+  -readlength 150 \
+  -clusterid 98 \
+  -taxlevel 7 \
+  -dbhome $phyloDB \
+  -CPUs 12 &> phyloflashlog.txt &
+
+## took ~20 min, 17 gig RAM
+
+getFile=/vol/funMicStorage/phyloFlashOut/
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/
+scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$getFile $putDir
+
+####### assembly #####
+
+conda activate assembly
+
+mkdir -p /vol/funMicStorage/assemblies/zymoMC/
+
+fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
+fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
+outdir=/vol/funMicStorage/assemblies/zymoMC/
+\time -v megahit -1 $fast1 \
+          -2 $fast2 \
+          -t 12 \
+          -o $outdir &> megahit.log &
+
+## this takes ~50 min to complete, max use of ~6 gig RAM
+
+####### binning ######
+
+## let's try metabat on a couple different settings
+## and VAMB on default
 
