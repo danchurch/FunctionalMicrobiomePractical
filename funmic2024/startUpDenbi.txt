@@ -523,7 +523,6 @@ reads1="/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz"
 reads2="/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz"
 concatenate.py illumcatalogue.fna.gz $illuminaAssembly
 
-## not run ##
 ## they use different aligner, minimap2, so back to our alignment environment
 ## super quick, 1 min, no RAM needed
 
@@ -544,7 +543,7 @@ minimap2 -t 14 -N 5 \
   --split-prefix mmsplit $reads1 $reads2 |
 samtools view -F 3584 \
   -b --threads 14 > illumReadsAligned2Contigs.bam 
-## start ~10:00
+## that is quick
 
 ## line 445 in last years script
 
@@ -555,16 +554,17 @@ samtools view -F 3584 \
 
 ## once we have our reads aligned to our metagenome assembly, run vamb itself
 
-conda deactivate
-conda activate vamb
-
-vamb --outdir vambOut \
+\time nohup vamb --outdir vambOut \
   --fasta illumcatalogue.fna.gz \
   --bamfiles illumReadsAligned2Contigs.bam \
-  -t 8 \
+  -t 7 \
   -o C \
-  --minfasta 200000
+  --minfasta 200000 &> vambLog.txt &
 
 ## -t 8 is for very simple communities, this number can be much higher
+## --minfasta is bp, I thik
 
+## finds nine bins, all over 2 million bp
+
+#### onto metabat ####
 
