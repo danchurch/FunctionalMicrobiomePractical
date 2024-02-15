@@ -162,13 +162,13 @@ conda activate binning
 conda install -c pytorch pytorch torchvision cudatoolkit=10.2
 ## but we don't have GPUs, so not sure why we need cuda
 ## that did some weird downgrades...not a good sign...
-## remember to test these. Stuff in this environment is the most likely to fail.
-
 ## we also need minimap2, will this install in this env?
 conda install -c bioconda minimap2
 ## and samtools...
 conda install -c bioconda samtools
-
+## and bowtie2, oh jeez...
+conda install -c bioconda bowtie2
+## remember to test these. Stuff in this environment is the most likely to fail.
 
 ## genome quality checks:
 
@@ -543,6 +543,7 @@ minimap2 -t 14 -N 5 \
   --split-prefix mmsplit $reads1 $reads2 |
 samtools view -F 3584 \
   -b --threads 14 > illumReadsAligned2Contigs.bam 
+
 ## that is quick
 
 ## line 445 in last years script
@@ -568,3 +569,83 @@ samtools view -F 3584 \
 
 #### onto metabat ####
 
+conda deactivate
+conda activate binning
+
+## make our output directory
+
+mkdir -p /vol/funMicStorage/binning/zymo/metabat
+cd /vol/funMicStorage/binning/zymo/metabat
+
+## we need to the reads back to the genome
+## metabat documentation suggests bowtie, don't
+## know why
+
+mkdir /vol/funMicStorage/binning/zymo/metabat/readAlignmentsForBinning
+
+illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
+reads1="/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz"
+reads2="/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz"
+outdir="/vol/funMicStorage/binning/zymo/metabat/readAlignmentsForBinning"
+
+## for our alignments we use bowtie, which needs an index of our assembly
+## we could probably use another mapper (bbmap? minimap?), if we have
+## time to tweak the scripts.
+
+\time bowtie2-build $illuminaAssembly $outdir/zymoIlluminaAssembly
+## ~5 minutes?
+
+## do the alignment. 
+\time nohup bowtie2 \
+  -x $outdir/zymoIlluminaAssembly \
+  -1 $reads1 -2 $reads2 \
+  -S rawReads2Contigs.sam \
+  --threads 7 \
+  --local &
+
+## started ~11:50
+
+## This takes a long time, 20-30 mins. Check top.
+
+## not run ## 
+
+## sort it
+
+samtools sort -l 1 \
+    -@7 \
+    -o rawReads2ContigsSorted.bam \
+    -O BAM \
+    rawReads2Contigs.sam &
+
+## to test, can we use the minimap-created alignment
+## from above? if we sort it, it should be basically 
+## the same...
+
+minimapRead2Contigs=/vol/funMicStorage/binning/zymo/vamb/illumReadsAligned2Contigs.bam
+samtools sort -l 1 \
+    -@5 \
+    -o minimapRawReads2ContigsSorted.bam \
+    -O BAM \
+    $minimapRead2Contigs
+## pretty quick, ~5 min?
+
+samtools view -h -o minimapRawReads2ContigsSorted.sam minimapRawReads2ContigsSorted.bam 
+
+## now try actual binning with metabat2
+## with both:
+
+cd /vol/funMicStorage/binning/zymo/metabat
+
+## first try with the minimap bam
+## define our variables
+illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
+bam="readAlignmentsForBinning/minimapRawReads2ContigsSorted.bam"
+runMetaBat.sh $illuminaAssembly $bam
+## error, some sort of mismatch in the headers
+
+#### metabat, different settings ####
+
+## let's try some non-default settings, and use these in our 
+## bin refinement process
+
+## 
