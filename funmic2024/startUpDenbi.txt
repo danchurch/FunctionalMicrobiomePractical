@@ -7,7 +7,7 @@ ssh ubuntu@129.70.51.6 -p 30487
 
 pwgen 1 10
 
-P082jA185J
+EHLsVmmpXb
 
 sudo adduser dimitri
 
@@ -15,33 +15,52 @@ sudo usermod -aG sudo dimitri
 
 ## made an ssh folder and authorized key file...
 
+cd /home/dimitri
 
+mkdir .ssh
 
+cd .ssh
+touch authorized_keys ## then paste in key
 
+## I think these need to belong to him...
+chown dimitri:dimitri .ssh
+chown dimitri:dimitri authorized_keys 
 
+## this VM is behaving really funny. 
+## constantly checking the ssh connection, and kicking 
+## us out when it does this.
+
+## so we try a new machine.
+
+ssh -i ~/.ssh ubuntu@129.70.51.6 -p 30476
+
+## meh, that old VM is basically dead, can't connect
+
+## seems to work ok. 
 
 ## need to mount the volume...
 
 ## following: https://simplevm.denbi.de/wiki/simple_vm/volumes/
 
-lsblk ## vdd
+lsblk ## vde, I think
 
 lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE | egrep -v "^loop"
 
-blkid /dev/vdd ## not in there?
+blkid /dev/vde ## not in there?
 
 ## guess it is not yet formatted? 
 
-sudo mkfs.ext4 /dev/vdd
+#sudo mkfs.ext4 /dev/vde
 
 sudo mkdir -p /vol/funMicStorage
 
-sudo mount /dev/vdd /vol/funMicStorage
+sudo mount /dev/vde /vol/funMicStorage
 
 ## add it to the fstab
 
 ## get the UUID
 lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
+
 ## add line to fstab 
 UUID=a29e2283-ddb8-477b-ae03-14d276642b7f       /vol/funMicStorage      auto    defaults        0       2
 ## check after shutting down, seems stable
@@ -79,7 +98,6 @@ nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2
 
 ## the dataset that Dmitri wants to use, kelp on beaches:
 https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJEB36085
-
 
 ## made an accession list. put in on denbi
 
@@ -308,13 +326,25 @@ sudo bash arb_install.sh
 
 sudo bash /usr/arb/SH/arb_installubuntu4arb.sh arb
 
+## according to this, add the following to .bashrc,
+## for path update with ARB binary
+######
+ARBHOME=/usr/arb;export ARBHOME
+LD_LIBRARY_PATH=${ARBHOME}/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH
+PATH=${ARBHOME}/bin:${PATH}
+export PATH
+######
+
 ARB http://www.arb-home.de/downloads.html
 
-FastTree2
-
 ## enable x11 forwarding in 
+
 sudo vim /etc/ssh/ssh_config
+
 ## all the other instances will have to modified, when they come into being...
+## actually, if we take a snapshot of this VM, we should be able to 
+## avoid all the manual 
 
 ## set the following:
 ForwardX11 yes
@@ -324,7 +354,7 @@ ForwardX11Trusted yes
 sudo systemctl restart sshd
 
 ## do we need set client (local) permissions?
-## nope. runs well, just make sure to use the -X flag
+## nope. runs well, just make sure to use the -X or -Y flag
 ## on the ssh command
 
 conda create -n fasttree -c bioconda fasttree
@@ -605,14 +635,17 @@ outdir="/vol/funMicStorage/binning/zymo/metabat/readAlignmentsForBinning"
 
 ## started ~11:50
 
-## This takes a long time, 20-30 mins. Check top.
+## This takes a long time, an hour with 7 cores. Use all cores
+## and maybe we can find a better solution
 
 ## not run ## 
 
 ## sort it
 
+3880489415
+
 samtools sort -l 1 \
-    -@7 \
+    -@14 \
     -o rawReads2ContigsSorted.bam \
     -O BAM \
     rawReads2Contigs.sam &
@@ -628,7 +661,6 @@ samtools sort -l 1 \
     -O BAM \
     $minimapRead2Contigs
 ## pretty quick, ~5 min?
-
 samtools view -h -o minimapRawReads2ContigsSorted.sam minimapRawReads2ContigsSorted.bam 
 
 ## now try actual binning with metabat2
@@ -642,6 +674,15 @@ illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
 bam="readAlignmentsForBinning/minimapRawReads2ContigsSorted.bam"
 runMetaBat.sh $illuminaAssembly $bam
 ## error, some sort of mismatch in the headers
+
+## okay, didn't work. try with the minimap bam
+## define our variables
+illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
+
+bam="readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+
+runMetaBat.sh $illuminaAssembly $bam
+
 
 #### metabat, different settings ####
 
