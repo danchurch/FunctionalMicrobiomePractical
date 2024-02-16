@@ -187,6 +187,44 @@ conda install -c bioconda samtools
 conda install -c bioconda bowtie2
 ## remember to test these. Stuff in this environment is the most likely to fail.
 
+## let's also install concoct. Probably won't use it, but 
+## JIC:
+
+## make sure channels ordered right
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda create -n concoct python=3 concoct
+
+## not working. Try this yaml:
+
+##########
+name: concoct
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - concoct=1.1.0
+  - libopenblas=*=openmp*
+  - mkl
+  - python>=3
+  - samtools>=1.9
+  - scikit-learn=1.1.*
+variables:
+  USE_OPENMP: 1
+##########
+
+
+conda deactivate
+
+conda env remove -n concoct
+
+conda env create -f concoct.yaml
+
+conda activate concoct
+
+
+
 ## genome quality checks:
 
 ## following https://github.com/chklovski/CheckM2
@@ -693,9 +731,61 @@ mv final.contigs.fa.metabat-bins80-20240216_140752 metabatContigs_sensitive
 ls metabatContigs_default | wc -l ## 14 bins
 ls metabatContigs_sensitive | wc -l ## 13 bins
 
+#### concoct ####
+
+conda deactivate 
+
+
+conda activate concoct
+
+mkdir -p /vol/funMicStorage/binning/zymo/concoct
+
+cd /vol/funMicStorage/binning/zymo/concoct
+
+## define our variables
+illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
+readAlignments="/vol/funMicStorage/binning/zymo/metabat/readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+outdir=/vol/funMicStorage/binning/zymo/concoct
+contigs=/vol/funMicStorage/binning/zymo/concoct
+
+## run the software
+## concoct has several steps, each with it's own script:
+
+## samtools needs us to index the sorted read alignments:
+
+samtools index -@ 14 $readAlignments
+
+cut_up_fasta.py $illuminaAssembly -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+
+concoct_coverage_table.py concoctContigs_10K.bed $readAlignments > coverage_table.tsv
+
+concoct \
+  --composition_file concoctContigs_10K.fa \
+  --coverage_file coverage_table.tsv \
+  -t 14 \
+  -b $outdir
+
+
+merge_cutup_clustering.py clustering_gt1000.csv > clustering_merged.csv
+
+mkdir fasta_bins
+
+extract_fasta_bins.py $illuminaAssembly clustering_merged.csv --output_path fasta_bins/
+
+## let's rename these, I think the raw numbers are causing problems
+cd fasta_bins
+for i in *; do
+mv $i ${i/\.fa/_concat\.fa}
+done
+
+
 ######## refining bins ########
 
-## okay, let's tree combining these bins:
+conda deactivate
+
+conda activate binning
+
+## okay, let's try combining these bins:
 
 mkdir -p /vol/funMicStorage/refiningBins/zymo
 
@@ -705,10 +795,11 @@ cd /vol/funMicStorage/refiningBins/zymo
 metabatDefaultBins=/vol/funMicStorage/binning/zymo/metabat/metabatContigs_default
 metabatSensitiveBins=/vol/funMicStorage/binning/zymo/metabat/metabatContigs_sensitive
 vambBins=/vol/funMicStorage/binning/zymo/vamb/vambOut/bins
+concoctBins=/vol/funMicStorage/binning/zymo/concoct/fasta_bins
 illuminaAssembly=/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa
 
 ## for each binner, we need a table to tell das_tools
-## which contig belogs to which bin
+#m which contig belogs to which bin
 
 ## metabat default
 Fasta_to_Contig2Bin.sh \
@@ -739,12 +830,27 @@ cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
 
 head vamb.contigs2bin_edited.tsv ## looks better
 
+### concoct 
+
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+head concoct.contigs2bin.tsv
+
+## I don't think that quite worked...
+## let's keep just the first and last columns of that
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+
+head concoct.contigs2bin_edited.tsv
+
 ## with these we can run DAS tool to refine bins:
 
 \time \
 DAS_Tool \
-    -i metabatDefault.contigs2bin.tsv,metabatSensitive.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
-    -l metabat,metabat,vamb \
+    -i metabatDefault.contigs2bin.tsv,metabatSensitive.contigs2bin.tsv,vamb.contigs2bin_edited.tsv,concoct.contigs2bin_edited.tsv \
+    -l metabat,metabat,vamb,concoct \
     -c $illuminaAssembly \
     -t 14 \
     --write_bins \
@@ -752,11 +858,27 @@ DAS_Tool \
 
 ## started 15:38
 
-## huh, only 4 bins. Weird. so some serious tweaking needed to defaults. 
-## or to metabat, or maybe use concoct also
+## huh, only 5 bins. Weird. so some serious tweaking needed to defaults. 
 
 ## okay, but for the moment, let's move on
 
-## 
+#### check mag qualities ######
+
+conda deactivate 
+
 conda activate magQC
+
 checkm2 -h
+
+
+dasBins=/vol/funMicStorage/refiningBins/zymo/zymoMCBinsRefined_DASTool_bins
+outdir=/vol/funMicStorage/magQC/zymo
+checkm2 predict --threads 14 --input $dasBins -x "fa" --output-directory $outdir
+## 5 min or so
+## funny, didn't tell it where the diamond database was...
+## not necessary?
+
+## next time, maybe declare it before running checkm, might be
+## faster?
+
+
