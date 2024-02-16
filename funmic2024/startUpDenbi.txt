@@ -7,7 +7,6 @@ ssh ubuntu@129.70.51.6 -p 30487
 
 pwgen 1 10
 
-EHLsVmmpXb
 
 sudo adduser dimitri
 
@@ -195,6 +194,7 @@ conda install -c bioconda bowtie2
 conda create -n magQC -c bioconda checkm2
 ## get some weird typeError from tensorflow
 ## so do lots of other folks: https://github.com/chklovski/CheckM2/issues/82
+
 conda remove -n magQC --all 
 
 ## according to one answer, you have to make sure python isn't too old/new
@@ -643,8 +643,6 @@ outdir="/vol/funMicStorage/binning/zymo/metabat/readAlignmentsForBinning"
 
 ## sort it
 
-3880489415
-
 samtools sort -l 1 \
     -@14 \
     -o rawReads2ContigsSorted.bam \
@@ -654,38 +652,17 @@ samtools sort -l 1 \
 ## to test, can we use the minimap-created alignment
 ## from above? if we sort it, it should be basically 
 ## the same...
-
-minimapRead2Contigs=/vol/funMicStorage/binning/zymo/vamb/illumReadsAligned2Contigs.bam
-samtools sort -l 1 \
-    -@5 \
-    -o minimapRawReads2ContigsSorted.bam \
-    -O BAM \
-    $minimapRead2Contigs
-## pretty quick, ~5 min?
-
-samtools view -h -o minimapRawReads2ContigsSorted.sam minimapRawReads2ContigsSorted.bam 
+## tried, some headers are lost with minimap. Debug later if time.
 
 ## now try actual binning with metabat2
-## with both:
 
 cd /vol/funMicStorage/binning/zymo/metabat
 
-## first try with the minimap bam
-## define our variables
-
-illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
-bam="readAlignmentsForBinning/minimapRawReads2ContigsSorted.bam"
-runMetaBat.sh $illuminaAssembly $bam
-## error, some sort of mismatch in the headers
-
-## okay, didn't work. try with the minimap bam
 ## define our variables
 illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
 bam="readAlignmentsForBinning/rawReads2ContigsSorted.bam"
 
 \time nohup runMetaBat.sh $illuminaAssembly $bam
-
-which runMetaBat.sh
 
 ## two minutes, didn't seem to use much memory
 
@@ -694,9 +671,92 @@ which runMetaBat.sh
 ## let's try some non-default settings, and use these in our 
 ## bin refinement process
 
-less /vol/funMicStorage/anaconda3/envs/binning/bin/runMetaBat.sh
+conda activate binning
 
-nohup runMetaBat.sh $illuminaAssembly $bam \
-  --verysensitive \
-  -p \
-  -m 500 \
+cd /vol/funMicStorage/binning/zymo/metabat
+
+illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
+bam="readAlignmentsForBinning/rawReads2ContigsSorted.bam"
+
+runMetaBat.sh $illuminaAssembly $bam 
+
+runMetaBat.sh \
+  --maxP 98 \
+  --maxEdges 500 \
+  --minS 80 \
+  $illuminaAssembly $bam 
+
+## give them better names
+mv final.contigs.fa.metabat-bins-20240216_120148 metabatContigs_default
+mv final.contigs.fa.metabat-bins80-20240216_140752 metabatContigs_sensitive
+
+ls metabatContigs_default | wc -l ## 14 bins
+ls metabatContigs_sensitive | wc -l ## 13 bins
+
+######## refining bins ########
+
+## okay, let's tree combining these bins:
+
+mkdir -p /vol/funMicStorage/refiningBins/zymo
+
+cd /vol/funMicStorage/refiningBins/zymo
+
+## define variables
+metabatDefaultBins=/vol/funMicStorage/binning/zymo/metabat/metabatContigs_default
+metabatSensitiveBins=/vol/funMicStorage/binning/zymo/metabat/metabatContigs_sensitive
+vambBins=/vol/funMicStorage/binning/zymo/vamb/vambOut/bins
+illuminaAssembly=/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa
+
+## for each binner, we need a table to tell das_tools
+## which contig belogs to which bin
+
+## metabat default
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatDefaultBins \
+    > metabatDefault.contigs2bin.tsv
+
+head metabatDefault.contigs2bin.tsv
+
+## metabat sensitive
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatSensitiveBins \
+    > metabatSensitive.contigs2bin.tsv
+
+head metabatSensitive.contigs2bin.tsv
+
+## vamb
+Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+head vamb.contigs2bin.tsv ## also looks weird
+
+## we need to cut the first three letters out of or so...
+cut --complement -c 1-3 vamb.contigs2bin.tsv > vamb.contigs2bin_edited.tsv
+
+head vamb.contigs2bin_edited.tsv ## looks better
+
+## with these we can run DAS tool to refine bins:
+
+\time \
+DAS_Tool \
+    -i metabatDefault.contigs2bin.tsv,metabatSensitive.contigs2bin.tsv,vamb.contigs2bin_edited.tsv \
+    -l metabat,metabat,vamb \
+    -c $illuminaAssembly \
+    -t 14 \
+    --write_bins \
+    -o zymoMCBinsRefined
+
+## started 15:38
+
+## huh, only 4 bins. Weird. so some serious tweaking needed to defaults. 
+## or to metabat, or maybe use concoct also
+
+## okay, but for the moment, let's move on
+
+## 
+conda activate magQC
+checkm2 -h
