@@ -600,6 +600,7 @@ samtools view -F 3584 \
 #### onto metabat ####
 
 conda deactivate
+
 conda activate binning
 
 ## make our output directory
@@ -661,6 +662,7 @@ samtools sort -l 1 \
     -O BAM \
     $minimapRead2Contigs
 ## pretty quick, ~5 min?
+
 samtools view -h -o minimapRawReads2ContigsSorted.sam minimapRawReads2ContigsSorted.bam 
 
 ## now try actual binning with metabat2
@@ -670,6 +672,7 @@ cd /vol/funMicStorage/binning/zymo/metabat
 
 ## first try with the minimap bam
 ## define our variables
+
 illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
 bam="readAlignmentsForBinning/minimapRawReads2ContigsSorted.bam"
 runMetaBat.sh $illuminaAssembly $bam
@@ -678,15 +681,22 @@ runMetaBat.sh $illuminaAssembly $bam
 ## okay, didn't work. try with the minimap bam
 ## define our variables
 illuminaAssembly="/vol/funMicStorage/assemblies/zymoMC/final.contigs.fa"
-
 bam="readAlignmentsForBinning/rawReads2ContigsSorted.bam"
 
-runMetaBat.sh $illuminaAssembly $bam
+\time nohup runMetaBat.sh $illuminaAssembly $bam
 
+which runMetaBat.sh
+
+## two minutes, didn't seem to use much memory
 
 #### metabat, different settings ####
 
 ## let's try some non-default settings, and use these in our 
 ## bin refinement process
 
-## 
+less /vol/funMicStorage/anaconda3/envs/binning/bin/runMetaBat.sh
+
+nohup runMetaBat.sh $illuminaAssembly $bam \
+  --verysensitive \
+  -p \
+  -m 500 \
