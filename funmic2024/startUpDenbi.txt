@@ -1,6 +1,6 @@
 ## let's set up our denbi pilot machine for 2024
 
-ssh ubuntu@129.70.51.6 -p 30487
+ssh ubuntu@129.70.51.6 -p 30476
 
 ## let's add Dimitri:
 ## Dimitri ##
@@ -138,9 +138,25 @@ conda config --add channels conda-forge
 conda create -n RawReadProcessing -c bioconda trim-galore bbmap seqtk phyloflash
 ## I added seqtk
 
-## phyloFlash needs a database:
-
 conda activate RawReadProcessing
+
+## trim_galore is having python issues:
+
+## let's try getting rid of the autodetection of python version:
+
+cd /vol/funMicStorage/anaconda3/envs/RawReadProcessing/bin/
+
+cp cutadapt cutadapt.bk
+
+vim cutadapt 
+
+## change the sheebang to directly say "#!/usr/bin/env python3"
+
+## does that break anything? yup
+
+## let's try a separate install for trim_galore below
+
+## phyloFlash needs a database:
 
 cd /vol/funMicStorage/databases/phyloFlash
 
@@ -155,6 +171,11 @@ phyloFlash.pl -dbhome /vol/funMicStorage/databases/phyloFlash/138.1 -lib TEST -C
  -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
  -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
  -almosteverything
+
+## trim_galore
+
+conda create -n trim-galore -c bioconda trim-galore
+
 
 ## next, assembler:
 conda create -n assembly -c bioconda megahit
@@ -235,7 +256,7 @@ conda deactivate
 
 ## get it local.
 file=/home/ubuntu/allCondaPackages_FunMicVM.txt
-scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$file .
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$file .
 #################################################################
 
 ## for now, back to installations:
@@ -385,17 +406,17 @@ conda activate fasttree
 sipData=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/16S_amps_SIP_2022.zip
 ## put it here:
 barcodeDir=/vol/funMicStorage/datasets/metabarcoding/
-scp -i /home/daniel/.ssh -P 30487 -r $sipData ubuntu@129.70.51.6:$barcodeDir
+scp -i /home/daniel/.ssh -P 30476 -r $sipData ubuntu@129.70.51.6:$barcodeDir
 
 ## also get the new milan data from alfons:
 file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/Oemik-Exp014.zip
 barcodeDir=/vol/funMicStorage/datasets/metabarcoding/
-scp -i /home/daniel/.ssh -P 30487 -r $file ubuntu@129.70.51.6:$barcodeDir
+scp -i /home/daniel/.ssh -P 30476 -r $file ubuntu@129.70.51.6:$barcodeDir
 
 ## and his metadata
 file=/home/daniel/Documents/teaching/functionalMicrobiomes/barcode2023/mapping.tsv
 barcodeDir=/vol/funMicStorage/datasets/metabarcoding/
-scp -i /home/daniel/.ssh -P 30487 -r $file ubuntu@129.70.51.6:$barcodeDir
+scp -i /home/daniel/.ssh -P 30476 -r $file ubuntu@129.70.51.6:$barcodeDir
 
 ## we need just milan's reads:
 
@@ -456,7 +477,7 @@ fastqc -t 10 \
 
 getFile=/vol/funMicStorage/rawReadQC/ERR7255689_?_fastqc.html
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
-scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$getFile $putDir
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ## can these be viewed with x11 forwarding?
 
@@ -497,7 +518,7 @@ phyloDB=/vol/funMicStorage/databases/phyloFlash/138.1
 
 getFile=/vol/funMicStorage/phyloFlashOut/
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/
-scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$getFile $putDir
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ####### assembly #####
 
@@ -534,7 +555,7 @@ less quastLog.txt
 
 getFile=/vol/funMicStorage/assemblyQC/
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/quastOut/
-scp -i /home/daniel/.ssh -P 30487 -r ubuntu@129.70.51.6:$getFile $putDir
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
 cd /home/daniel/Documents/teaching/functionalMicrobiomes/quastOut/
 ## looks fine, n50 of ~100,000, if we don't filter anything
@@ -928,5 +949,103 @@ Lactobacillus fermentum
 ## and of course the Fungi
 Saccharomyces cerevisiae
 Cryptococcus neoformans
+
+######## metabarcoding #########
+
+## data for barcoding is here:
+
+milanReads=/vol/funMicStorage/datasets/metabarcoding/milanReads
+classReads=/vol/funMicStorage/datasets/metabarcoding/old16S
+
+## for qiime, we need a manifest table and a metadata table
+## and all reads need to be found in a single directory
+
+## we have the tables from last year, copy them here 
+## and files into shape to match.
+
+cd /vol/funMicStorage/metabarcoding
+
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2023/metabarcodeTables/sipManifest2023.tsv
+
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2023/metabarcodeTables/sipMeta2023.tsv
+
+## I think last year I ran the students through looking at 
+## qualities and trimming primers. 
+
+## I think I remember pretty similar error profiles for
+## both read sets. So let's combine them into one file 
+## for the students to look at:
+
+cd /vol/funMicStorage/datasets/metabarcoding
+
+mkdir comboMetabarcodeData
+
+cp milanReads/* comboMetabarcodeData/
+
+cp old16S/* comboMetabarcodeData/
+
+## 33 files, combined
+
+## for students to have something to look at:
+
+cd /vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData
+#gunzip *
+cat * > ../comboMetabarcodeData.fastq
+#gzip *
+
+## to check this out:
+
+conda activate RawReadProcessing
+
+cd /vol/funMicStorage/metabarcoding
+
+mkdir rawFASTQCreports
+allCombo16S="/vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData.fastq"
+outdir="/vol/funMicStorage/metabarcoding/rawFASTQCreports"
+fastqc -o $outdir -t 7 $allCombo16S
+
+## get this local and look at them with your web browser
+
+## local computer ##
+getFile=/vol/funMicStorage/metabarcoding/rawFASTQCreports/comboMetabarcodeData_fastqc.html
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/metabarcodeData
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## from this, and what we know about our primers, make a few decisions:
+
+## make output directory
+
+mkdir /vol/funMicStorage/metabarcoding/trimmedSIPreads
+
+
+conda activate trim-galore 
+
+cd /vol/funMicStorage/metabarcoding/
+## define some variables
+sipRawReads=/vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData
+output=/vol/funMicStorage/metabarcoding/trimmedSIPreads
+## run it
+trim_galore \
+  --cores 7 \
+  -o $output \
+  --clip_R1 20 \
+  --illumina \
+  --length 200 \
+  $sipRawReads/*fastq.gz
+
+## we can check these with fastqc if we want.
+
+## but for now keep moving.
+
+## we need to get these into qiime.
+
+## get rid of the reports:
+cd /vol/funMicStorage/metabarcoding/trimmedSIPreads
+
+rm *txt
+
+## and... change manifest file to 
+## match new file path. Metadata should be the same
+## as last year.
 
 
