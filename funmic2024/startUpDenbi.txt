@@ -885,6 +885,15 @@ rmdir ./identify
 
 mags=/vol/funMicStorage/refiningBins/zymo/zymoMCBinsRefined_DASTool_bins
 
+## do the gene predictions, and find the marker genes present in each mag
 gtdbtk identify --genome_dir $mags --out_dir ./identify --extension "fa" --cpus 7
+
+## run multiple alignments of these markers, figure out which domain of life
+## we are dealing with.
+gtdbtk align --identify_dir ./identify --out_dir ./align --cpus 7
+
+\time \
+gtdbtk classify --genome_dir $mags --align_dir ./align --out_dir ./classify -x "fa" --cpus 7
+
 
 
