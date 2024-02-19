@@ -196,10 +196,7 @@ conda config --add channels bioconda
 conda config --add channels conda-forge
 conda create -n concoct python=3 concoct
 
-
 conda activate concoct
-
-
 
 ## genome quality checks:
 
@@ -895,5 +892,41 @@ gtdbtk align --identify_dir ./identify --out_dir ./align --cpus 7
 \time \
 gtdbtk classify --genome_dir $mags --align_dir ./align --out_dir ./classify -x "fa" --cpus 7
 
+## that took ~half hour and 51 gig max RAM
+
+## main results are here:
+
+cd /vol/funMicStorage/assignTax/zymo/classify/classify/
+
+less gtdbtk.bac120.summary.tsv
+less gtdbtk.bac120.summary.tsv
+
+## how to parse these results?
+## explanation is here:
+## https://ecogenomics.github.io/GTDBTk/files/summary.tsv.html
+
+head -n2 gtdbtk.bac120.summary.tsv | cut -f 2
+
+cut -f 16 gtdbtk.bac120.summary.tsv | head -n2
+
+cut -f1,2 gtdbtk.bac120.summary.tsv | head -n 2
+## all 5 identified
+
+## correctly?
+cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15
+
+## we have Bacillus spizizenii, instead of Bacillus subtilis
+## ah yup, LPSN.dsmz says this is a synonym
+
+## https://lpsn.dsmz.de/species/bacillus-spizizenii
+
+## so we lost:
+Escherichia coli
+Salmonella enterica
+Lactobacillus fermentum
+
+## and of course the Fungi
+Saccharomyces cerevisiae
+Cryptococcus neoformans
 
 
