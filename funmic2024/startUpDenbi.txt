@@ -1385,7 +1385,44 @@ load("classSoilps.rda")
 ## our community matrix:
 
 soilCom <- t(ps@otu_table@.Data)
+soilEnv <- as.data.frame(as.matrix(sample_data(ps)))
 
-soilEnv <- sample_data(ps)@.Data
+## write them out for next time:
 
-t(as.matrix(otu_table(ps)))[1:4,1:4]
+write.csv(soilCom, file="soilCom.csv")
+write.csv(soilEnv, file="soilEnv.csv")
+
+## so should be able to start script from here:
+
+conda activate qiime
+
+R
+
+setwd("/vol/funMicStorage/metabarcoding/stats")
+
+library(vegan)
+
+soilCom <- read.csv("soilCom.csv", row.names=1)
+soilEnv <- read.csv("soilEnv.csv", row.names=1)
+
+## look at these:
+
+dim(soilCom) ## big!!
+
+## our community matrix big, 
+## so we pick some rows and columns to look at:
+soilCom[1:10,1:5] 
+
+## with our treatment data,
+## which we will pretend is an environmental matrix,
+## we can use "head" and "tail" to look at.
+
+head(soilEnv)
+
+tail(soilEnv)
+
+## give these to the vegan adonis function:
+adonis2(soilCom ~ ., data = soilEnv, method="bray")
+
+## let's leave it there for now.
+
