@@ -444,6 +444,21 @@ qiime --help ## works for the moment
 ## I think we'll still need to get classifiers, silva etc
 ## we'll come back to this. 
 
+## R, vegan ##
+
+## qiime has a pretty up-to-date R version
+## but can we get phyloseq going?
+
+
+
+R
+
+install.packages("BiocManager")
+BiocManager::install("phyloseq")
+## huh, already on there
+
+
+
 ########################################
 
 #### trials with mc data #######
@@ -1203,7 +1218,7 @@ scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ### last metabarcoding task: assign taxonomy ###
 
-conda activate qiime2
+conda activate qiime
 
 mkdir /vol/funMicStorage/metabarcoding/qiime/taxClassification
 
@@ -1225,23 +1240,152 @@ nohup qiime feature-classifier classify-sklearn \
   --p-n-jobs 7 \
   --o-classification dada2_rep_set_classified.qza &
 
-## not run ##
-## not run ##
-## not run ##
+
 qiime metadata tabulate \
   --m-input-file dada2_rep_set_classified.qza \
   --o-visualization taxonomy.qzv
 
 ## to make a nice visualization out of this...
 
-repSetClassified=/vol/danBot/sipMetabarcode/qiime/taxClassification/dada2_rep_set_classified.qza
-dada2_table=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_table.qza
-metadata=/vol/danBot/sipMetabarcode/qiime/sipMeta2023.tsv
-dada2Reps=/vol/danBot/sipMetabarcode/qiime/dada2OutPut/dada2_rep_set.qza
+## let's put it in our visualization folder:
 
-qiime metadata tabulate \
-  --m-input-file dada2_rep_set_classified.qza \
-  --o-visualization taxonomy.qzv
+cd /vol/funMicStorage/metabarcoding/qiime/dada2visualizations
+repSetClassified=/vol/funMicStorage/metabarcoding/qiime/taxClassification/dada2_rep_set_classified.qza
+dada2_table=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
+dada2Reps=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_rep_set.qza
 
+qiime taxa barplot \
+  --i-table $dada2_table \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization all_taxa_bar_plots.qzv
 
+## get local, look at it:
 
+getFile=/vol/funMicStorage/metabarcoding/qiime/dada2visualizations/all_taxa_bar_plots.qzv
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeOutputs/dada2visualizations/
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+
+#### statistical tests #####
+
+## let's do a permanova test of our 
+## various predictors 
+
+## we need a community matrix and an environmental 
+## matrix out of qiime, and R with vegan. 
+
+## place to put all this:
+
+mkdir /vol/funMicStorage/metabarcoding/stats
+cd /vol/funMicStorage/metabarcoding/stats
+
+## tax table: 
+cd /vol/funMicStorage/metabarcoding/qiime/taxClassification/
+unzip dada2_rep_set_classified.qza
+mv taxonomy.tsv /vol/funMicStorage/metabarcoding/stats/
+
+## rep set sequences
+
+cd /vol/funMicStorage/metabarcoding/qiime/dada2OutPut/
+unzip dada2_rep_set.qza 
+mv dna-sequences.fasta /vol/funMicStorage/metabarcoding/stats/
+
+## get community matrix ##
+
+## qiime data is ridiculously hard to get into
+## phyloseq
+
+## there should be a biom table in there, but not sure 
+## if it is what we need:
+
+cd /vol/funMicStorage/metabarcoding/qiime/dada2OutPut/
+cp dada2_table.qza dada2_table.qza.bk
+unzip dada2_table.qza
+mv feature-table.biom /vol/funMicStorage/metabarcoding/stats/
+
+## nope. We need to incorporate taxonomy into this 
+## before phyloseq will use it:
+## following 
+## https://forum.qiime2.org/t/exporting-and-modifying-biom-tables-e-g-adding-taxonomy-annotations/3630
+
+rm /vol/funMicStorage/metabarcoding/stats/feature-table.biom
+
+dadaTable=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
+taxAss=/vol/funMicStorage/metabarcoding/qiime/taxClassification/taxonomy.qzv
+statsDir=/vol/funMicStorage/metabarcoding/stats/
+
+qiime tools export --input-path $dadaTable --output-path $statsDir
+qiime tools export --input-path $taxAss --output-path $statsDir
+
+## modify header of metadata.tsv to say:
+#OTUID  taxonomy        confidence
+
+## name is confusing
+mv metadata.tsv biom-taxonomy.tsv
+
+## try adding with the biom package:
+biom add-metadata \
+  -i feature-table.biom \
+  -o table-with-taxonomy.biom \
+  --observation-metadata-fp biom-taxonomy.tsv \
+  --sc-separated taxonomy
+
+## looks ok
+
+## we have a 16s tree, use it?
+
+## unzip and pull it out of the tree object
+unzip rooted_tree.qza ## etc
+
+mv tree.nwk /vol/funMicStorage/metabarcoding/stats/
+
+cd /vol/funMicStorage/metabarcoding/stats
+
+## qiime actually has a pretty good R setup already built:
+
+conda activate qiime
+
+R
+
+library("phyloseq")
+library("vegan")
+
+setwd("/vol/funMicStorage/metabarcoding/stats/")
+
+## for the first time:
+ps = import_biom("table-with-taxonomy.biom", 
+                          treefilename="tree.nwk", 
+                          refseqfilename="dna-sequences.fasta",
+                        )
+     
+## is our metadata in there already? of course not.
+
+## looking at this, our raw metadata table may work:
+aa <- read.csv("/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv", sep="\t", row.names=1)
+sample_data(ps) <- aa
+
+## clean up the names a bit:
+taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+
+save(ps, file="classSoilps.rda")
+
+## next time:
+
+load("classSoilps.rda")
+
+## great, so we have a functioning ps object. 
+
+## what do we want to do?
+
+## I think we just have time for a simple PERMANOVA
+
+## so we need get vegan our community matrix and env data:
+
+## our community matrix:
+
+soilCom <- t(ps@otu_table@.Data)
+
+soilEnv <- sample_data(ps)@.Data
+
+t(as.matrix(otu_table(ps)))[1:4,1:4]
