@@ -7,7 +7,7 @@
    viewBox="0 0 581.4886 480.16732"
    version="1.1"
    id="svg5"
-   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
    sodipodi:docname="metagenomeFlow.svg"
    inkscape:export-filename="/home/daniel/Documents/teaching/functionalMicrobiomes/skriptGraphics/metagenomeFlow.png"
    inkscape:export-xdpi="96"
@@ -27,21 +27,23 @@
      inkscape:document-units="mm"
      showgrid="false"
      showborder="true"
-     inkscape:zoom="0.27845198"
-     inkscape:cx="752.37389"
-     inkscape:cy="849.33854"
-     inkscape:window-width="1204"
-     inkscape:window-height="656"
-     inkscape:window-x="76"
-     inkscape:window-y="27"
+     inkscape:zoom="0.55690396"
+     inkscape:cx="1087.2611"
+     inkscape:cy="821.5061"
+     inkscape:window-width="3072"
+     inkscape:window-height="1634"
+     inkscape:window-x="2293"
+     inkscape:window-y="-11"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g89386"
      inkscape:snap-nodes="true"
      fit-margin-top="10"
      fit-margin-left="10"
      fit-margin-right="10"
      fit-margin-bottom="10"
-     inkscape:snap-global="false" />
+     inkscape:snap-global="false"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
   <defs
      id="defs2">
     <marker
@@ -349,33 +351,33 @@
        transform="translate(-96.123841,-9.3376247)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-260.0639"
          y="-24.904474"
          id="text4103"><tspan
            sodipodi:role="line"
            id="tspan4101"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-260.0639"
            y="-24.904474">Quality control </tspan><tspan
            sodipodi:role="line"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-260.0639"
            y="-11.67535"
            id="tspan219983">of raw sequences</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-260.46439"
          y="5.9835119"
          id="text5669"><tspan
            sodipodi:role="line"
            id="tspan5667"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-260.46439"
            y="5.9835119"> </tspan><tspan
            sodipodi:role="line"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-260.46439"
            y="19.212637"
            id="tspan225895">= FastQC + Cutadapt</tspan></text>
@@ -399,37 +401,37 @@
        transform="translate(0.45100703,-10.295612)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-324.64792"
-         y="78.899529"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="-326.22708"
+         y="78.247276"
          id="text22455"><tspan
            sodipodi:role="line"
            id="tspan22453"
-           style="stroke-width:0.264583"
-           x="-324.64792"
-           y="78.899529">Assembly of metagenome</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="-326.22708"
+           y="78.247276">Assembly of metagenome</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-253.75053"
-         y="96.835365"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="-253.86212"
+         y="99.222389"
          id="text24769"><tspan
            sodipodi:role="line"
            id="tspan24767"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-           x="-253.75053"
-           y="96.835365">MEGAHIT </tspan><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
+           x="-253.86212"
+           y="99.222389">MEGAHIT </tspan><tspan
            sodipodi:role="line"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
-           x="-253.75053"
-           y="110.06449"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke-width:0.264583"
+           x="-253.86212"
+           y="114.65639"
            id="tspan9869" /></text>
       <rect
          id="rect250305-1"
          width="146.00316"
          height="21.487621"
          x="-328.12073"
-         y="64.980034"
+         y="64.308144"
          style="fill:#000000;fill-opacity:0.35;stroke:#000000;stroke-width:1.165;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <rect
          id="rect250305-1-2"
@@ -441,35 +443,35 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-       x="-344.1955"
-       y="138.47217"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-345.3844"
+       y="138.13985"
        id="text31337"><tspan
          sodipodi:role="line"
          id="tspan31335"
-         style="stroke-width:0.264583"
-         x="-344.1955"
-         y="138.47217">Assembly quality control</tspan></text>
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="-345.3844"
+         y="138.13985">Assembly quality control</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
        x="-299.51459"
        y="163.22678"
        id="text33651"><tspan
          sodipodi:role="line"
          id="tspan33649"
-         style="stroke-width:0.264583"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-299.51459"
          y="163.22678">QUAST</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
        x="-311.57016"
        y="171.58112"
        id="text38725"><tspan
          sodipodi:role="line"
          id="tspan38723"
-         style="stroke-width:0.264583"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-311.57016"
          y="171.58112" /></text>
     <rect
@@ -491,46 +493,46 @@
        transform="translate(-8.2516486,-10.224066)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-339.00891"
          y="234.43463"
          id="text43415"><tspan
            sodipodi:role="line"
            id="tspan43413"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-339.00891"
            y="234.43463">Binning contigs</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-338.56448"
          y="255.494"
          id="text53481"><tspan
            sodipodi:role="line"
            id="tspan53479"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-338.56448"
            y="255.494">Concoct</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-323.19595"
          y="268.35162"
          id="text56125"><tspan
            sodipodi:role="line"
            id="tspan56123"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-323.19595"
            y="268.35162">MetaBAT2</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-292.5705"
          y="281.30228"
          id="text58637"><tspan
            sodipodi:role="line"
            id="tspan58635"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-292.5705"
            y="281.30228">VAMB</tspan></text>
       <rect
@@ -553,24 +555,24 @@
        transform="translate(17.369705,-0.12720893)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-337.60306"
          y="324.94824"
          id="text70235"><tspan
            sodipodi:role="line"
            id="tspan70233"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-337.60306"
            y="324.94824">Bin refinement</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-320.66357"
          y="346.51315"
          id="text73539"><tspan
            sodipodi:role="line"
            id="tspan73537"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-320.66357"
            y="346.51315">DAS tool</tspan></text>
       <rect
@@ -587,30 +589,54 @@
          x="-342.98123"
          y="331.78522"
          style="fill:none;stroke:#000000;stroke-width:1.165;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-337.17276"
+         y="-91.234695"
+         id="text73539-1"
+         transform="rotate(-75.927714)"><tspan
+           sodipodi:role="line"
+           id="tspan73537-8"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+           x="-337.17276"
+           y="-91.234695">Performed for each sample / metagenomic library</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-312.34848"
+         y="-62.242271"
+         id="text73539-1-5"
+         transform="rotate(-75.927714)"><tspan
+           sodipodi:role="line"
+           id="tspan73537-8-2"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+           x="-312.34848"
+           y="-62.242271">Performed once for the entire dataset</tspan></text>
     </g>
     <g
        id="g255183"
        transform="translate(320.84048,-89.04834)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-382.18503"
-         y="394.08673"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="-385.01364"
+         y="394.36536"
          id="text82453"><tspan
            sodipodi:role="line"
            id="tspan82451"
-           style="stroke-width:0.264583"
-           x="-382.18503"
-           y="394.08673">Quality control of MAGs</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="-385.01364"
+           y="394.36536">Quality control of MAGs</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-340.42285"
          y="416.6774"
          id="text84635"><tspan
            sodipodi:role="line"
            id="tspan84633"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-340.42285"
            y="416.6774">CheckM</tspan></text>
       <rect
@@ -633,24 +659,24 @@
        transform="translate(295.43777,-260.40035)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-317.97034"
-         y="459.69931"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="-321.63007"
+         y="459.35483"
          id="text88335"><tspan
            sodipodi:role="line"
            id="tspan88333"
-           style="stroke-width:0.264583"
-           x="-317.97034"
-           y="459.69931">Assign taxonomy of MAGs</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="-321.63007"
+           y="459.35483">Assign taxonomy of MAGs</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-272.46524"
          y="480.64413"
          id="text89835"><tspan
            sodipodi:role="line"
            id="tspan89833"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-272.46524"
            y="480.64413">GTDB-tk</tspan></text>
       <rect
@@ -673,29 +699,29 @@
        transform="translate(-147.14886,-161.65017)">
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-17.234322"
          y="131.74376"
          id="text139941"><tspan
            sodipodi:role="line"
            id="tspan139939"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-17.23432"
            y="131.74376">Whole-community</tspan><tspan
            sodipodi:role="line"
-           style="text-align:center;text-anchor:middle;stroke-width:0.264583"
+           style="text-align:center;text-anchor:middle;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-17.234324"
            y="144.97289"
            id="tspan201123">taxonomic composition</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="-49.131496"
          y="169.38403"
          id="text191091"><tspan
            sodipodi:role="line"
            id="tspan191089"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="-49.131496"
            y="169.38403">Phyloflash</tspan></text>
       <rect
@@ -720,28 +746,28 @@
          id="rect250305-1-2-7-0-9-6-6-0-3-7-5"
          width="118.24752"
          height="21.564911"
-         x="48.998409"
-         y="193.79013"
+         x="49.362556"
+         y="193.38248"
          style="fill:#000000;fill-opacity:0.35;stroke:#000000;stroke-width:1.165;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="54.26302"
-         y="207.49231"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="51.078968"
+         y="208.58412"
          id="text111267"><tspan
            sodipodi:role="line"
-           style="stroke-width:0.264583"
-           x="54.26302"
-           y="207.49231"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="51.078968"
+           y="208.58412"
            id="tspan111269">Genome annotations</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         style="font-style:normal;font-weight:normal;font-size:12.34722222px;line-height:1.25;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
          x="94.020248"
          y="230.08298"
          id="text111267-3"><tspan
            sodipodi:role="line"
-           style="stroke-width:0.264583"
+           style="stroke-width:0.264583;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
            x="94.020248"
            y="230.08298"
            id="tspan111269-7">RAST</tspan></text>
@@ -749,8 +775,8 @@
          id="rect250305-1-2-7-0-9-6-6-0-3-7-5-9"
          width="118.24382"
          height="21.564911"
-         x="48.998409"
-         y="215.35504"
+         x="49.250366"
+         y="215.18707"
          style="fill:none;stroke:#000000;stroke-width:1.165;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <path
@@ -780,7 +806,7 @@
        sodipodi:nodetypes="czc" />
     <path
        style="fill:none;stroke:#000000;stroke-width:3.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow1Sstart-2-0-2)"
-       d="m -211.34613,389.64721 c -63.25687,-0.13176 -68.19278,-36.51745 -68.19278,-36.51745"
+       d="m -214.36963,388.97532 c -63.25687,-0.13176 -65.16928,-35.84556 -65.16928,-35.84556"
        id="path255458-3-6-6"
        sodipodi:nodetypes="cc" />
     <path
@@ -805,42 +831,42 @@
          id="rect250305-1-2-7-0-9-6-6-1"
          width="135.64333"
          height="21.564911"
-         x="-454.19992"
-         y="503.40723"
+         x="-453.20782"
+         y="504.67517"
          style="fill:#000000;fill-opacity:0.35;stroke:#000000;stroke-width:1.165;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-445.06021"
-         y="517.10938"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="-431.05823"
+         y="518.64996"
          id="text82453-5"><tspan
            sodipodi:role="line"
            id="tspan82451-6"
-           style="stroke-width:0.264583"
-           x="-445.06021"
-           y="517.10938">Genome dereplication</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="-431.05823"
+           y="518.64996">Bin dereplication</tspan></text>
       <text
          xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:10.5833px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-401.71051"
-         y="539.70007"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="-400.70267"
+         y="541.71576"
          id="text84635-2"><tspan
            sodipodi:role="line"
            id="tspan84633-9"
-           style="stroke-width:0.264583"
-           x="-401.71051"
-           y="539.70007">dRep</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.3472px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+           x="-400.70267"
+           y="541.71576">dRep</tspan></text>
       <rect
          id="rect250305-1-2-7-0-9-6-6-2-2"
          width="135.64333"
          height="21.564911"
-         x="-454.19995"
-         y="524.97211"
+         x="-453.19211"
+         y="526.98779"
          style="fill:none;stroke:#000000;stroke-width:1.165;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
     <path
        style="fill:none;stroke:#000000;stroke-width:3.565;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow1Sstart-2-0-2-7-3)"
-       d="m 5.9751588,340.89848 c -9.9809364,17.50909 -40.8618948,52.57113 -74.6196968,47.63785"
+       d="m 5.9751588,340.89848 c -9.963816,17.48855 -33.2300948,48.45213 -71.2602548,48.64568"
        id="path255458-3-6-6-9-0"
        sodipodi:nodetypes="cc"
        inkscape:transform-center-x="-19.017306"
@@ -850,5 +876,21 @@
        d="m 19.991055,119.00135 c 1.6466,29.73455 17.993987,40.35846 16.836267,63.45696"
        id="path255458-3-6-6-9-0-6"
        sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#ffffff;stroke:#303030;stroke-width:1.05833;stroke-dasharray:12.7, 12.7;stroke-dashoffset:0;stroke-opacity:1"
+       d="M -154.77595,358.23926 -55.336461,-40.190576"
+       id="path1"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:12.34722222px;line-height:1.15;font-family:Arial;-inkscape-font-specification:'Arial, Normal';text-align:center;text-decoration-color:#000000;text-anchor:middle;fill:#ffffff;stroke:#303030;stroke-width:1.05833;stroke-dasharray:12.7, 12.7;stroke-dashoffset:0;stroke-opacity:1;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="-191.05792"
+       y="231.92424"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="stroke-width:1.05833;-inkscape-font-specification:'Arial, Normal';font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:12.34722222px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-191.05792"
+         y="231.92424" /></text>
   </g>
 </svg>
