@@ -948,6 +948,9 @@ cut -f1,2 gtdbtk.bac120.summary.tsv | head -n 2
 ## all 5 identified
 
 ## correctly?
+
+cd /vol/funMicStorage/assignTax/zymo/classify
+
 cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15
 
 ## we have Bacillus spizizenii, instead of Bacillus subtilis
@@ -958,11 +961,9 @@ cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15
 ## so we lost:
 Escherichia coli
 Salmonella enterica
-Lactobacillus fermentum
 
 ## and of course the Fungi
 Saccharomyces cerevisiae
-Cryptococcus neoformans
 
 ######## metabarcoding #########
 
