@@ -945,7 +945,15 @@ head -n2 gtdbtk.bac120.summary.tsv | cut -f 2
 cut -f 16 gtdbtk.bac120.summary.tsv | head -n2
 
 cut -f1,2 gtdbtk.bac120.summary.tsv | head -n 2
-## all 5 identified
+
+## all 5 identified:
+
+## Staphylococcus aureus
+## Enterococcus faecalis
+## Bacillus spizizenii
+## Pseudomonas aeruginosa
+## Listeria monocytogenes
+
 
 ## correctly?
 
@@ -1426,4 +1434,12 @@ tail(soilEnv)
 adonis2(soilCom ~ ., data = soilEnv, method="bray")
 
 ## let's leave it there for now.
+
+
+### clean up computer for students ###
+
+## let's simplify the environment for students
+
+## they can make their own mess later:
+
 
