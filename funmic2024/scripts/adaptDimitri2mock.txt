@@ -1,4 +1,0 @@
-## let's rerun our script using the modifications from 
-## dimitri's pipeline to the mock community
-
-## 

@@ -1,0 +1,129 @@
+## playing around with BASH (the linux command line)
+
+## use wget to get the latest version of the intro script (this document!)
+
+## first, you need to get this document, somehow...point and click from the link on the 
+## skript pdf (section C1, page 21) 
+
+https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/scripts/funBASHterminalScript.txt
+
+## you can use the command "wget" to download it while you are in the terminal:
+
+https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/scripts/funBASHterminalScript.txt
+
+## we need a file to play with:
+
+echo "this isn't a real file is it?" > example.txt
+
+## and now, let's practice some commands and getting around in a linux filetree.
+
+pwd 
+
+ls 
+
+cd 
+
+cp 
+
+mv 
+
+mkdir 
+
+echo 
+
+cat 
+
+rm 
+
+sudo 
+
+top 
+
+man 
+
+head 
+
+tail 
+
+less 
+
+## special characters
+## ~  ##
+## .  ##
+## .. ## 
+## >  ##
+## |  ##
+## ;  ##
+## /  ##
+## \  ##
+## &  ##
+## = and $ ##
+
+dirX=
+echo $dirX
+
+## *  ##
+## ?  ##
+## #  ## 
+
+## loops ##
+
+for i in *
+do
+  echo $i
+done
+
+
+## and now, let's try to log onto our denbi virtual machines:
+
+## I can do this with a command from my computer with a command
+## in the terminal:
+
+ssh -Y -p 30476 -i /home/daniel/.ssh/./id_ed25519 ubuntu@129.70.51.6
+
+## you can try this, or you can use MobaXterm
+
+## look at the storage volume:
+
+cd /vol/funMicStorage
+
+## there should be a shortcut stored on your computer:
+
+vol ## typing this should get you to the volume.
+
+## and let's learn how to get files onto and off our VM. 
+
+
+## find this file with MobaXterm and put it on your local
+## computer. Make sure you can find it on both computers.
+
+
+
+##### move this to metagenome script ########
+
+## let's get our assembly going
+
+## first, look at qualities:
+
+## get into the right conda environment
+
+conda activate RawReadProcessing
+
+## make a directory for our new assembly:
+mkdir -p /vol/danBot/assemblies/zymoMC/nanopore/
+
+## or you could make a folder here:
+cd /vol/danBot/
+mkdir zymoNanoporeAssembly
+
+## set my variables
+reads=/vol/danBot/datasets/zymoMC/nanopore/ERR7287988_shortened.fastq
+outdir=/vol/danBot/assemblies/zymoMC/nanopore/
+## (or your output directory might look like this, depends on what you did above):
+## outdir=/vol/danBot/zymoNanoporeAssembly
+
+## run it, using nohup to make sure it doesn't die when we hang up the connection
+
+## this is the same as:
+nohup flye --meta --threads 25 --out-dir $outdir --nano-hq $reads &
+
