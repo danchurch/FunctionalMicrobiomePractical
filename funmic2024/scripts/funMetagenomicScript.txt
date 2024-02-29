@@ -1,0 +1,168 @@
+## let's try to get some metagenomes out of our 
+## mock community data
+
+## first thing, let's make folder that will contain
+## all our outputs. I will call mine:
+
+mkdir /vol/funMicStorage/zymoAnalysis
+
+## and let's look at the data:
+## the data is here:
+
+cd /vol/funMicStorage/datasets/zymo
+
+## these are compressed files. To look at them
+## manually we can unzip them, with a program
+## called gunzip (gnu unzip).
+
+gunzip -k ERR7255689_1.fastq.gz &
+
+less ERR7255689_1.fastq
+
+## what do you see? how does this compare to 
+## a fasta?:
+
+less /vol/funMicStorage/someFiles/bin1.fa
+
+## we need a bigger view of what's going on 
+## let's use FastQC.
+
+## go back to our directory for this analysis:
+
+cd /vol/funMicStorage/zymoAnalysis
+
+## to use FastQC, we need to activate the correct conda environment:
+
+conda activate RawReadProcessing
+
+## in general before we use a program,
+## we will make a directory for its outputs,
+## and define some variables to tell the
+## program where the important files are: 
+
+## outputs will go here:
+mkdir /vol/funMicStorage/zymoAnalysis/rawReadQC
+
+## define some variables...
+
+## where will our outputs go?:
+outDir=/vol/funMicStorage/zymoAnalysis/rawReadQC
+
+## where is our data?
+readFile="/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz"
+
+## now run the command itself:
+
+fastqc -t 10 \
+  -o $outDir \
+  $readFile 
+
+## that is the R1 reads. We should also look at the reverse reads:
+
+## we need to change our file, so change the variable:
+outDir=/vol/funMicStorage/zymoAnalysis/rawReadQC
+readFile="/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz"
+fastqc -t 10 \
+  -o $outDir \
+  $readFile 
+
+## can you get these files onto your local computer, using 
+## MobaXterm?
+
+## I grab my files the old fashioned way :)
+#########################################################################
+## you probably don't need to do this, just use MobaXterm
+getFile=/vol/funMicStorage/zymoAnalysis/rawReadQC/ERR7255689_?_fastqc.html
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+#########################################################################
+
+## let's look at these read quality reports:
+firefox *
+
+## what do you think? Do we need to alter these reads by 
+## trimming or filtering?
+
+## and back on de.NBI machine
+
+## we can check our taxonomic community composition   
+## using phyloFlash, on our raw reads
+
+## phyloFlash is installed in the same environment:
+conda activate RawReadProcessing
+
+## same pattern as before. make a directory to work in,
+## and define some variables for the program,
+## then run it.
+
+mkdir /vol/funMicStorage/zymoAnalysis/phyloFlashOut
+
+cd /vol/funMicStorage/zymoAnalysis/phyloFlashOut
+
+## our fasta files
+fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
+fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
+## but what is this?:
+phyloDB=/vol/funMicStorage/databases/phyloFlash/138.1
+## here's a hint:
+ls $phyloDB
+
+## run the command
+phyloFlash.pl \
+  -lib zymoPhyloFlashOut \
+  -read1 $fast1 \
+  -read2 $fast2 \
+  -readlength 150 \
+  -clusterid 98 \
+  -taxlevel 7 \
+  -dbhome $phyloDB \
+  -CPUs 12 
+
+## this gives us a lot of outputs that 
+## track the various stages of the analysis
+
+#########################################################################
+## you probably don't need to do this, just use MobaXterm
+getFile=/vol/funMicStorage/zymoAnalysis/phyloFlashOut
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+#########################################################################
+
+## let's examine the results, 
+
+## and compare them to the species we know are in 
+## our mock community:
+
+https://github.com/danchurch/FunctionalMicrobiomePractical/blob/main/funmic2024/_d6322_zymobiomics_hmw_dna_standard.pdf
+
+####### assembly #######
+
+## now try an assembly, with megahit
+
+conda activate assembly
+
+## same pattern as always. make a directory and
+## define variables:
+
+mkdir /vol/funMicStorage/zymoAnalysis/assembly
+
+cd /vol/funMicStorage/zymoAnalysis/assembly
+
+fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
+fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
+## 
+
+## the command...
+\nohup megahit -1 $fast1 \
+          -2 $fast2 \
+          -t 12 &
+
+## wait, what is "nohup"? and why is there an "&" at the end of this???
+
+## check how things are going:
+
+less nohup.out
+
+top
+
+## that is going to run a while...take lunch?
