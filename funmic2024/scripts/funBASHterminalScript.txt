@@ -85,17 +85,24 @@ do
   echo $i
 done
 
+## 
+
 ## we can use files as lists:
 
-## make a file if this isn't already there
+cd someFiles 
 
 for i in $(cat bin5.fa)
 do
   echo "this is data?" $i
 done
 
-## and let's learn how to get files onto and off our VM. 
+## or look at some numbers...
 
+for i in {0..10}; do
+  echo "this is a number?" $i
+done
+
+## and let's learn how to get files onto and off our VM. 
 
 ## find one of the fasta files with MobaXterm and put it on your local
 ## computer. Make sure you can find it on both computers.
