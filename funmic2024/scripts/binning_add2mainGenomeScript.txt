@@ -31,6 +31,8 @@ mkdir coverage
 
 cd coverage 
 ## or 
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/coverage
 cd /vol/funMicStorage/zymoAnalysis/binning/coverage
 
 assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
@@ -70,11 +72,13 @@ bash rawReads_to_assembly_to_bam.sh
 ## generate coverage table ##
 
 ## for all of 3 of the binning programs,
-## we need a coverage table. We'll use a custom script 
-## from JGI, that comes with metabat2. Because of this,
-## we change the conda environment:
+## we need a coverage table that summarizes the 
+## mapping we just did. We'll use a custom script 
+## from JGI, that comes with the program metabat2. 
+## Because of this, we change the conda environment:
 
-#conda deactivate
+conda deactivate
+
 conda activate binning 
 
 ## let's stay in our "coverage directory", because these
@@ -84,7 +88,6 @@ cd /vol/funMicStorage/zymoAnalysis/binning/coverage
 
 assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
 sortedBAM=/vol/funMicStorage/zymoAnalysis/binning/coverage/rawReads_to_assembly_sorted.bam
-
 jgi_summarize_bam_contig_depths \
     --outputDepth coverage_Depths.txt \
     --referenceFasta  $assembly \
@@ -92,17 +95,6 @@ jgi_summarize_bam_contig_depths \
 
 ## this generates a coverage table. But we have to 
 ## reformat it a bit to fit the needs of the binning programs. 
-## the contig names are too complex. Trim them down.
-
-## use the "cut/paste" programs to fix it. 
-cut $coverageTable -f1 | cut -d" " -f1 > contigName.txt
-cut $coverageTable --complement -f1 > everythingElse.txt
-paste contigName.txt everythingElse.txt > simpleNames.txt
-## If you are curious about cut/paste, ask me about it.
-
-## rename files
-mv coverage_Depths.txt coverage_Depths.txt.bk
-mv simpleNames.txt coverage_Depths.txt
 
 ## check it, does your new file look like mine?
 
@@ -122,8 +114,7 @@ mkdir /vol/funMicStorage/zymoAnalysis/binning/metabat
 cd /vol/funMicStorage/zymoAnalysis/binning/metabat
 
 assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
-#coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
-coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/simpleNames.txt
+coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
 metabat2 \
   -i $assembly \
   -a $coverageTable \
@@ -145,23 +136,211 @@ mkdir /vol/funMicStorage/zymoAnalysis/binning/vamb
 cd /vol/funMicStorage/zymoAnalysis/binning/vamb
 
 assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
-#coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
-coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/simpleNames.txt
+coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
 
 nohup vamb \
     --fasta $assembly \
     --jgi $coverageTable \
     -t 64 \
-    --minfasta 200000 \
+    --minfasta 2000000 \
     --outdir vambOut & 
+
+## how many are there?
+cd vambOut/bins
+
+## let's make the names a lat
+for i in *; do
+  mv $i ${i/\.fna/_vamb\.fna}
+done
 
 ## the -t flag lowers the batch size of contigs
 ## that are put into memory. We are lowering
 ## here because we have such a simple community.
 
-\time nohup vamb --outdir vambOut \
-  --fasta illumcatalogue.fna.gz \
-  --bamfiles illumReadsAligned2Contigs.bam \
-  -t 7 \
-  -o C \
-  --minfasta 200000 &> vambLog.txt &
+### concoct ###
+
+## concoct has some special software requirements,
+## so it is in its own conda environment 
+
+#conda deactivate
+conda activate concoct
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/concoct
+
+cd /vol/funMicStorage/zymoAnalysis/binning/concoct
+
+## concoct needs its own format of coverage table:
+## for example, see here: 
+https://github.com/BinPro/CONCOCT/blob/develop/tests/test_data/coverage
+
+## so find our original coverage table:
+coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
+
+## and do a little bit of bash magic convert our old coverage table:
+cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
+
+## now that our coverage table is formatted in a way that 
+## concoct likes, run the program!
+
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+concoct \
+  --composition_file $assembly \
+  --coverage_file concoct_coverage.txt \
+  -t 12 
+
+## find a place to put these bins:
+mkdir fasta_bins
+
+## another custom script from concoct to collect our contigs into 
+## fasta files:
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+## looks promising, but we want pretty file names
+## time for more BASH magic:
+cd fasta_bins
+for i in *; do
+  mv $i ${i/\.fa/_concat\.fa}
+done
+
+### refining of bins ###
+
+## we now have lots of bins...
+## how can we choose among them?
+
+
+## here we use DAS tool to search
+## genomes for single copy gene markers
+## that can be used to assess
+## completeness and redundancy/contamination
+## in a genome, and use this information
+## to select bins from our binning process,
+## and potentially improve them by removing
+## misplaced contigs. 
+
+#conda deactivate
+conda activate binning
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/refineBins
+
+cd /vol/funMicStorage/zymoAnalysis/binning/refineBins
+
+## DAS tools needs information about where contigs 
+## map to in each of our different bin sets...
+## they have a custom script for this to save us 
+## some time,
+
+## define variables. Where did we put all those bins?
+metabatBins=/vol/funMicStorage/zymoAnalysis/binning/metabat
+vambBins=/vol/funMicStorage/zymoAnalysis/binning/vamb/vambOut/bins
+concoctBins=/vol/funMicStorage/zymoAnalysis/binning/concoct/fasta_bins
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+
+## find the contigs in our metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+## what does that look like?
+head metabat.contigs2bin.tsv
+
+## and vamb
+Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+head vamb.contigs2bin.tsv 
+
+## and concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+head concoct.contigs2bin.tsv
+
+## with that, we can run das tool:
+
+DAS_Tool \
+    -i metabat.contigs2bin.tsv,vamb.contigs2bin.tsv,concoct.contigs2bin.tsv \
+    -l metabat,vamb,concoct \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 12 \
+    --write_bins \
+    -o zymoMC_das
+
+## how many are there?
+
+## at this point if we had multiple environmental samples,
+## we would also use this information to help us 
+## help decide which bins to keep, and which are
+## redundant, using the software Drep
+
+## Dimitri will cover this next week when we have 
+## multiple metagenomes to process.
+
+### Bin Quality Check ###
+
+## now let's check our bin qualities with checkM
+
+#conda deactivate
+conda activate magQC
+
+mkdir /vol/funMicStorage/zymoAnalysis/magQC
+
+cd /vol/funMicStorage/zymoAnalysis/magQC
+
+
+dasBins=/vol/funMicStorage/zymoAnalysis/binning/refineBins/zymoMC_das_DASTool_bins
+checkm2 predict \
+  --threads 12 \
+  --input $dasBins \
+  -x "fa" \
+  --output-directory checkMout
+
+cd /vol/funMicStorage/magQC/zymo
+
+### assign taxonomy ###
+
+## we'll use the genome taxonomy database tool kit to 
+## assign taxonomy
+
+#conda deactivate
+conda activate gtdbtk
+
+mkdir /vol/funMicStorage/zymoAnalysis/assignTaxonomy
+
+cd /vol/funMicStorage/zymoAnalysis/assignTaxonomy
+
+dasBins=/vol/funMicStorage/zymoAnalysis/binning/refineBins/zymoMC_das_DASTool_bins
+
+nohup gtdbtk classify_wf \
+    --cpus 12 \
+    --pplacer_cpus 12 \
+    --genome_dir $dasBins \
+    -x fa \
+    --out_dir gtdbtk_Out &
+
+## what came out of this?:
+
+cd /vol/funMicStorage/zymoAnalysis/assignTaxonomy/gtdbtk_Out/classify
+
+less gtdbtk.bac120.summary.tsv
+
+## how to parse these results?
+## information about this file is here:
+## https://ecogenomics.github.io/GTDBTk/files/summary.tsv.html
+
+## let's pare it down a bit with some BASH commands:
+
+cut -f1,2 gtdbtk.bac120.summary.tsv 
+
+cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15
+
+paste <(cut -f1 gtdbtk.bac120.summary.tsv) \
+<(cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15)
+
+## compare to our phyloFlash results and the zymo MC data:
+https://github.com/danchurch/FunctionalMicrobiomePractical/blob/main/funmic2024/_d6322_zymobiomics_hmw_dna_standard.pdf

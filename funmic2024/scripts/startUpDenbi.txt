@@ -25,6 +25,11 @@ touch authorized_keys ## then paste in key
 chown dimitri:dimitri .ssh
 chown dimitri:dimitri authorized_keys 
 
+## check permissions
+
+## not run, didn't need, but maybe for student keys:
+chmod 700 /home/user_name/.ssh && chmod 600 /home/user_name/.ssh/authorized_keys
+
 ## this VM is behaving really funny. 
 ## constantly checking the ssh connection, and kicking 
 ## us out when it does this.
