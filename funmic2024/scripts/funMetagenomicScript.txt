@@ -166,3 +166,36 @@ less nohup.out
 top
 
 ## that is going to run a while...take lunch?
+
+## after lunch, assembly should be done. Let's 
+## clean up our contig names. 
+
+## we use a program called sed. 
+sed -i 's/\ .*//g' final.contigs.fa
+## if you want to learn more about sed, ask us!
+
+#### assess genome assembly quality ####
+
+#conda deactivate ## good practice
+conda activate quast
+
+## make working directory 
+mkdir /vol/funMicStorage/zymoAnalysis/assemblyQC
+
+cd /vol/funMicStorage/zymoAnalysis/assemblyQC
+
+## define variables...where is our assembly again?
+zymoMCassembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+## run the command
+quast -t 12 \
+  $zymoMCassembly
+
+
+#########################################################################
+## you probably don't need to do this, just use MobaXterm
+getFile=/vol/funMicStorage/zymoAnalysis/assemblyQC/quast_results/latest/
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/quastOut/
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+#########################################################################
+
+## look at it with a web browser!

@@ -1435,11 +1435,11 @@ adonis2(soilCom ~ ., data = soilEnv, method="bray")
 
 ## let's leave it there for now.
 
-
-### clean up computer for students ###
+### prep computers for students ###
 
 ## let's simplify the environment for students
 
-## they can make their own mess later:
+## we need ~ 7 key pairs, matched with port numbers
+
 
 
