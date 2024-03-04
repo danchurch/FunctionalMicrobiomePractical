@@ -1444,7 +1444,137 @@ adonis2(soilCom ~ ., data = soilEnv, method="bray")
 
 ## let's simplify the environment for students
 
+## first on cloud, take a snapshot of the existing
+## VM, and make 7 copies.
+
+## then check the volumes.
+
+## if all is good, attach volumes, get conda working
+
+## check fstab
+
+## make keys pairs, save on USB stick, distribute tomorrow
+
 ## we need ~ 7 key pairs, matched with port numbers
 
+## update slide with student login, reformat 
 
 
+#### getting new VMs up to speed ####
+
+## we have 7 new VMs that are supposedly 
+## exact clones of our development one
+
+## check logins:
+
+## funmicbot1
+ssh ubuntu@129.70.51.6 -p 30405
+
+## starts up, with conda
+## files are there
+## fstab ok? apparently. Volume stays mounted after reboot
+
+
+
+## ssh commands:
+
+## funmicbot1
+ssh -p 30405 ubuntu@129.70.51.6
+
+## funmicbot2
+ssh ubuntu@129.70.51.6 -p 30451
+
+## funmicbot3
+ssh ubuntu@129.70.51.6 -p 30409
+
+## funmicbot4
+ssh ubuntu@129.70.51.6 -p 30427
+
+## funmicbot5
+ssh ubuntu@129.70.51.6 -p 30322
+
+## funmicbot6
+ssh ubuntu@129.70.51.6 -p 30391
+
+## funmicbot7
+ssh ubuntu@129.70.51.6 -p 30289
+
+## ports:
+funmicbot1,30405
+funmicbot2,30451
+funmicbot3,30409
+funmicbot4,30427
+funmicbot5,30322
+funmicbot6,30391
+funmicbot7,30289
+
+## great. now each needs a keyset...
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/setupVMs
+for i in {0..7}; do
+  echo $i
+  ssh-keygen -f ./funmic${i} -q -N "" && echo ${i}" done"
+done
+
+
+
+## funmicbot1
+
+scp -P 30405 ./funmic1.pub ubuntu@129.70.51.6:~/.ssh/
+## to add on remote comp
+ssh -p 30405 ubuntu@129.70.51.6
+cd .ssh && cat funmic1.pub >> authorized_keys
+
+## funmicbot2
+scp -P 30451 ./funmic2.pub ubuntu@129.70.51.6:~/.ssh/
+ssh -p 30451 ubuntu@129.70.51.6
+cd .ssh && cat funmic2.pub >> authorized_keys
+
+## funmicbot3
+scp -P 30409 ./funmic3.pub ubuntu@129.70.51.6:~/.ssh/
+ssh -p 30409 ubuntu@129.70.51.6
+cd .ssh && cat funmic3.pub >> authorized_keys
+logout
+
+## funmicbot4
+scp -P 30427 ./funmic4.pub ubuntu@129.70.51.6:~/.ssh/
+ssh -p 30427 ubuntu@129.70.51.6
+cd .ssh && cat funmic4.pub >> authorized_keys
+logout
+
+## funmicbot5
+scp -P 30322 ./funmic5.pub ubuntu@129.70.51.6:~/.ssh/
+ssh -p 30322 ubuntu@129.70.51.6
+cd .ssh && cat funmic5.pub >> authorized_keys
+logout
+
+## funmicbot6
+scp -P 30391 ./funmic6.pub ubuntu@129.70.51.6:~/.ssh/
+
+ssh -p 30391 ubuntu@129.70.51.6
+
+cd .ssh && cat funmic6.pub >> authorized_keys
+logout
+
+## funmicbot7
+scp -P 30289 ./funmic7.pub ubuntu@129.70.51.6:~/.ssh/
+ssh -p 30289 ubuntu@129.70.51.6
+cd .ssh && cat funmic7.pub >> authorized_keys
+logout
+
+## tomorrow, test funmic7 on windows with mobaxterm and private key
+
+## get the public key for the others onto their VMs
+
+scp -P 30405 funmic1.pub ubuntu@129.70.51.6:~/.ssh 
+
+## we also need an ssh key set for teaching computer onto 
+## all the student computers. 
+
+funmicbot1,30405
+funmicbot2,30451
+funmicbot3,30409
+funmicbot4,30427
+funmicbot5,30322
+funmicbot6,30391
+funmicbot7,30289
