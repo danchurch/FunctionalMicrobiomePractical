@@ -24,7 +24,7 @@ pwd
 
 ls 
 
-cd 
+cd  /
 
 ## look at the storage volume:
 
@@ -35,9 +35,16 @@ vol ## typing this should get you to the volume.
 
 cp 
 
-mv 
+cp bin1.fa zoop.fa
 
-mkdir 
+mv zoop.fa ../  
+
+mv zoop.fa /vol/funMicStorage
+
+
+mkdir newDirectory
+
+mkdir /vol/funMicStorage/zoop
 
 rmdir 
 
@@ -51,7 +58,10 @@ sudo
 
 top 
 
-man 
+man top
+top --help
+top -h
+
 
 head 
 
@@ -60,30 +70,112 @@ tail
 less 
 
 ## special characters
+
+
+
+
 ## ~  ##
+
+cd ~
+
 ## .  ##
+
+
 ## .. ## 
-## >  ##
+
+
+
+
+
+cd ..
+
+
+
+
+
+
+
+## > ##
+
+echo "this a file" > file.txt
+
+
+
 ## |  ##
+
+one program | second program
+
 ## ;  ##
+
+ls; cd ~
+
+ls
+cd ~
+
+
 ## /  ##
+
 ## \  ##
+
+mkdir "this is a folder"
+
 ## &  ##
+
+
+
+
+top &
+
+
+
+
+
 ## = and $ ##
 
-dirX=
-echo $dirX
+X="this is a variable"
+echo $X
+
+
+
+vol 
+
+cd someFiles
+
+
+
 
 ## *  ##
-## ?  ##
-## #  ## 
+
+ls bin*
+
+## ? ##
+
+ls bin??fa
+
+
+
+
+## this is a note 
+
+
+
+
+
+
+## # ## 
 
 ## loops ##
 
-for i in *
+for ZOOP in *
 do
-  echo $i
+  echo $ZOOP
 done
+
+echo $FILENAME
+
+FILENAME="zzoop"
+
+echo $FILENAME
 
 ## 
 
@@ -131,4 +223,8 @@ cd /vol/funMicStorage
 ## Make sure you can find it on both computers.
 
 
-
+## you probably don't need to do this, just use MobaXterm
+getFile=/vol/funMicStorage/zymoAnalysis/rawReadQC/ERR7255689_?_fastqc.html
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+#
