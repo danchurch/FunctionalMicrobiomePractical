@@ -227,4 +227,6 @@ cd /vol/funMicStorage
 getFile=/vol/funMicStorage/zymoAnalysis/rawReadQC/ERR7255689_?_fastqc.html
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
 scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
-#
+##
+
+

@@ -6,6 +6,8 @@
 
 mkdir /vol/funMicStorage/zymoAnalysis
 
+cd /vol/funMicStorage/zymoAnalysis
+
 ## and let's look at the data:
 ## the data is here:
 
@@ -15,7 +17,7 @@ cd /vol/funMicStorage/datasets/zymo
 ## manually we can unzip them, with a program
 ## called gunzip (gnu unzip).
 
-gunzip -k ERR7255689_1.fastq.gz &
+unzip -k ERR7255689_1.fastq.gz &
 
 less ERR7255689_1.fastq
 
@@ -41,13 +43,13 @@ conda activate RawReadProcessing
 ## program where the important files are: 
 
 ## outputs will go here:
+
 mkdir /vol/funMicStorage/zymoAnalysis/rawReadQC
 
 ## define some variables...
 
 ## where will our outputs go?:
-outDir=/vol/funMicStorage/zymoAnalysis/rawReadQC
-
+outDir="/vol/funMicStorage/zymoAnalysis/rawReadQC"
 ## where is our data?
 readFile="/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz"
 
@@ -56,6 +58,10 @@ readFile="/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz"
 fastqc -t 10 \
   -o $outDir \
   $readFile 
+
+fastqc -t 10 \
+  -o $outDir \
+   "/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz"
 
 ## that is the R1 reads. We should also look at the reverse reads:
 
@@ -89,6 +95,7 @@ firefox *
 ## using phyloFlash, on our raw reads
 
 ## phyloFlash is installed in the same environment:
+
 conda activate RawReadProcessing
 
 ## same pattern as before. make a directory to work in,
@@ -104,7 +111,9 @@ fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
 fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
 ## but what is this?:
 phyloDB=/vol/funMicStorage/databases/phyloFlash/138.1
+
 ## here's a hint:
+
 ls $phyloDB
 
 ## run the command
@@ -130,6 +139,9 @@ scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ## let's examine the results, 
 
+firefox *html
+
+
 ## and compare them to the species we know are in 
 ## our mock community:
 
@@ -152,10 +164,20 @@ fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
 fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
 ## 
 
+man megahit
+
+megahit --help | less
+
+megahit -h
+
+
 ## the command...
-\nohup megahit -1 $fast1 \
+nohup megahit -1 $fast1 \
           -2 $fast2 \
-          -t 12 &
+          -t 12 & 
+
+nohup megahit -1 $fast1 -2 $fast2 -t 12 &
+
 
 ## wait, what is "nohup"? and why is there an "&" at the end of this???
 
@@ -177,9 +199,11 @@ sed -i 's/\ .*//g' final.contigs.fa
 #### assess genome assembly quality ####
 
 #conda deactivate ## good practice
+
 conda activate quast
 
 ## make working directory 
+
 mkdir /vol/funMicStorage/zymoAnalysis/assemblyQC
 
 cd /vol/funMicStorage/zymoAnalysis/assemblyQC
@@ -199,3 +223,349 @@ scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 #########################################################################
 
 ## look at it with a web browser!
+#### binning ####
+
+## binning is probably the most complicated thing 
+## we will do. We need to conduct parallel 
+## pipelines with three binning software,
+## and combine the results for the bin refining
+## step with DAS tools. 
+
+## let's make a directory:
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning
+
+cd /vol/funMicStorage/zymoAnalysis/binning
+
+## first step - map our contigs back to our raw reads
+
+
+## in this step, we are trying to find out how often
+## contigs are found in the metagenome reads. This
+## step gives us a kind of abundance information about
+## each of our contigs. Theoretically, contigs that 
+## appear in approx. equal amounts are more likely to 
+## belong to the same genome. 
+
+## we'll use bbmap software for this mapping step:
+
+#conda deactivate
+conda activate RawReadProcessing
+
+mkdir coverage
+
+cd coverage 
+## or 
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/coverage
+cd /vol/funMicStorage/zymoAnalysis/binning/coverage
+
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
+fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
+nohup bbmap.sh \
+   threads=13 \
+   minid=.97 \
+   idfilter=.95 \
+   ref=$assembly \
+   in=$fast1 \
+   in2=$fast2 \
+   outm=rawReads_to_assembly.sam \
+   bamscript=rawReads_to_assembly_to_bam.sh &
+
+## this generates a sequence alignment map (SAM) file
+
+## this is a really common file format in bioinformatics
+## you can look at it:
+
+less rawReads_to_assembly.sam
+
+## SAMs are big. They can be compressed to a binary form
+## without any loss of information. Also, we need to 
+## sort and index (make a "map") of all these alignments,
+## to make the coverage files.
+
+## our bbmap program made us a custom script to do all 
+## this:
+
+bash rawReads_to_assembly_to_bam.sh
+
+## now that we have mapped our reads back to our assembly,
+## we can use this information to generate coverage tables
+## for downstream binning programs. 
+
+## generate coverage table ##
+
+## for all of 3 of the binning programs,
+## we need a coverage table that summarizes the 
+## mapping we just did. We'll use a custom script 
+## from JGI, that comes with the program metabat2. 
+## Because of this, we change the conda environment:
+
+conda deactivate
+
+conda activate binning 
+
+## let's stay in our "coverage directory", because these
+## files should be useful to all of 3 of our binning programs:
+
+cd /vol/funMicStorage/zymoAnalysis/binning/coverage
+
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+sortedBAM=/vol/funMicStorage/zymoAnalysis/binning/coverage/rawReads_to_assembly_sorted.bam
+jgi_summarize_bam_contig_depths \
+    --outputDepth coverage_Depths.txt \
+    --referenceFasta  $assembly \
+    $sortedBAM
+
+## this generates a coverage table. But we have to 
+## reformat it a bit to fit the needs of the binning programs. 
+
+## check it, does your new file look like mine?
+
+head coverage_Depths.txt
+
+
+### metabat2 ###
+
+## the first binning software we will use is
+## metabat2. It is the simplest to use.
+
+#conda deactivate
+conda activate binning 
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/metabat
+
+cd /vol/funMicStorage/zymoAnalysis/binning/metabat
+
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
+metabat2 \
+  -i $assembly \
+  -a $coverageTable \
+  -o "metabat" \
+  -t 12
+
+
+### VAMB ###
+
+## another, newer assembler is VAMB. It uses complex machine
+## learning algorithms but is still fundamentally based
+## on 4mer (tetranucleotide) frequencies and coverage/abundance
+
+#conda deactivate
+conda activate binning 
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/vamb
+
+cd /vol/funMicStorage/zymoAnalysis/binning/vamb
+
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
+
+nohup vamb \
+    --fasta $assembly \
+    --jgi $coverageTable \
+    -t 64 \
+    --minfasta 2000000 \
+    --outdir vambOut & 
+
+## how many are there?
+cd vambOut/bins
+
+## let's make the names a lat
+for i in *; do
+  mv $i ${i/\.fna/_vamb\.fna}
+done
+
+## the -t flag lowers the batch size of contigs
+## that are put into memory. We are lowering
+## here because we have such a simple community.
+
+### concoct ###
+
+## concoct has some special software requirements,
+## so it is in its own conda environment 
+
+#conda deactivate
+conda activate concoct
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/concoct
+
+cd /vol/funMicStorage/zymoAnalysis/binning/concoct
+
+## concoct needs its own format of coverage table:
+## for example, see here: 
+https://github.com/BinPro/CONCOCT/blob/develop/tests/test_data/coverage
+
+## so find our original coverage table:
+coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.txt
+
+## and do a little bit of bash magic convert our old coverage table:
+cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
+
+## now that our coverage table is formatted in a way that 
+## concoct likes, run the program!
+
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+concoct \
+  --composition_file $assembly \
+  --coverage_file concoct_coverage.txt \
+  -t 12 
+
+## find a place to put these bins:
+mkdir fasta_bins
+
+## another custom script from concoct to collect our contigs into 
+## fasta files:
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+## looks promising, but we want pretty file names
+## time for more BASH magic:
+cd fasta_bins
+for i in *; do
+  mv $i ${i/\.fa/_concat\.fa}
+done
+
+### refining of bins ###
+
+## we now have lots of bins...
+## how can we choose among them?
+
+
+## here we use DAS tool to search
+## genomes for single copy gene markers
+## that can be used to assess
+## completeness and redundancy/contamination
+## in a genome, and use this information
+## to select bins from our binning process,
+## and potentially improve them by removing
+## misplaced contigs. 
+
+#conda deactivate
+conda activate binning
+
+mkdir /vol/funMicStorage/zymoAnalysis/binning/refineBins
+
+cd /vol/funMicStorage/zymoAnalysis/binning/refineBins
+
+## DAS tools needs information about where contigs 
+## map to in each of our different bin sets...
+## they have a custom script for this to save us 
+## some time,
+
+## define variables. Where did we put all those bins?
+metabatBins=/vol/funMicStorage/zymoAnalysis/binning/metabat
+vambBins=/vol/funMicStorage/zymoAnalysis/binning/vamb/vambOut/bins
+concoctBins=/vol/funMicStorage/zymoAnalysis/binning/concoct/fasta_bins
+assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
+
+## find the contigs in our metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+## what does that look like?
+head metabat.contigs2bin.tsv
+
+## and vamb
+Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+head vamb.contigs2bin.tsv 
+
+## and concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+head concoct.contigs2bin.tsv
+
+## with that, we can run das tool:
+
+DAS_Tool \
+    -i metabat.contigs2bin.tsv,vamb.contigs2bin.tsv,concoct.contigs2bin.tsv \
+    -l metabat,vamb,concoct \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 12 \
+    --write_bins \
+    -o zymoMC_das
+
+## how many are there?
+
+## at this point if we had multiple environmental samples,
+## we would also use this information to help us 
+## help decide which bins to keep, and which are
+## redundant, using the software Drep
+
+## Dimitri will cover this next week when we have 
+## multiple metagenomes to process.
+
+### Bin Quality Check ###
+
+## now let's check our bin qualities with checkM
+
+#conda deactivate
+conda activate magQC
+
+mkdir /vol/funMicStorage/zymoAnalysis/magQC
+
+cd /vol/funMicStorage/zymoAnalysis/magQC
+
+
+dasBins=/vol/funMicStorage/zymoAnalysis/binning/refineBins/zymoMC_das_DASTool_bins
+checkm2 predict \
+  --threads 12 \
+  --input $dasBins \
+  -x "fa" \
+  --output-directory checkMout
+
+cd /vol/funMicStorage/magQC/zymo
+
+### assign taxonomy ###
+
+## we'll use the genome taxonomy database tool kit to 
+## assign taxonomy
+
+#conda deactivate
+conda activate gtdbtk
+
+mkdir /vol/funMicStorage/zymoAnalysis/assignTaxonomy
+
+cd /vol/funMicStorage/zymoAnalysis/assignTaxonomy
+
+dasBins=/vol/funMicStorage/zymoAnalysis/binning/refineBins/zymoMC_das_DASTool_bins
+
+nohup gtdbtk classify_wf \
+    --cpus 12 \
+    --pplacer_cpus 12 \
+    --genome_dir $dasBins \
+    -x fa \
+    --out_dir gtdbtk_Out &
+
+## what came out of this?:
+
+cd /vol/funMicStorage/zymoAnalysis/assignTaxonomy/gtdbtk_Out/classify
+
+less gtdbtk.bac120.summary.tsv
+
+## how to parse these results?
+## information about this file is here:
+## https://ecogenomics.github.io/GTDBTk/files/summary.tsv.html
+
+## let's pare it down a bit with some BASH commands:
+
+cut -f1,2 gtdbtk.bac120.summary.tsv 
+
+cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15
+
+paste <(cut -f1 gtdbtk.bac120.summary.tsv) \
+<(cut -f2 gtdbtk.bac120.summary.tsv | cut -d"_" -f 15)
+
+## compare to our phyloFlash results and the zymo MC data:
+https://github.com/danchurch/FunctionalMicrobiomePractical/blob/main/funmic2024/_d6322_zymobiomics_hmw_dna_standard.pdf
