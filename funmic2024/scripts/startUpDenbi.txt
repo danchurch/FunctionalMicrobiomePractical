@@ -1578,3 +1578,43 @@ funmicbot4,30427
 funmicbot5,30322
 funmicbot6,30391
 funmicbot7,30289
+
+## we need to get the combo fastq file onto all the student computers:
+
+## get it from denbi:
+
+
+
+
+file=/vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData.fastq.gz
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$file .
+
+## put it one their computers
+
+file2put=/home/daniel/Documents/teaching/functionalMicrobiomes/comboMetabarcodeData.fastq.gz
+path2key=/home/daniel/Documents/teaching/functionalMicrobiomes/setupVMs/
+putFileHere=/vol/funMicStorage/datasets/metabarcoding/
+
+#funmic1
+scp -P 30405 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datasets/metabarcoding/ &
+
+#funmic2
+scp -P 30451 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datasets/metabarcoding/ &
+
+## funmicbot3
+scp -P 30409 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datasets/metabarcoding/ &
+
+## funmicbot4
+scp -P 30427 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datasets/metabarcoding/ &
+
+## funmicbot6
+scp -P 30391 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datasets/metabarcoding/ &
+
+## funmicbot7
+scp -P 30289 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datasets/metabarcoding/ &
+
+## did that work?
+
+ssh -p 30289 -i $path2key ubuntu@129.70.51.6
+
+## looks good. Let's pray

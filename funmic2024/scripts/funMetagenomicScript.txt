@@ -255,16 +255,19 @@ conda activate RawReadProcessing
 mkdir coverage
 
 cd coverage 
+
 ## or 
 
 mkdir /vol/funMicStorage/zymoAnalysis/binning/coverage
+
 cd /vol/funMicStorage/zymoAnalysis/binning/coverage
 
 assembly=/vol/funMicStorage/zymoAnalysis/assembly/megahit_out/final.contigs.fa
 fast1=/vol/funMicStorage/datasets/zymo/ERR7255689_1.fastq.gz
 fast2=/vol/funMicStorage/datasets/zymo/ERR7255689_2.fastq.gz
+
 nohup bbmap.sh \
-   threads=13 \
+   threads=14 \
    minid=.97 \
    idfilter=.95 \
    ref=$assembly \
@@ -319,7 +322,6 @@ jgi_summarize_bam_contig_depths \
     $sortedBAM
 
 ## this generates a coverage table. But we have to 
-## reformat it a bit to fit the needs of the binning programs. 
 
 ## check it, does your new file look like mine?
 
@@ -367,7 +369,7 @@ nohup vamb \
     --fasta $assembly \
     --jgi $coverageTable \
     -t 64 \
-    --minfasta 2000000 \
+    --minfasta 200000 \
     --outdir vambOut & 
 
 ## how many are there?
@@ -377,6 +379,10 @@ cd vambOut/bins
 for i in *; do
   mv $i ${i/\.fna/_vamb\.fna}
 done
+
+## Alternative that might work. But don't do both! It will add more and more _vamb to ykour filenames
+rename '.fna' '_vamb\.fna' *.fna
+
 
 ## the -t flag lowers the batch size of contigs
 ## that are put into memory. We are lowering
@@ -423,8 +429,10 @@ extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
 ## looks promising, but we want pretty file names
 ## time for more BASH magic:
 cd fasta_bins
+
 for i in *; do
-  mv $i ${i/\.fa/_concat\.fa}
+#  mv $i ${i/\.fa/_concat\.fa}
+  mv $i ${i/\.fa/_concoct\.fa}
 done
 
 ### refining of bins ###
@@ -443,6 +451,7 @@ done
 ## misplaced contigs. 
 
 #conda deactivate
+
 conda activate binning
 
 mkdir /vol/funMicStorage/zymoAnalysis/binning/refineBins
@@ -510,6 +519,7 @@ DAS_Tool \
 
 ## now let's check our bin qualities with checkM
 
+
 #conda deactivate
 conda activate magQC
 
@@ -519,13 +529,16 @@ cd /vol/funMicStorage/zymoAnalysis/magQC
 
 
 dasBins=/vol/funMicStorage/zymoAnalysis/binning/refineBins/zymoMC_das_DASTool_bins
+
 checkm2 predict \
   --threads 12 \
   --input $dasBins \
   -x "fa" \
   --output-directory checkMout
 
-cd /vol/funMicStorage/magQC/zymo
+#cd /vol/funMicStorage/magQC/zymo
+
+cd /vol/funMicStorage/zymoAnalysis/magQC/checkMout
 
 ### assign taxonomy ###
 
@@ -542,8 +555,8 @@ cd /vol/funMicStorage/zymoAnalysis/assignTaxonomy
 dasBins=/vol/funMicStorage/zymoAnalysis/binning/refineBins/zymoMC_das_DASTool_bins
 
 nohup gtdbtk classify_wf \
-    --cpus 12 \
-    --pplacer_cpus 12 \
+    --cpus 14 \
+    --pplacer_cpus 14 \
     --genome_dir $dasBins \
     -x fa \
     --out_dir gtdbtk_Out &
