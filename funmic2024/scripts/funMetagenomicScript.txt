@@ -582,3 +582,5 @@ paste <(cut -f1 gtdbtk.bac120.summary.tsv) \
 
 ## compare to our phyloFlash results and the zymo MC data:
 https://github.com/danchurch/FunctionalMicrobiomePractical/blob/main/funmic2024/_d6322_zymobiomics_hmw_dna_standard.pdf
+
+

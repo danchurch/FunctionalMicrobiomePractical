@@ -1,0 +1,302 @@
+######## metabarcoding #########
+
+## let's look at the communities of 
+## soil samples from previous years of
+## this class
+
+## the data for barcoding is here:
+
+cd /vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData
+
+## that's lots of files.
+## 33 files, combined
+
+## but we have combined them here, for fastqc to look at:
+
+cd .. ## or 
+
+cd /vol/funMicStorage/datasets/metabarcoding/
+
+ls -lh comboMetabarcodeData.fastq.gz
+
+##  let's make a working directory
+mkdir /vol/funMicStorage/metabarcoding
+
+cd /vol/funMicStorage/metabarcoding
+
+## let's look at our read qualities:
+
+#conda deactivate
+conda activate RawReadProcessing
+
+cd /vol/funMicStorage/metabarcoding
+
+mkdir rawFASTQCreports
+
+allCombo16S="/vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData.fastq.gz"
+outdir="/vol/funMicStorage/metabarcoding/rawFASTQCreports"
+fastqc -o $outdir -t 12 $allCombo16S
+
+## get this local and look at them with your web browser
+
+###### I have to do this, you probably don't!! #######
+getFile=/vol/funMicStorage/metabarcoding/rawFASTQCreports/comboMetabarcodeData_fastqc.html
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/metabarcodeData
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+########################################################
+
+## raw read quality control ##
+
+## from this, and what we know about our primers, let's make a few decisions:
+
+#conda deactivate
+conda activate trim-galore 
+
+## make sure I'm in my workind directory
+cd /vol/funMicStorage/metabarcoding/
+
+## make output directory
+
+mkdir /vol/funMicStorage/metabarcoding/trimmedSIPreads
+
+## define some variables
+sipRawReads=/vol/funMicStorage/datasets/metabarcoding/comboMetabarcodeData
+output=/vol/funMicStorage/metabarcoding/trimmedSIPreads
+
+trim_galore \
+  --cores 12 \
+  -o $output \
+  --clip_R1 20 \
+  --illumina \
+  --length 200 \
+  $sipRawReads/*fastq.gz
+
+## we can check these with fastqc if we want.
+
+## but for now keep moving.
+
+## we need to get these into qiime.
+
+## get rid of the reports:
+
+cd /vol/funMicStorage/metabarcoding/trimmedSIPreads
+
+## let's clean up a bit.
+## always check with ls before running rm:
+
+## this is what we will delete
+ls *txt
+
+## looks okay:
+rm *txt
+
+###### time for Qiime ##########
+
+## can qiime read these in?
+
+conda deactivate 
+conda activate qiime
+
+mkdir /vol/funMicStorage/metabarcoding/qiime
+cd /vol/funMicStorage/metabarcoding/qiime
+
+## we need our metadata for this data 
+
+## check github links
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/metabarcodeTables/sipManifest2024.tsv"
+
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/metabarcodeTables/sipMeta2024.tsv"
+
+manifest=/vol/funMicStorage/metabarcoding/qiime/sipManifest2024.tsv
+metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
+outdir=/vol/funMicStorage/metabarcoding/qiime
+
+qiime tools import \
+  --type 'SampleData[SequencesWithQuality]' \
+  --input-path $manifest \
+  --output-path SIPreads_qiime \
+  --input-format SingleEndFastqManifestPhred33V2
+
+## now let's try getting ASV's out of this:
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs SIPreads_qiime.qza \
+  --p-trunc-len 0 \
+  --p-n-threads 7 \
+  --o-table dada2_table.qza \
+  --o-representative-sequences dada2_rep_set.qza \
+  --o-denoising-stats dada2_stats.qza
+
+## qiime can make some tables and graphics for us to use
+## to understand what just happened:
+
+qiime metadata tabulate \
+  --m-input-file dada2_stats.qza \
+  --o-visualization dada2_stats_bymetadata.qzv
+
+qiime feature-table summarize \
+  --i-table dada2_table.qza \
+  --m-sample-metadata-file $metadata \
+  --o-visualization dada2_featureTableSummary_visualization.qzv
+
+qiime feature-table tabulate-seqs \
+  --i-data dada2_rep_set.qza \
+  --o-visualization dada2_rep_set.qzv
+
+
+
+## put the visualizations here:
+https://view.qiime2.org/
+
+### let's get organized... ###
+
+mkdir dada2visualizations
+mv dada2_stats_bymetadata.qzv dada2_featureTableSummary_visualization.qzv dada2_rep_set.qzv dada2visualizations/
+
+mkdir dada2OutPut
+mv dada2_table.qza dada2_rep_set.qza dada2_stats.qza dada2OutPut/
+
+## get them local and look at them!
+
+###### I have to do this, you probably don't!! #######
+getFile=/vol/funMicStorage/metabarcoding/qiime/dada2visualizations
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeOutputs
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/qiimeOutputs/dada2visualizations
+#############################################################
+
+
+## put the visualizations here:
+https://view.qiime2.org/
+
+### rarefaction and alpha/beta diversity ###
+
+## back on denbi...
+
+conda activate qiime
+
+cd /vol/funMicStorage/metabarcoding/qiime
+
+dada2_table=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
+qiime diversity alpha-rarefaction \
+  --i-table $dada2_table \
+  --o-visualization alpha_rarefaction_curves.qzv \
+  --m-metadata-file $metadata \
+  --p-max-depth 10000
+
+## get it local and let's talk about it
+
+###### I have to do this, you probably don't!! #######
+getFile=/vol/funMicStorage/metabarcoding/qiime/alpha_rarefaction_curves.qzv
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeOutputs/
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+######################################################
+
+###assigning phylogeny and taxonomy###
+
+## a first step for any phylogenetic
+## analysis would be to generate a tree
+
+conda activate qiime
+
+mkdir /vol/funMicStorage/metabarcoding/qiime/aligned2Tree/
+
+cd /vol/funMicStorage/metabarcoding/qiime/aligned2Tree/
+
+repSet=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_rep_set.qza
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences $repSet \
+  --o-alignment aligned_dada2_rep_set.qza \
+  --o-masked-alignment masked_aligned_dada2_rep_set.qza \
+  --o-tree unrooted_tree.qza \
+  --o-rooted-tree rooted_tree.qza \
+  --p-n-threads 7 \
+  --verbose
+
+## quick, 2 min
+
+## once we have this tree, it can be used to do diversity-based
+## distance metrics like unifrac
+
+cd /vol/funMicStorage/metabarcoding/qiime
+
+repSet=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_rep_set.qza
+dada2_table=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
+rootedTree=/vol/funMicStorage/metabarcoding/qiime/aligned2Tree/rooted_tree.qza
+
+qiime diversity core-metrics-phylogenetic --help
+
+qiime diversity core-metrics-phylogenetic \
+  --i-table $dada2_table \
+  --i-phylogeny $rootedTree \
+  --m-metadata-file $metadata \
+  --p-sampling-depth 6000 \
+  --output-dir core-metrics-results
+
+###### I have to do this, you probably don't!! #######
+getFile=/vol/funMicStorage/metabarcoding/qiime/core-metrics-results
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeOutputs/
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+#####################################################
+
+## okay
+
+#### assign taxonomy ####
+
+### last metabarcoding task: assign taxonomy ###
+
+conda activate qiime
+
+mkdir /vol/funMicStorage/metabarcoding/qiime/taxClassification
+
+cd /vol/funMicStorage/metabarcoding/qiime/taxClassification
+
+## we need to get the algorithm for assigning taxonomy
+## as part of this, we have to choose our database of
+## taxonomy. We will use the well-known Silva 16S database,
+## and one of their standard classifiers:
+
+wget https://data.qiime2.org/2024.2/common/silva-138-99-515-806-nb-classifier.qza
+
+repSet=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_rep_set.qza
+ourClassifier=/vol/funMicStorage/metabarcoding/qiime/taxClassification/silva-138-99-515-806-nb-classifier.qza
+nohup qiime feature-classifier classify-sklearn \
+  --i-classifier $ourClassifier \
+  --i-reads $repSet \
+  --p-n-jobs 7 \
+  --o-classification dada2_rep_set_classified.qza &
+
+
+qiime metadata tabulate \
+  --m-input-file dada2_rep_set_classified.qza \
+  --o-visualization taxonomy.qzv
+
+
+## to make a nice visualization out of this...
+
+## let's put it in our visualization folder:
+
+## not run ##
+
+cd /vol/funMicStorage/metabarcoding/qiime/dada2visualizations
+repSetClassified=/vol/funMicStorage/metabarcoding/qiime/taxClassification/dada2_rep_set_classified.qza
+dada2_table=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
+metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
+dada2Reps=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_rep_set.qza
+
+qiime taxa barplot \
+  --i-table $dada2_table \
+  --i-taxonomy $repSetClassified \
+  --m-metadata-file $metadata \
+  --o-visualization all_taxa_bar_plots.qzv
+
+## get local, look at it:
+
+###### I have to do this, you probably don't!! #######
+getFile=/vol/funMicStorage/metabarcoding/qiime/dada2visualizations/all_taxa_bar_plots.qzv
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/qiimeOutputs/dada2visualizations/
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+##########################################################
+
