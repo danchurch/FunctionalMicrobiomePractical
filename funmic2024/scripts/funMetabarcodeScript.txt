@@ -20,6 +20,7 @@ cd /vol/funMicStorage/datasets/metabarcoding/
 ls -lh comboMetabarcodeData.fastq.gz
 
 ##  let's make a working directory
+
 mkdir /vol/funMicStorage/metabarcoding
 
 cd /vol/funMicStorage/metabarcoding
@@ -29,7 +30,6 @@ cd /vol/funMicStorage/metabarcoding
 #conda deactivate
 conda activate RawReadProcessing
 
-cd /vol/funMicStorage/metabarcoding
 
 mkdir rawFASTQCreports
 
@@ -49,7 +49,8 @@ scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ## from this, and what we know about our primers, let's make a few decisions:
 
-#conda deactivate
+conda deactivate
+
 conda activate trim-galore 
 
 ## make sure I'm in my workind directory
@@ -95,9 +96,11 @@ rm *txt
 ## can qiime read these in?
 
 conda deactivate 
+
 conda activate qiime
 
 mkdir /vol/funMicStorage/metabarcoding/qiime
+
 cd /vol/funMicStorage/metabarcoding/qiime
 
 ## we need our metadata for this data 
@@ -110,7 +113,6 @@ wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/
 manifest=/vol/funMicStorage/metabarcoding/qiime/sipManifest2024.tsv
 metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
 outdir=/vol/funMicStorage/metabarcoding/qiime
-
 qiime tools import \
   --type 'SampleData[SequencesWithQuality]' \
   --input-path $manifest \
@@ -122,10 +124,10 @@ qiime tools import \
 qiime dada2 denoise-single \
   --i-demultiplexed-seqs SIPreads_qiime.qza \
   --p-trunc-len 0 \
-  --p-n-threads 7 \
+  --p-n-threads 14 \
   --o-table dada2_table.qza \
   --o-representative-sequences dada2_rep_set.qza \
-  --o-denoising-stats dada2_stats.qza
+  --o-denoising-stats dada2_stats.qza 
 
 ## qiime can make some tables and graphics for us to use
 ## to understand what just happened:
@@ -142,7 +144,6 @@ qiime feature-table summarize \
 qiime feature-table tabulate-seqs \
   --i-data dada2_rep_set.qza \
   --o-visualization dada2_rep_set.qzv
-
 
 
 ## put the visualizations here:
@@ -179,6 +180,7 @@ cd /vol/funMicStorage/metabarcoding/qiime
 
 dada2_table=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
 metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
+
 qiime diversity alpha-rarefaction \
   --i-table $dada2_table \
   --o-visualization alpha_rarefaction_curves.qzv \
@@ -211,7 +213,7 @@ qiime phylogeny align-to-tree-mafft-fasttree \
   --o-masked-alignment masked_aligned_dada2_rep_set.qza \
   --o-tree unrooted_tree.qza \
   --o-rooted-tree rooted_tree.qza \
-  --p-n-threads 7 \
+  --p-n-threads 14 \
   --verbose
 
 ## quick, 2 min
@@ -225,8 +227,6 @@ repSet=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_rep_set.qza
 dada2_table=/vol/funMicStorage/metabarcoding/qiime/dada2OutPut/dada2_table.qza
 metadata=/vol/funMicStorage/metabarcoding/qiime/sipMeta2024.tsv
 rootedTree=/vol/funMicStorage/metabarcoding/qiime/aligned2Tree/rooted_tree.qza
-
-qiime diversity core-metrics-phylogenetic --help
 
 qiime diversity core-metrics-phylogenetic \
   --i-table $dada2_table \
@@ -265,7 +265,7 @@ ourClassifier=/vol/funMicStorage/metabarcoding/qiime/taxClassification/silva-138
 nohup qiime feature-classifier classify-sklearn \
   --i-classifier $ourClassifier \
   --i-reads $repSet \
-  --p-n-jobs 7 \
+  --p-n-jobs 14 \
   --o-classification dada2_rep_set_classified.qza &
 
 
