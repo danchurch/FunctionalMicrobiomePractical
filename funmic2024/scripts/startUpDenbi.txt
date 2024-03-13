@@ -1618,3 +1618,23 @@ scp -P 30289 -i $path2key $file2put ubuntu@129.70.51.6:/vol/funMicStorage/datase
 ssh -p 30289 -i $path2key ubuntu@129.70.51.6
 
 ## looks good. Let's pray
+
+#### notes for second week #####
+
+## let's try looking for electron acceptors, etc, in a sample genome
+
+## we'll look for ERR3801502_MetaBAT.19.fa, which has 
+
+ls /vol/funMicStorage/Helgo_analysis_dimitri/Final_bins/ERR3801502_MetaBAT.19.fa
+
+## qualities here:
+less /vol/funMicStorage/Helgo_analysis_dimitri/Final_bins_CheckM/quality_report.tsv
+
+less /vol/funMicStorage/Helgo_analysis_dimitri/Final_bins_GTDB/classify/gtdbtk.bac120.summary.tsv
+
+cut -f1,2 /vol/funMicStorage/Helgo_analysis_dimitri/Final_bins_GTDB/classify/gtdbtk.bac120.summary.tsv
+## Sulfurovum sp.
+
+## now, how do we find the electron acceptors, donors, etc?
+
+ 

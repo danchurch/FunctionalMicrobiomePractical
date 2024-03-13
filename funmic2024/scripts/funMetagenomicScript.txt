@@ -410,6 +410,8 @@ coverageTable=/vol/funMicStorage/zymoAnalysis/binning/coverage/coverage_Depths.t
 ## and do a little bit of bash magic convert our old coverage table:
 cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
 
+cut -f 1,4,6,8 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1\tsample_2\tsample_3' > concoct_coverage.txt
+
 ## now that our coverage table is formatted in a way that 
 ## concoct likes, run the program!
 
