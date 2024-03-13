@@ -1637,4 +1637,37 @@ cut -f1,2 /vol/funMicStorage/Helgo_analysis_dimitri/Final_bins_GTDB/classify/gtd
 
 ## now, how do we find the electron acceptors, donors, etc?
 
- 
+## sulari's computer
+
+ssh -p 30289 ubuntu@129.70.51.6
+
+## get her cov table and assembly:
+#file2get=/vol/funMicStorage/Sulari/assembly/megahit_out/final.contigs.fa
+file2get=/vol/funMicStorage/Sulari/binning/coverage/coverage_Depths.txt 
+scp -P 30289 ubuntu@129.70.51.6:$file2get . 
+
+## put these on Bex's computer
+
+ssh -p 30405 ubuntu@129.70.51.6
+
+#file2put=final.contigs.fa
+file2put=coverage_Depths.txt
+scp -P 30405 $file2put ubuntu@129.70.51.6:/vol/funMicStorage/filesFromSulari/ 
+
+
+
+## bex's comp
+ssh -p 30405 ubuntu@129.70.51.6 "ls -l /vol/funMicStorage/filesFromSulari/" ##211231276
+
+## sularis's comp
+
+ssh -p 30289 ubuntu@129.70.51.6 "ls -l /vol/funMicStorage/Sulari/assembly/megahit_out/final.contigs.fa" ##211231276
+
+## my computer
+ls -l
+## 211231276
+
+
+## okay, these are on there.
+
+
