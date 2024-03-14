@@ -1957,8 +1957,11 @@ ssh -p 30409 ubuntu@129.70.51.6
 
 cd /vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
 
-scp -P 30409 fasta_bins/* ubuntu@129.70.51.6:/vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
+## jana needs some files
 
+scp -rP 30409 /home/daniel/Desktop/MAGs_JJ_LQ ubuntu@129.70.51.6:/vol/funMicStorage/
+
+scp -P 30409 fasta_bins/* ubuntu@129.70.51.6:/vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
 
 ## take everyone's mags, run derep, get tax and checkm information for each
 
@@ -1970,3 +1973,154 @@ scp -P 30409 fasta_bins/* ubuntu@129.70.51.6:/vol/funMicStorage/datasets/kelp/bi
 
 
 ## start a new script just  for this, to avoid git issues. 
+
+## download from efiles:
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/
+
+mv /home/daniel/Desktop/MAGs.zip /home/daniel/Documents/teaching/functionalMicrobiomes/
+
+
+## put these onto my denbi
+scp -P 30476 MAGs.zip ubuntu@129.70.51.6:/vol/funMicStorage/
+
+## make some wd
+mkdir /vol/funMicStorage/drep
+mkdir /vol/funMicStorage/drep/all_bins
+mkdir /vol/funMicStorage/drep/dereplicated_bins
+
+## put these onto my denbi
+scp -P 30476 MAGs.zip ubuntu@129.70.51.6:/vol/funMicStorage/
+
+## on denbbi
+
+unzip MAGs.zip
+
+cd /vol/funMicStorage/MAGs/MAGs_JJ_LQ
+for i in *; do
+  mv $i "JJ_LQ_"${i} 
+done
+
+cd /vol/funMicStorage/MAGs/MAGs_SA_BY
+for i in *; do
+  mv $i "SA_BY_"${i} 
+done
+
+cd /vol/funMicStorage/MAGs/MAGs_Abdel
+for i in *; do
+  mv $i "Abdel_"${i} 
+done
+
+mkdir /vol/funMicStorage/drep
+mkdir /vol/funMicStorage/drep/all_bins
+mkdir /vol/funMicStorage/drep/dereplicated_bins
+
+## flatten mag dir
+
+cd /vol/funMicStorage
+
+cp MAGs/*/* /vol/funMicStorage/drep/all_bins
+
+conda activate drep
+
+## need these?
+#export OMP_NUM_THREADS=12
+#export NUMEXPR_MAX_THREADS=12
+
+cd /vol/funMicStorage/drep
+
+ALL_BINS_DIRECTORY=/vol/funMicStorage/drep/all_bins
+DEREP_BINS_DIRECTORY=/vol/funMicStorage/binning/drep/dereplicated_bins
+nohup dRep dereplicate \
+    ${DEREP_BINS_DIRECTORY} \
+    -p 12 \
+    -g ${ALL_BINS_DIRECTORY}/*.fa \
+    -comp 40 \
+    -l 500000 \
+    -comW 1 \
+    -sizeW 1 \
+    -conW 5 \
+    -strW 1 \
+    -N50W 0.5 \
+    --run_tertiary_clustering  &
+
+## seems to be running ok....
+
+## great. But we need bins. Let's run dasTool on Abdel's bins:
+
+## abdel 
+ssh -p 30427 ubuntu@129.70.51.6
+
+cd /vol/funMicStorage/danWD/vambBinsBackup
+
+## clean up names
+for i in *; do
+  #mv $i ${i/\.fna/_vamb\.fna}
+done
+
+
+
+conda activate binning
+
+cd /vol/funMicStorage/danWD/das
+
+## where are his bins?
+metabatBins=/vol/funMicStorage/kelpAnalysis/binning/metabat
+vambBins=/vol/funMicStorage/danWD/vambBinsBackup
+concoctBins=/vol/funMicStorage/kelpAnalysis/binning/concoct/fasta_bins
+assembly=/vol/funMicStorage/kelpAnalysis/assembly/megahit_out/final.contigs.fa
+
+## find the contigs in our metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+head metabat.contigs2bin.tsv
+tail metabat.contigs2bin.tsv
+
+## and vamb
+Fasta_to_Contig2Bin.sh \
+    -e fna \
+    -i $vambBins \
+    > vamb.contigs2bin.tsv
+
+head vamb.contigs2bin.tsv
+tail vamb.contigs2bin.tsv
+
+## and concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+head concoct.contigs2bin.tsv
+tail concoct.contigs2bin.tsv
+
+## now run das
+DAS_Tool \
+    -i metabat.contigs2bin.tsv,vamb.contigs2bin.tsv,concoct.contigs2bin.tsv \
+    -l metabat,vamb,concoct \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 12 \
+    --write_bins \
+    -o zymoMC_das
+
+## get results locally
+file2get=/vol/funMicStorage/binning/drep/dereplicated_bins/dereplicated_genomes/
+scp -rP 30476 ubuntu@129.70.51.6:$file2get .
+
+ls /vol/funMicStorage/binning/drep/dereplicated_bins/dereplicated_genomes/ | wc -l
+
+## switch to lab comp, enter these names onto the spreadsheet
+
+Abdel_0_concat.fa       Abdel_73_concat.fa      Abdel_metabat.9.fa       JJ_LQ_metabat.17_sub.fa  SA_BY_metabat.25.fa
+Abdel_15_concat.fa      Abdel_89_concat_sub.fa  JJ_LQ_18_concoct.fa      JJ_LQ_metabat.24.fa      SA_BY_metabat.8_sub.fa
+Abdel_22_concat_sub.fa  Abdel_8_concat.fa       JJ_LQ_24_concoct_sub.fa  SA_BY_10_concoct.fa
+Abdel_39_concat_sub.fa  Abdel_metabat.23.fa     JJ_LQ_27_concoct.fa      SA_BY_5_concoct.fa
+Abdel_54_concat.fa      Abdel_metabat.7.fa      JJ_LQ_64_concoct_sub.fa  SA_BY_metabat.22.fa
+
+## put this on myfiles for the students
+
+
