@@ -1670,4 +1670,303 @@ ls -l
 
 ## okay, these are on there.
 
+## second problem - concoct isn't running right for anyone. 
 
+## step one recreate the problem. Can we find the files on Lin's 
+## computer?
+
+## lin's comp:
+
+ssh -p 30451 ubuntu@129.70.51.6 
+
+
+## coverage table is here:
+
+/vol/funMicStorage/datasets/kelp/binning/coverage/coverage_Depths.txt
+
+## looks fine
+
+
+conda activate concoct
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct
+
+## log shows things at least started okay...
+
+## looking at the command history, the command that breaks is:
+
+assembly=/vol/funMicStorage/datasets/kelp/assembly/megahit_out/final.contigs.fa
+concoct   --composition_file $assembly   --coverage_file concoct_coverage.txt   -t 8
+
+## and there it is. Issue on github here: https://github.com/BinPro/CONCOCT/issues/232
+## why didn't my previous or dimitri's script have this error?
+
+## think we need a fresh install. Setup the teaching comp with the files and repeat
+
+## we need her assembly, the relevant files are her assembly and her coverage file,
+## and we might need her original coverage table
+
+## get local from lin's computer
+
+#file=/vol/funMicStorage/datasets/kelp/assembly/megahit_out/final.contigs.fa
+#file=/vol/funMicStorage/datasets/kelp/binning/concoct/concoct_coverage.txt
+file=/vol/funMicStorage/datasets/kelp/binning/coverage/coverage_Depths.txt
+scp -P 30451 ubuntu@129.70.51.6:$file . 
+
+## put onto teaching comp:
+
+#file=final.contigs.fa
+#file=concoct_coverage.txt
+file=coverage_Depths.txt
+scp -P 30476 $file ubuntu@129.70.51.6:/vol/funMicStorage/fixConcoct 
+
+## try to repeat the error on our machine:
+
+conda activate concoct
+
+cd /vol/funMicStorage/fixConcoct
+
+## reorganize a bit
+mkdir filesFromLin/
+mv concoct_coverage.txt filesFromLin/
+mv coverage_Depths.txt filesFromLin/
+mv final.contigs.fa filesFromLin/
+
+
+## the command that breaks is:
+
+cd /vol/funMicStorage/fixConcoct
+
+concoctCov=/vol/funMicStorage/fixConcoct/filesFromLin/concoct_coverage.txt
+assembly=/vol/funMicStorage/fixConcoct/filesFromLin/final.contigs.fa
+concoct   --composition_file $assembly --coverage_file $concoctCov -t 8
+
+
+## okay, problem repeats
+
+## try with single core? this will take forever...
+
+cd /vol/funMicStorage/fixConcoct
+concoctCov=/vol/funMicStorage/fixConcoct/filesFromLin/concoct_coverage.txt
+assembly=/vol/funMicStorage/fixConcoct/filesFromLin/final.contigs.fa
+concoct   --composition_file $assembly --coverage_file $concoctCov 
+## started 6:09
+
+find -newermt '9 minutes ago' 
+
+#find -newermt '9 minutes ago' -exec rm {} \;
+
+
+## let's try a reinstall with older python?:
+
+#conda deactivate 
+
+conda config --add channels defaults
+conda config --add channels conda-forge
+conda config --add channels bioconda
+conda create -n concoct_reinstall python=3.8 concoct
+
+conda config --env --add channels defaults
+conda config --env --add channels conda-forge
+conda config --env --add channels bioconda
+
+conda create -n concoct_reinstalled python=3.8
+
+
+## this fails. wtf, can't even start an empty environment?
+
+conda activate concoct_reinstalled 
+
+conda config --env --add channels defaults
+conda config --env --add channels conda-forge
+conda config --env --add channels bioconda
+conda install concoct
+
+## looks like having dimitri on there screwed up our 
+## conda permissions. Note to self - don't put 
+## multiple users on a conda install...
+
+## try again, on lin's computer:
+
+## lin's comp:
+ssh -p 30451 ubuntu@129.70.51.6 
+
+conda activate concoct
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct
+
+assembly=/vol/funMicStorage/datasets/kelp/assembly/megahit_out/final.contigs.fa
+concoct   --composition_file $assembly --coverage_file concoct_coverage.txt -t 8
+
+## try reinstall:
+
+
+conda deactivate 
+
+conda create -n concoct_reinstall python=3.8
+
+## nope, this is broken on all of their computers. 
+
+## in the future, do not use different users on same conda
+
+## okay, the only option I see is to still single-core 
+## mode binning for all groups. Do one from each group, 
+## then start more if time allows:
+
+
+## group1:
+## lin's comp:
+
+ssh -p 30451 ubuntu@129.70.51.6 
+
+conda activate concoct
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct
+
+assembly=/vol/funMicStorage/datasets/kelp/assembly/megahit_out/final.contigs.fa
+
+concoct --composition_file $assembly --coverage_file concoct_coverage.txt &
+
+## can we run the next step, also?
+## find a place to put these bins:
+
+mkdir fasta_bins
+
+## another custom script from concoct to collect our contigs into
+## fasta files:
+
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+## and rename:
+cd fasta_bins
+
+for i in *; do
+#  mv $i ${i/\.fa/_concat\.fa}
+  mv $i ${i/\.fa/_concoct\.fa}
+done
+
+## looks ok.
+
+## group2:
+## sulari's comp:
+
+ssh -p 30289 ubuntu@129.70.51.6
+
+cd /vol/funMicStorage/Sulari/binning/concoct
+
+conda activate concoct
+
+assembly=/vol/funMicStorage/Sulari/assembly/megahit_out/final.contigs.fa
+#nohup concoct --composition_file $assembly --coverage_file concoct_coverage.txt &
+
+mkdir fasta_bins
+
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+for i in *; do
+#  mv $i ${i/\.fa/_concat\.fa}
+  mv $i ${i/\.fa/_concoct\.fa}
+done
+
+## another custom script from concoct to collect our contigs into
+## fasta files:
+
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+## group3
+
+## abdel's computer
+ssh -p 30427 ubuntu@129.70.51.6
+
+## his coverage table is here:
+coverageTable=/vol/funMicStorage/kelpAnalysis/binning/coverage/coverage_Depths.txt
+
+## make this into a concoct table:
+
+cd /vol/funMicStorage/kelpAnalysis/binning/concoct
+
+cut -f 1,4,6,8 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1\tsample_2\tsample_3' > concoct_coverage.txt
+
+
+conda activate concoct
+
+assembly=/vol/funMicStorage/kelpAnalysis/assembly/megahit_out/final.contigs.fa
+#nohup concoct --composition_file $assembly --coverage_file concoct_coverage.txt &
+
+mkdir fasta_bins
+
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+## let's see if that runs for them...
+
+## and let's make sure we can 
+
+## bex? let's talk about it with him.
+
+
+## the next big knot will be getting every to 
+## to pool their genomes after das bin step
+
+## have they all run vamb?
+
+## abdel 
+ssh -p 30427 ubuntu@129.70.51.6
+
+## he ran it, but the folder is empty.
+assembly=/vol/funMicStorage/kelpAnalysis/assembly/megahit_out/final.contigs.fa
+coverageTable=/vol/funMicStorage/kelpAnalysis/binning/coverage/coverage_Depths.txt
+
+conda activate binning
+
+cd /vol/funMicStorage/kelpAnalysis/binning/danVamb
+
+nohup vamb --fasta $assembly --jgi $coverageTable --minfasta 200000 --outdir vambOut &
+
+## did sulari's work?
+
+ssh -p 30289 ubuntu@129.70.51.6
+
+## looks good
+
+
+## lin's comp:
+
+ssh -p 30451 ubuntu@129.70.51.6 
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct
+
+## also looks good. so, they should run das tools
+
+## when they finish, ask them to put these on the myfilesGo
+
+
+
+
+#### jana needs lin's bins:
+
+ 
+ssh -p 30451 ubuntu@129.70.51.6 
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct
+
+scp -rP 30451 ubuntu@129.70.51.6:/vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins .
+
+## onto jana's computer:
+
+ssh -p 30409 ubuntu@129.70.51.6
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
+
+scp -P 30409 fasta_bins/* ubuntu@129.70.51.6:/vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
+
+
+## take everyone's mags, run derep, get tax and checkm information for each
+
+## put in a new folder on myfiles
+
+## make spreadsheet with: magname, source (team), taxonomy,  
+
+## maybe best to do this on the PC.
+
+
+## start a new script just  for this, to avoid git issues. 
