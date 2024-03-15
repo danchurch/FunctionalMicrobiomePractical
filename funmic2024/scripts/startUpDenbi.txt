@@ -1963,6 +1963,7 @@ scp -rP 30409 /home/daniel/Desktop/MAGs_JJ_LQ ubuntu@129.70.51.6:/vol/funMicStor
 
 scp -P 30409 fasta_bins/* ubuntu@129.70.51.6:/vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
 
+
 ## take everyone's mags, run derep, get tax and checkm information for each
 
 ## put in a new folder on myfiles
@@ -2123,4 +2124,32 @@ Abdel_54_concat.fa      Abdel_metabat.7.fa      JJ_LQ_64_concoct_sub.fa  SA_BY_m
 
 ## put this on myfiles for the students
 
+## did Jana run das_tools?
 
+## her old bins are here:
+ls /vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins
+
+mkdir -p /vol/funMicStorage/.concoctoldbinsFromLin/fasta_bins 
+mv /vol/funMicStorage/datasets/kelp/binning/concoct/fasta_bins /vol/funMicStorage/.concoctoldbinsFromLin/
+
+cd /vol/funMicStorage/datasets/kelp/binning/concoct/
+
+## does she have any newer ones?
+
+ssh -p 30409 ubuntu@129.70.51.6
+
+find . -name *concoct.fa
+
+find -newermt '9 minutes ago' 
+
+#find -newermt '9 minutes ago' -exec ls {} \;
+
+#### jana's organism phylogeny
+
+## on lins computer
+30451
+
+ssh -p 30451 ubuntu@129.70.51.6
+
+file=/vol/funMicStorage/datasets/kelp/assignTaxonomy/gtdbtk_Out/classify/gtdbtk.bac120.summary.tsv
+scp -P 30451 ubuntu@129.70.51.6:$file .
