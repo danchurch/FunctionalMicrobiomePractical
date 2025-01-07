@@ -1,0 +1,14 @@
+## okay, starting the setup for the funmic practical, spring 2025
+
+## our setup instance is here:
+
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30423
+
+## oops. Wrong key. do we have the denbi key on this work computer?
+## this is probably a key on my laptop....
+
+## for conda, I think Dimitri and I need to share a user on this computer. 
+## will just need to add his key. 
+
+
+
