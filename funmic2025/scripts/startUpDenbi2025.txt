@@ -1,5 +1,15 @@
 ## okay, starting the setup for the funmic practical, spring 2025
 
+## synch up our work computer github:
+
+https://github.com/danchurch/FunctionalMicrobiomePractical.git
+
+git remote add origin https://github.com/danchurch/FunctionalMicrobiomePractical.git
+git branch -M main
+git remote set-url origin git@github.com:danchurch/FunctionalMicrobiomePractical.git
+git push -u origin main
+
+
 ## our setup instance is here:
 
 ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30423
