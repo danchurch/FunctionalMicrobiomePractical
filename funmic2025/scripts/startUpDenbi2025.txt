@@ -1,6 +1,6 @@
 ## okay, starting the setup for the funmic practical, spring 2025
 
-## synch up our work computer github:
+## synch up our desktop computer with github:
 
 https://github.com/danchurch/FunctionalMicrobiomePractical.git
 
@@ -9,16 +9,151 @@ git branch -M main
 git remote set-url origin git@github.com:danchurch/FunctionalMicrobiomePractical.git
 git push -u origin main
 
-
 ## our setup instance is here:
 
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30423
+ssh ubuntu@129.70.51.6 -p 30423
 
 ## oops. Wrong key. do we have the denbi key on this work computer?
 ## this is probably a key on my laptop....
 
+## I had to add a public key from desktop, via the notebook.
+## let's do the same for dimitri, using the key he gave me last year.
+
 ## for conda, I think Dimitri and I need to share a user on this computer. 
 ## will just need to add his key. 
 
+## now, is the volume already mounted?
+
+lsblk
+
+## mounted for the moment, 
+
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE  ##vdc
 
 
+## change to user, not root
+sudo chown ubuntu:ubuntu /vol/funmic
+
+## if we restart the machine, do we lose the volume?:
+
+## yup. 
+
+
+## need the uuid, either with:
+blkid /dev/vdc
+
+## or 
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
+
+cp /etc/fstab ~/fstab.bk
+
+## let's add this to the fstab:
+UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    defaults        0       2
+
+## works on reboot.
+## we may need to change the UUIDs for the student computers when we start them up.
+
+## and now get conda going
+
+####### install conda #############
+## let's start with miniconda, and put it on the volume:
+
+mkdir -p /vol/funmic/miniconda3
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /vol/funmic/miniconda3/miniconda.sh
+bash /vol/funmic/miniconda3/miniconda.sh -b -u -p /vol/funmic/miniconda3/miniconda3
+rm /vol/funmic/miniconda3/miniconda.sh
+
+source /vol/funmic/miniconda3/miniconda3/bin/activate
+
+## add to path env
+export PATH=/vol/funmic/miniconda3/miniconda3/bin:$PATH
+
+## initiate with defaults.
+conda init
+
+##### metagenome datasets #####
+
+## let's use the mock community data and the kelp dataset, as per last year.
+
+## mock community dataset:
+
+nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_1.fastq.gz -O /vol/funmic/datasets/ERR7255689_1.fastq.gz &
+nohup wget ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR725/009/ERR7255689/ERR7255689_2.fastq.gz -O /vol/funmic/datasets/ERR7255689_2.fastq.gz &
+
+## and the kelp dataset. This was tricky last year.
+
+## let's try the SRA toolkit:
+
+## got the binaries here:
+wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
+
+tar -xzf sratoolkit.current-ubuntu64.tar.gz
+
+cd /home/ubuntu/sratoolkit.3.1.1-ubuntu64/bin
+
+
+## set the working directory and temp file location to somewhere on the volume, then 
+## seems to work, add to path
+
+export PATH=/home/ubuntu/sratoolkit.3.1.1-ubuntu64/bin:$PATH
+
+
+## test: 
+
+vdb-config -i
+
+fastq-dump --stdout -X 2 SRR390728
+
+https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJEB36085
+
+## I think we just need the kelp-associated samples, not the water or sediment samples?
+## we need SRA run numbers for these, keep clicking till you fun the link for runs.
+
+## I see only 3 non-amplicon files associates with the kelp biofilms.  
+## these are:
+
+ERR3801502
+ERR3801542
+ERR3801603
+
+## saved in 
+
+cd /vol/funmic/datasets/kelpBiofilm
+
+## following this website for 
+## https://bioinformaticsworkbook.org/dataAcquisition/fileTransfer/sra.html#gsc.tab=0 
+
+## also these from ncbi:
+## https://github.com/ncbi/sra-tools/wiki/08.-prefetch-and-fasterq-dump
+## https://github.com/ncbi/sra-tools/wiki/HowTo:-fasterq-dump
+
+/vol/funmic/datasets/kelpBiofilm
+
+## can use old fashioned way:
+fastq-dump --split-files --origfmt --gzip ERR3801502
+
+## seems to work, but let's try the prefetch/fasterq combination:
+
+prefetch ERR3801502 
+#fasterq-dump --split-spot ERR3801502  ## but this is interleaved. 
+fasterq-dump --split-files ERR3801502  ## this seems to works better.
+
+## so a script for this would be:
+
+####### getKelpReads.sh ############
+names=(
+"ERR3801502"
+"ERR3801542"
+"ERR3801603"
+)
+
+for i in ${names[@]}; do
+  prefetch $i
+  fasterq-dump --split-files $i
+done
+####################################
+
+nohup bash getKelpReads.sh &
+
+## looks like it worked. 
