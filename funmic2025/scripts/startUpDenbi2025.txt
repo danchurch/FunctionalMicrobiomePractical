@@ -53,6 +53,9 @@ UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    default
 ## works on reboot.
 ## we may need to change the UUIDs for the student computers when we start them up.
 
+## need the old fashioned zip tools for alfons data?
+sudo apt install unzip
+
 ## and now get conda going
 
 ####### install conda #############
@@ -157,3 +160,90 @@ done
 nohup bash getKelpReads.sh &
 
 ## looks like it worked. 
+
+########### software installs ###########
+
+## first, is conda using the mamba solver?
+
+conda update -n base conda
+conda install -n base conda-libmamba-solver
+conda config --set solver libmamba
+
+## get bioconda and conda forge
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+## let's try to keep our environments in line with the boxes 
+## in the overal schematic of the class.
+
+## The first is "quality control of raw sequences". So, let's call it "qualityControlRawSequences"
+
+## the installation of trim-galore should be all we need, this includes fastqc:
+
+conda create -n qualityControlRawSequences -c bioconda trim-galore 
+ 
+## install phyloflash
+
+conda create -n communityComposition -c bioconda phyloflash
+
+## we need a formatted silva database for phyloFlash
+cd /vol/funmic/databases
+
+## looks like they haven't updated from last year:
+wget https://zenodo.org/record/7892522/files/138.1.tar.gz
+mv 138.1/ phyloflashSilvaDB/
+
+
+tar -xzf 138.1.tar.gz
+
+
+######### software tests ############
+
+### trim-galore: ###
+
+conda activate qualityControlRawSequences 
+
+trim_galore  -help
+
+## let's check it with our new data:
+
+outDir=~/test
+file="/vol/funmic/datasets/Barcode2024/raw_reads/M13-07.fastq.gz"
+fastqc -t 10 \
+  -o $outDir \
+  $file 
+
+getFile=/home/ubuntu/test
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad
+scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## fastqc works
+
+## does the cut-adapt side work?
+sipRawReads="/vol/funmic/datasets/Barcode2024/raw_reads"
+output=/home/ubuntu/test
+## run it
+trim_galore \
+  --cores 7 \
+  -o $output \
+  --clip_R1 20 \
+  --illumina \
+  --length 200 \
+  ${sipRawReads}/*fastq.gz
+
+## looks good. 
+
+### phyloflash: ###
+
+conda activate communityComposition
+
+phyloFlash.pl -check_env
+
+phyloFlash.pl -dbhome /vol/funmic/databases/phyloflashSilvaDB -lib TEST -CPUs 14 \
+ -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
+ -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
+ -almosteverything
+
+## seems to work
