@@ -163,6 +163,11 @@ nohup bash getKelpReads.sh &
 
 ########### software installs ###########
 
+## this section is "what worked". 
+## there is a section below for testing and for what didn't work.
+
+### solver ###
+
 ## first, is conda using the mamba solver?
 
 conda update -n base conda
@@ -198,8 +203,27 @@ mv 138.1/ phyloflashSilvaDB/
 
 tar -xzf 138.1.tar.gz
 
+### megahit ###
+
+conda create -n assembly -c bioconda megahit
+
+### quast ###
+
+conda create -n assemblyQC -c bioconda quast
+
+
+##### binning #####
+
+## what are the chances the binning software will all play nice with each other?
+
+conda create -n binning -c bioconda metabat2 vamb concoct
+
+conda remove -n binning --all
 
 ######### software tests ############
+
+## here is all the "trash" scripting of the process of me testing
+## different installs.
 
 ### trim-galore: ###
 
@@ -247,3 +271,56 @@ phyloFlash.pl -dbhome /vol/funmic/databases/phyloflashSilvaDB -lib TEST -CPUs 14
  -almosteverything
 
 ## seems to work
+
+### megahit ###
+
+## test megahit on our metagenomes from the kelp:
+
+conda activate assembly
+
+megahit -h
+
+kelpDir="/vol/funmic/datasets/kelpBiofilm/"
+
+rm -r $outdir
+fast1=${kelpDir}ERR3801502_1.fastq
+fast2=${kelpDir}ERR3801502_2.fastq
+#fast1=${kelpDir}ERR3801542_1.fastq
+#fast2=${kelpDir}ERR3801542_2.fastq
+#fast1=${kelpDir}ERR3801603_1.fastq
+#fast2=${kelpDir}ERR3801603_2.fastq
+outdir=/home/ubuntu/test/
+\time -v megahit -1 $fast1 \
+          -2 $fast2 \
+          -t 12 \
+          -o $outdir
+
+## this took 3569928 kbytes of RAM, or 3.5 gig, and 2 hours human time
+## something funny if I try stdout and stderr redirection, but
+## resolve this later. for now install looks good. 
+
+
+### quast ###
+
+conda activate assemblyQC 
+
+cd /home/ubuntu/test
+
+mkdir /home/ubuntu/test/assemblyQC 
+
+assembly=/home/ubuntu/test/final.contigs.fa
+quastOut=/home/ubuntu/test/assemblyQC
+
+## run the command
+\time quast -t 12 \
+  -o $quastOut \
+  $assembly &> quastLog.txt &
+
+less quastLog.txt
+## trivial amount of time and memory used.
+getFile=/home/ubuntu/test/assemblyQC/
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
+scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## quast works
+
