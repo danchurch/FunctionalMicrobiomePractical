@@ -211,14 +211,59 @@ conda create -n assembly -c bioconda megahit
 
 conda create -n assemblyQC -c bioconda quast
 
+### minimap ### 
+
+## the repo for minimap (https://github.com/lh3/minimap2?tab=readme-ov-file#install)
+## says just download binaries. so:
+
+mkdir /vol/funmic/.minimap2
+
+cd /vol/funmic/.minimap2
+
+curl -L https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x64-linux.tar.bz2 | tar -jxvf -
+
+## link to somewhere we can find it
+sudo ln -s /vol/funmic/.minimap2/minimap2 /usr/local/bin/minimap2
+
+### bbmap ###
+
+## jgi also recommends a direct download 
+
+## try:
+
+cd /vol/funmic
+
+wget https://altushost-swe.dl.sourceforge.net/project/bbmap/BBMap_39.14.tar.gz
+
+tar -xvzf BBMap_39.14.tar.gz
+
+mv bbmap /vol/funmic/.bbmap/
+
+## I guess we just add it to our path, add the following to our bashrc.
+## not ideal, but...
+
+export PATH="/vol/funmic/.bbmap/:$PATH"
+## added to bashrc file, seems to work
+
+## needs java
+sudo apt install default-jre
 
 ##### binning #####
 
 ## what are the chances the binning software will all play nice with each other?
 
-conda create -n binning -c bioconda metabat2 vamb concoct
+conda create -n binning -c bioconda metabat2 vamb concoct minimap2
 
-conda remove -n binning --all
+## no errors thrown, but can't believe that actually worked...
+## this automatically installed samtools as a dependency, newest version.
+
+## vamb behaving weird. 
+
+conda create -n binning -c bioconda metabat2 vamb concoct maxbin2
+
+conda activate binning
+
+conda install bioconda::maxbin2 ## surprisingly, no errors
 
 ######### software tests ############
 
@@ -324,3 +369,127 @@ scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ## quast works
 
+#### binning ####
+
+
+conda activate binning
+
+## mapping first, with bbmap:
+
+cd /vol/funmic/test/binning/
+mkdir coverage
+
+cd /vol/funmic/test/binning/coverage
+
+assembly=/vol/funmic/test/final.contigs.fa
+kelpDir="/vol/funmic/datasets/kelpBiofilm/"
+fast1=${kelpDir}ERR3801502_1.fastq
+fast2=${kelpDir}ERR3801502_2.fastq
+
+\time -v bbmap.sh \
+   threads=14 \
+   minid=.97 \
+   idfilter=.95 \
+   ref=$assembly \
+   in=$fast1 \
+   in2=$fast2 \
+   outm=rawReads_to_assembly.sam \
+   bamscript=rawReads_to_assembly_to_bam.sh
+
+## that took 14 minutes, 35 gig of ram
+
+cd /vol/funMicStorage/binning/zymo/metabat
+
+## map reads back to contigs
+
+\time -v bash rawReads_to_assembly_to_bam.sh ## trivial
+
+## coverage table
+
+cd /vol/funmic/test/binning/coverage
+
+assembly=/vol/funmic/test/final.contigs.fa
+sortedBAM=/vol/funmic/test/binning/coverage/rawReads_to_assembly_sorted.bam
+
+\time -v jgi_summarize_bam_contig_depths \
+           --outputDepth coverage_Depths.txt \
+           --referenceFasta  $assembly \
+           $sortedBAM
+## no RAM used, really, <1 min
+
+### metabat ###
+
+mkdir /vol/funmic/test/binning/metabat
+
+cd /vol/funmic/test/binning/metabat
+
+assembly=/vol/funmic/test/final.contigs.fa
+coverageTable=/vol/funmic/test/binning/coverage/coverage_Depths.txt
+metabat2 \
+  -i $assembly \
+  -a $coverageTable \
+  -o "metabat" \
+  -t 12
+
+## some errors concerning negative values, check this out later
+
+### vamb ###
+
+mkdir /vol/funmic/test/binning/vamb
+
+conda activate binning
+
+cd /vol/funmic/test/binning/vamb
+
+assembly=/vol/funmic/test/final.contigs.fa
+coverageTable=/vol/funmic/test/binning/coverage/coverage_Depths.txt
+\time -v vamb \
+          --fasta $assembly \
+          --jgi $coverageTable \
+          -t 64 \
+          --minfasta 100000 \
+          --outdir vambOut 
+
+## how many are there?
+cd /vol/funmic/test/binning/vamb/bins
+
+## this is working but taking forever. Too long for the class, probably. Weird. Worked last year. 
+## check on max bin, maybe the installs have been fixed. 
+
+### maxbin2 ###
+
+## try it, if it works, use this instead of vamb:
+
+cd /vol/funmic/test/binning/maxbin
+
+
+cut -f1,3 /vol/funmic/test/binning/coverage/coverage_Depths.txt > abundance.list
+
+## for some reason, all the documentation talks about a run_MaxBin.pl that we don't have.
+## I do find this binary:
+
+MaxBin
+
+## I think the abundance list that max bin wants is our coverage coverage_Depths.txt file.
+## hope the neg values don't cause problems:
+
+assembly=/vol/funmic/test/final.contigs.fa
+MaxBin -fasta $assembly -abund abundance.list 
+
+## but doesn't work. No error, just doesn't run. 
+
+conda update maxbin2
+## that helped
+
+mkdir /vol/funmic/test/binning/maxbin/maxbinOut
+
+
+assembly=/vol/funmic/test/final.contigs.fa
+run_MaxBin.pl -fasta $assembly -abund abundance.list 
+
+\time -v run_MaxBin.pl -thread 12 -min_contig_length 1500 \
+              -contig $assembly \
+              -abund abundance.list \
+              -out  /vol/funmic/test/binning/maxbin/maxbinOut
+
+## delete binning environment, start over and test
