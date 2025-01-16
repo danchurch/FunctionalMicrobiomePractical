@@ -254,16 +254,12 @@ sudo apt install default-jre
 
 conda create -n binning -c bioconda metabat2 vamb concoct minimap2
 
+## this was useful when maxbin doesn't completely install:
+## conda update maxbin2
+
 ## no errors thrown, but can't believe that actually worked...
 ## this automatically installed samtools as a dependency, newest version.
 
-## vamb behaving weird. 
-
-conda create -n binning -c bioconda metabat2 vamb concoct maxbin2
-
-conda activate binning
-
-conda install bioconda::maxbin2 ## surprisingly, no errors
 
 ######### software tests ############
 
@@ -398,7 +394,7 @@ fast2=${kelpDir}ERR3801502_2.fastq
 
 ## that took 14 minutes, 35 gig of ram
 
-cd /vol/funMicStorage/binning/zymo/metabat
+cd /vol/funmic/test/binning
 
 ## map reads back to contigs
 
@@ -465,27 +461,9 @@ cd /vol/funmic/test/binning/maxbin
 
 cut -f1,3 /vol/funmic/test/binning/coverage/coverage_Depths.txt > abundance.list
 
-## for some reason, all the documentation talks about a run_MaxBin.pl that we don't have.
-## I do find this binary:
-
-MaxBin
-
-## I think the abundance list that max bin wants is our coverage coverage_Depths.txt file.
 ## hope the neg values don't cause problems:
 
-assembly=/vol/funmic/test/final.contigs.fa
-MaxBin -fasta $assembly -abund abundance.list 
-
-## but doesn't work. No error, just doesn't run. 
-
-conda update maxbin2
-## that helped
-
 mkdir /vol/funmic/test/binning/maxbin/maxbinOut
-
-
-assembly=/vol/funmic/test/final.contigs.fa
-run_MaxBin.pl -fasta $assembly -abund abundance.list 
 
 \time -v run_MaxBin.pl -thread 12 -min_contig_length 1500 \
               -contig $assembly \
