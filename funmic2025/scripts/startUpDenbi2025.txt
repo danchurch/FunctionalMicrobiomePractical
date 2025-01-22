@@ -252,15 +252,18 @@ sudo apt install default-jre
 
 ## what are the chances the binning software will all play nice with each other?
 
-## no errors thrown, but can't believe that actually worked...
-## this automatically installed samtools as a dependency, newest version.
-
 ## vamb behaving weird. never works anyway, leave it out this year, try maxbin2 again
 
 conda create -n binning -c bioconda metabat2 maxbin2 concoct
 
-
 #conda remove -n binning --all ## keep needing this
+
+## this was useful when maxbin doesn't completely install:
+## conda update maxbin2
+
+## no errors thrown, but can't believe that actually worked...
+## this automatically installed samtools as a dependency, newest version.
+
 
 ######### software tests ############
 
@@ -419,12 +422,11 @@ conda activate binning
 
 ## coverage table
 
-conda activate binning
-
 cd /vol/funmic/test/binning/coverage
 
 assembly=/vol/funmic/test/final.contigs.fa
 sortedBAM=/vol/funmic/test/binning/coverage/rawReads_to_assembly_sorted.bam
+
 \time -v jgi_summarize_bam_contig_depths \
            --outputDepth coverage_Depths.txt \
            --referenceFasta  $assembly \
@@ -432,8 +434,6 @@ sortedBAM=/vol/funmic/test/binning/coverage/rawReads_to_assembly_sorted.bam
 ## no RAM used, really, <1 min
 
 ### metabat ###
-
-conda activate binning
 
 mkdir /vol/funmic/test/binning/metabat
 
