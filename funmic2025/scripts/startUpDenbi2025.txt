@@ -254,7 +254,8 @@ sudo apt install default-jre
 
 ## vamb behaving weird. never works anyway, leave it out this year, try maxbin2 again
 
-conda create -n binning -c bioconda metabat2 maxbin2 concoct
+#conda create -n binning -c bioconda metabat2 maxbin2 concoct
+conda create -n binning -c bioconda maxbin2 concoct
 
 #conda remove -n binning --all ## keep needing this
 
@@ -263,6 +264,58 @@ conda create -n binning -c bioconda metabat2 maxbin2 concoct
 
 ## no errors thrown, but can't believe that actually worked...
 ## this automatically installed samtools as a dependency, newest version.
+
+## and doesn't work. There is a bug in metabat2 concerning 
+## the abundance calculation program "jgi_summarize_bam_contig_depths"
+## as per: https://bitbucket.org/berkeleylab/metabat/issues/172/jgi_summarize_bam_contig_depths-producing
+## also several other bugs concerning negative abundances. 
+## the author recommends against using bioconda/conda
+
+## the author suggest docker or compiling from source. I should learn to use docker, but not now.
+## https://bitbucket.org/berkeleylab/metabat/src/master/
+
+## try from source. Dependencies:
+
+## 1 boost
+apt search libboost-all-dev
+sudo apt install libboost-all-dev
+
+## 2 cmake
+sudo apt install cmake
+
+## 3 g++
+sudo apt install g++
+
+cd /vol/funmic
+
+## try the development version:
+wget https://bitbucket.org/berkeleylab/metabat/get/master.tar.gz
+
+tar xzvf master.tar.gz
+
+cd berkeleylab-metabat-*
+
+mkdir build && cd build && cmake .. [ -DCMAKE_INSTALL_PREFIX=/vol/funmic/ ] && make && make test && make install
+
+## seems to have worked, hide it and put in on the path:
+
+mv /vol/funmic/bin /vol/funmic/.metabat
+
+## do we still need this?
+rm -r berkeleylab-metabat-453915fb5bbc/
+
+## added to path in bashrc
+
+##### refining of bins #####
+
+### das_tool ###
+
+## as per: https://github.com/cmks/DAS_Tool
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda create -n refine -c bioconda das_tool
 
 
 ######### software tests ############
@@ -412,13 +465,13 @@ assembly=/vol/funmic/test/final.contigs.fa
    bamscript=rawReads_to_assembly_to_bam.sh
 
 ## with first kelp files that took 14 minutes, 35 gig of ram
-## with mock comm files that took , gig of ram 
+## with mock comm files that took 13 min, 33 gig of ram 
 
 ## map reads back to contigs
 
 conda activate binning
 
-\time -v bash rawReads_to_assembly_to_bam.sh ## trivial
+\time -v bash rawReads_to_assembly_to_bam.sh ## for mock community, ~20 gig ram, 3 min
 
 ## coverage table
 
@@ -426,6 +479,8 @@ cd /vol/funmic/test/binning/coverage
 
 assembly=/vol/funmic/test/final.contigs.fa
 sortedBAM=/vol/funmic/test/binning/coverage/rawReads_to_assembly_sorted.bam
+
+jgi_summarize_bam_contig_depths --help
 
 \time -v jgi_summarize_bam_contig_depths \
            --outputDepth coverage_Depths.txt \
@@ -441,36 +496,32 @@ cd /vol/funmic/test/binning/metabat
 
 assembly=/vol/funmic/test/final.contigs.fa
 coverageTable=/vol/funmic/test/binning/coverage/coverage_Depths.txt
-metabat2 \
-  -i $assembly \
-  -a $coverageTable \
-  -o "metabat" \
-  -t 12
+\time -v  metabat2 \
+            -i $assembly \
+            -a $coverageTable \
+            -o "metabat" \
+            -t 12 
 
 ## some errors concerning negative values, check this out later
+## errors gone now, with updated metabat2
 
 ### maxbin2 ###
 
 ## try it, if it works, use this instead of vamb:
 
+mkdir -p /vol/funmic/test/binning/maxbin/maxbinOut
+
 cd /vol/funmic/test/binning/maxbin
 
 cut -f1,3 /vol/funmic/test/binning/coverage/coverage_Depths.txt > abundance.list
-
-
-## I think the abundance list that max bin wants is our coverage coverage_Depths.txt file.
-## hope the neg values don't cause problems:
-
-
-mkdir /vol/funmic/test/binning/maxbin/maxbinOut
-
 
 assembly=/vol/funmic/test/final.contigs.fa
 \time -v run_MaxBin.pl -thread 12 -min_contig_length 1500 \
               -contig $assembly \
               -abund abundance.list \
-              -out  /vol/funmic/test/binning/maxbin/maxbinOut
+              -out  /vol/funmic/test/binning/maxbin/maxbinOut/maxbin
 
+## 1 min, 0.5 gig RAM
 
 ### concoct ###
 
@@ -492,9 +543,8 @@ outdir=/vol/funmic/test/binning/concoct
 
 #samtools index -@ 12 $readAlignments ## think this is already indexed
 
-cut_up_fasta.py $assembly -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
-
-concoct_coverage_table.py concoctContigs_10K.bed $sortedBAM > coverage_table.tsv 
+# cut_up_fasta.py $assembly -c 10000 -o 0 --merge_last -b concoctContigs_10K.bed > concoctContigs_10K.fa
+# concoct_coverage_table.py concoctContigs_10K.bed $sortedBAM > coverage_table.tsv 
 
 ## still not working. Try an install of concoct with older python, like last year.
 
@@ -509,6 +559,72 @@ assembly=/vol/funmic/test/final.contigs.fa
             -t 12
 
 ## find a place to put these bins:
+
 mkdir fasta_bins
 
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
 
+## looks promising, but we want pretty file names
+## time for more BASH magic:
+
+cd fasta_bins
+for i in *; do
+  mv $i ${i/\.fa/_concoct\.fa}
+done
+
+#### refining ####
+
+### test das_tool ###
+
+conda activate refine
+
+mkdir /vol/funmic/test/refine
+
+cd /vol/funmic/test/refine
+
+metabatBins=/vol/funmic/test/binning/metabat
+concoctBins=/vol/funmic/test/binning/concoct/fasta_bins
+maxbinBins=/vol/funmic/test/binning/maxbin/maxbinOut
+assembly=/vol/funmic/test/final.contigs.fa
+
+## assign contigs to bins
+
+## metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+paste <(cut  -f 1 metabat.contigs2bin.tsv) <(cut -f 4 metabat.contigs2bin.tsv) > metabat.contigs2bin_edited.tsv
+
+head metabat*
+
+## concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+
+head concoct*
+
+## maxbin:
+Fasta_to_Contig2Bin.sh \
+    -e fasta \
+    -i $maxbinBins \
+    > maxbin.contigs2bin.tsv
+
+head maxbin.contigs2bin.tsv
+## don't need to edit this table, looks good
+
+DAS_Tool \
+    -i metabat.contigs2bin_edited.tsv,concoct.contigs2bin_edited.tsv,maxbin.contigs2bin.tsv \
+    -l metabat,concoct,maxbin \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 12 \
+    --write_bins \
+    -o zymoMC_das
+
+## works. 
