@@ -254,7 +254,6 @@ sudo apt install default-jre
 
 ## vamb behaving weird. never works anyway, leave it out this year, try maxbin2 again
 
-#conda create -n binning -c bioconda metabat2 maxbin2 concoct
 conda create -n binning -c bioconda maxbin2 concoct
 
 #conda remove -n binning --all ## keep needing this
@@ -317,6 +316,11 @@ conda config --add channels bioconda
 conda config --add channels conda-forge
 conda create -n refine -c bioconda das_tool
 
+##### depreplication #####
+
+## we need derep for the multiple metagenomes that dimitri has
+
+conda create -n dereplication -c bioconda  drep
 
 ######### software tests ############
 
@@ -380,13 +384,6 @@ cd /vol/funmic/test
 
 megahit -h
 
-#kelpDir="/vol/funmic/datasets/kelpBiofilm/"
-#fast1=${kelpDir}ERR3801502_1.fastq
-#fast2=${kelpDir}ERR3801502_2.fastq
-#fast1=${kelpDir}ERR3801542_1.fastq
-#fast2=${kelpDir}ERR3801542_2.fastq
-#fast1=${kelpDir}ERR3801603_1.fastq
-#fast2=${kelpDir}ERR3801603_2.fastq
 
 ## the first two kelp files result in the weird negative 
 ## values in the coverage table. Can't figure out why.
@@ -401,7 +398,38 @@ outdir=/vol/funmic/test
           -t 12 \
           -o $outdir
 
-## here ##
+## we can make a script for the kelp assemblies:
+
+kelpDir="/vol/funmic/datasets/kelpBiofilm/"
+fast1_1=${kelpDir}ERR3801502_1.fastq
+fast1_2=${kelpDir}ERR3801502_2.fastq
+fast2_1=${kelpDir}ERR3801542_1.fastq
+fast2_2=${kelpDir}ERR3801542_2.fastq
+fast3_1=${kelpDir}ERR3801603_1.fastq
+fast3_2=${kelpDir}ERR3801603_2.fastq
+
+megahit -1 $fast1_1 \
+ -2 $fast1_2 \
+ -t 12 \
+ -o /vol/funmic/test/kelpAssemblies/kelp1/
+
+megahit -1 $fast2_1 \
+ -2 $fast2_2 \
+ -t 12 \
+ -o /vol/funmic/test/kelpAssemblies/kelp2/
+
+megahit -1 $fast3_1 \
+ -2 $fast3_2 \
+ -t 12 \
+ -o /vol/funmic/test/kelpAssemblies/kelp3/
+
+## saved in assembleKelp.sh
+
+cd /vol/funmic/test/kelpAssemblies
+
+conda activate assembly
+
+nohup bash assembleKelp.sh &
 
 ## this took 3569928 kbytes of RAM, or 3.5 gig, and 2 hours human time
 ## something funny if I try stdout and stderr redirection, but
@@ -628,3 +656,4 @@ DAS_Tool \
     -o zymoMC_das
 
 ## works. 
+
