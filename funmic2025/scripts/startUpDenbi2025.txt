@@ -629,6 +629,44 @@ coverageTable=/vol/funmic/test/binning/coverage/coverage_Depths.txt
 ## some errors concerning negative values, check this out later
 ## errors gone now, with updated metabat2
 
+## kelp metabat ##
+
+## kelp1
+
+mkdir /vol/funmic/test/kelpbinning/kelp1/metabat
+cd /vol/funmic/test/kelpbinning/kelp1/metabat
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+coverageTable=/vol/funmic/test/kelpbinning/kelp1/coverage/coverage_Depths.txt
+\time -v  metabat2 \
+            -i $assembly \
+            -a $coverageTable \
+            -o "metabat" \
+            -t 12 
+
+
+## kelp2
+mkdir /vol/funmic/test/kelpbinning/kelp2/metabat
+cd /vol/funmic/test/kelpbinning/kelp2/metabat
+assembly=/vol/funmic/test/kelpAssemblies/kelp2/final.contigs.fa
+coverageTable=/vol/funmic/test/kelpbinning/kelp2/coverage/coverage_Depths.txt
+\time -v  metabat2 \
+            -i $assembly \
+            -a $coverageTable \
+            -o "metabat" \
+            -t 12 
+
+## kelp3
+mkdir /vol/funmic/test/kelpbinning/kelp3/metabat
+cd /vol/funmic/test/kelpbinning/kelp3/metabat
+assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
+coverageTable=/vol/funmic/test/kelpbinning/kelp3/coverage/coverage_Depths.txt
+\time -v  metabat2 \
+            -i $assembly \
+            -a $coverageTable \
+            -o "metabat" \
+            -t 12 
+
 ### maxbin2 ###
 
 ## try it, if it works, use this instead of vamb:
@@ -646,6 +684,42 @@ assembly=/vol/funmic/test/final.contigs.fa
               -out  /vol/funmic/test/binning/maxbin/maxbinOut/maxbin
 
 ## 1 min, 0.5 gig RAM
+
+## kelp1
+
+mkdir -p /vol/funmic/test/kelpbinning/kelp1/maxbin/maxbinOut
+cd /vol/funmic/test/kelpbinning/kelp1/maxbin
+
+cut -f1,3 /vol/funmic/test/kelpbinning/kelp1/coverage/coverage_Depths.txt > abundance.list
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+run_MaxBin.pl -thread 12 -min_contig_length 1500 \
+     -contig $assembly \
+     -abund abundance.list \
+     -out /vol/funmic/test/kelpbinning/kelp1/maxbin/maxbinOut
+
+
+## kelp2
+mkdir -p /vol/funmic/test/kelpbinning/kelp2/maxbin/maxbinOut
+cd /vol/funmic/test/kelpbinning/kelp2/maxbin
+cut -f1,3 /vol/funmic/test/kelpbinning/kelp2/coverage/coverage_Depths.txt > abundance.list
+assembly=/vol/funmic/test/kelpAssemblies/kelp2/final.contigs.fa
+run_MaxBin.pl -thread 12 -min_contig_length 1500 \
+     -contig $assembly \
+     -abund abundance.list \
+     -out /vol/funmic/test/kelpbinning/kelp2/maxbin/maxbinOut
+
+## kelp3
+mkdir -p /vol/funmic/test/kelpbinning/kelp3/maxbin/maxbinOut
+cd /vol/funmic/test/kelpbinning/kelp3/maxbin
+cut -f1,3 /vol/funmic/test/kelpbinning/kelp3/coverage/coverage_Depths.txt > abundance.list
+assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
+run_MaxBin.pl -thread 12 -min_contig_length 1500 \
+     -contig $assembly \
+     -abund abundance.list \
+     -out /vol/funmic/test/kelpbinning/kelp3/maxbin/maxbinOut
+
+## for some reason, outputs aren't going to maxbinout. Oh well, moving them there.
 
 ### concoct ###
 
@@ -682,8 +756,6 @@ assembly=/vol/funmic/test/final.contigs.fa
             --coverage_file concoct_coverage.txt \
             -t 12
 
-## find a place to put these bins:
-
 mkdir fasta_bins
 
 extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
@@ -695,6 +767,76 @@ cd fasta_bins
 for i in *; do
   mv $i ${i/\.fa/_concoct\.fa}
 done
+
+## kelp1 concoct:
+
+mkdir -p /vol/funmic/test/kelpbinning/kelp1/concoct/fasta_bins
+
+cd /vol/funmic/test/kelpbinning/kelp1/concoct/
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp1/rawReads_to_assembly_sorted.bam
+outdir=/vol/funmic/test/kelpbinning/kelp1/concoct/
+coverageTable=/vol/funmic/test/kelpbinning/kelp1/coverage/coverage_Depths.txt
+cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
+concoct \
+   --composition_file $assembly \
+   --coverage_file concoct_coverage.txt \
+   -t 12
+
+## that actually took some time:
+
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+
+cd /vol/funmic/test/kelpbinning/kelp1/concoct/fasta_bins
+for i in *; do
+  mv $i ${i/\.fa/_concoct\.fa}
+done
+
+## kelp2 concoct:
+
+## that took some time. let's make a script:
+
+### kelp2concoct.sh ###################
+mkdir -p /vol/funmic/test/kelpbinning/kelp2/concoct/fasta_bins
+cd /vol/funmic/test/kelpbinning/kelp2/concoct/
+assembly=/vol/funmic/test/kelpAssemblies/kelp2/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp2/rawReads_to_assembly_sorted.bam
+outdir=/vol/funmic/test/kelpbinning/kelp2/concoct/
+coverageTable=/vol/funmic/test/kelpbinning/kelp2/coverage/coverage_Depths.txt
+cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
+concoct \
+   --composition_file $assembly \
+   --coverage_file concoct_coverage.txt \
+   -t 6
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+cd /vol/funmic/test/kelpbinning/kelp2/concoct/fasta_bins
+for i in *; do
+  mv $i ${i/\.fa/_concoct\.fa}
+done
+###########################################
+
+### kelp3concoct.sh ###################
+mkdir -p /vol/funmic/test/kelpbinning/kelp3/concoct/fasta_bins
+cd /vol/funmic/test/kelpbinning/kelp3/concoct/
+assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp3/rawReads_to_assembly_sorted.bam
+outdir=/vol/funmic/test/kelpbinning/kelp3/concoct/
+coverageTable=/vol/funmic/test/kelpbinning/kelp3/coverage/coverage_Depths.txt
+cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
+concoct \
+   --composition_file $assembly \
+   --coverage_file concoct_coverage.txt \
+   -t 6
+extract_fasta_bins.py $assembly clustering_gt1000.csv --output_path fasta_bins/
+cd /vol/funmic/test/kelpbinning/kelp3/concoct/fasta_bins
+for i in *; do
+  mv $i ${i/\.fa/_concoct\.fa}
+done
+###########################################
+
+nohup bash ./kelp2concoct.sh &
+nohup bash ./kelp3concoct.sh &> kelpsconcoct.log &
 
 #### refining ####
 
@@ -751,5 +893,121 @@ DAS_Tool \
     --write_bins \
     -o zymoMC_das
 
-## works. 
+## works. now try with the kelp files
 
+## dastool kelp1
+
+conda activate refine
+
+mkdir -p /vol/funmic/test/kelprefine/kelp1
+
+cd /vol/funmic/test/kelprefine/kelp1
+
+metabatBins=/vol/funmic/test/kelpbinning/kelp1/metabat
+concoctBins=/vol/funmic/test/kelpbinning/kelp1/concoct/fasta_bins
+maxbinBins=/vol/funmic/test/kelpbinning/kelp1/maxbin/maxbinOut
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+
+## metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+paste <(cut  -f 1 metabat.contigs2bin.tsv) <(cut -f 4 metabat.contigs2bin.tsv) > metabat.contigs2bin_edited.tsv
+
+## concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+
+## maxbin:
+Fasta_to_Contig2Bin.sh \
+    -e fasta \
+    -i $maxbinBins \
+    > maxbin.contigs2bin.tsv
+
+DAS_Tool \
+    -i metabat.contigs2bin_edited.tsv,concoct.contigs2bin_edited.tsv,maxbin.contigs2bin.tsv \
+    -l metabat,concoct,maxbin \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 14 \
+    --write_bins \
+    -o zymoMC_das
+
+## kelp2
+mkdir -p /vol/funmic/test/kelprefine/kelp2
+cd /vol/funmic/test/kelprefine/kelp2
+metabatBins=/vol/funmic/test/kelpbinning/kelp2/metabat
+concoctBins=/vol/funmic/test/kelpbinning/kelp2/concoct/fasta_bins
+maxbinBins=/vol/funmic/test/kelpbinning/kelp2/maxbin/maxbinOut
+assembly=/vol/funmic/test/kelpAssemblies/kelp2/final.contigs.fa
+## metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+
+paste <(cut  -f 1 metabat.contigs2bin.tsv) <(cut -f 4 metabat.contigs2bin.tsv) > metabat.contigs2bin_edited.tsv
+## concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+## maxbin:
+Fasta_to_Contig2Bin.sh \
+    -e fasta \
+    -i $maxbinBins \
+    > maxbin.contigs2bin.tsv
+
+DAS_Tool \
+    -i metabat.contigs2bin_edited.tsv,concoct.contigs2bin_edited.tsv,maxbin.contigs2bin.tsv \
+    -l metabat,concoct,maxbin \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 14 \
+    --write_bins \
+    -o zymoMC_das
+
+## kelp3
+mkdir -p /vol/funmic/test/kelprefine/kelp3
+cd /vol/funmic/test/kelprefine/kelp3
+metabatBins=/vol/funmic/test/kelpbinning/kelp3/metabat
+concoctBins=/vol/funmic/test/kelpbinning/kelp3/concoct/fasta_bins
+maxbinBins=/vol/funmic/test/kelpbinning/kelp3/maxbin/maxbinOut
+assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
+## metabat bins
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $metabatBins \
+    > metabat.contigs2bin.tsv
+paste <(cut  -f 1 metabat.contigs2bin.tsv) <(cut -f 4 metabat.contigs2bin.tsv) > metabat.contigs2bin_edited.tsv
+## concoct:
+Fasta_to_Contig2Bin.sh \
+    -e fa \
+    -i $concoctBins \
+    > concoct.contigs2bin.tsv
+paste <(cut -d " " -f 1 concoct.contigs2bin.tsv) <(cut -f 2 concoct.contigs2bin.tsv) > concoct.contigs2bin_edited.tsv
+## maxbin:
+Fasta_to_Contig2Bin.sh \
+    -e fasta \
+    -i $maxbinBins \
+    > maxbin.contigs2bin.tsv
+DAS_Tool \
+    -i metabat.contigs2bin_edited.tsv,concoct.contigs2bin_edited.tsv,maxbin.contigs2bin.tsv \
+    -l metabat,concoct,maxbin \
+    --score_threshold 0.25 \
+    -c $assembly \
+    -t 14 \
+    --write_bins \
+    -o zymoMC_das
+
+## should have changed the output directory. But anyway, looks like it worked. 
+
+## try drep next
