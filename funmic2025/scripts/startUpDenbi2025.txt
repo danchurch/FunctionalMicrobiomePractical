@@ -384,9 +384,6 @@ cd /vol/funmic/test
 
 megahit -h
 
-
-## the first two kelp files result in the weird negative 
-## values in the coverage table. Can't figure out why.
 ## try with the mock community:
 
 fast1=/vol/funmic/datasets/zymogenMock/ERR7255689_1.fastq
@@ -397,6 +394,10 @@ outdir=/vol/funmic/test
           -2 $fast2 \
           -t 12 \
           -o $outdir
+
+## this took 3569928 kbytes of RAM, or 3.5 gig, and 2 hours human time
+## something funny if I try stdout and stderr redirection, but
+## resolve this later. for now install looks good. 
 
 ## we can make a script for the kelp assemblies:
 
@@ -431,9 +432,6 @@ conda activate assembly
 
 nohup bash assembleKelp.sh &
 
-## this took 3569928 kbytes of RAM, or 3.5 gig, and 2 hours human time
-## something funny if I try stdout and stderr redirection, but
-## resolve this later. for now install looks good. 
 
 
 ### quast ###
@@ -462,23 +460,15 @@ scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
 #### binning ####
 
-
-
 ## mapping first, with bbmap:
 
 mkdir -p /vol/funmic/test/binning/coverage
-
 cd /vol/funmic/test/binning/coverage
 
 
-###### Kelp data keeps giving me negative coverage values####
-#kelpDir="/vol/funmic/datasets/kelpBiofilm/"
-#fast1=${kelpDir}ERR3801502_1.fastq
-#fast2=${kelpDir}ERR3801502_2.fastq
 ############################################################
 
 ## try with the mock community
-
 fast1=/vol/funmic/datasets/zymogenMock/ERR7255689_1.fastq
 fast2=/vol/funmic/datasets/zymogenMock/ERR7255689_2.fastq
 assembly=/vol/funmic/test/final.contigs.fa
@@ -515,6 +505,79 @@ jgi_summarize_bam_contig_depths --help
            --referenceFasta  $assembly \
            $sortedBAM
 ## no RAM used, really, <1 min
+
+## repeat for the three kelp metagenomes ##
+
+## kelp1:
+#mkdir -p /vol/funmic/test/kelpbinning/kelp1
+cd /vol/funmic/test/kelpbinning/kelp1
+
+fast1=/vol/funmic/datasets/kelpBiofilm/ERR3801502_1.fastq
+fast2=/vol/funmic/datasets/kelpBiofilm/ERR3801502_2.fastq
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+\time -v bbmap.sh \
+   threads=14 \
+   minid=.97 \
+   idfilter=.95 \
+   ref=$assembly \
+   in=$fast1 \
+   in2=$fast2 \
+   outm=rawReads_to_assembly.sam \
+   bamscript=rawReads_to_assembly_to_bam.sh
+
+
+conda activate binning
+
+\time -v bash rawReads_to_assembly_to_bam.sh ## 
+
+
+mkdir /vol/funmic/test/kelpbinning/kelp1/coverage
+
+cd /vol/funmic/test/kelpbinning/kelp1/coverage
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp1/rawReads_to_assembly_sorted.bam
+\time -v jgi_summarize_bam_contig_depths \
+           --outputDepth coverage_Depths.txt \
+           --referenceFasta  $assembly \
+           $sortedBAM
+## kelp2:
+
+#mkdir -p /vol/funmic/test/kelpbinning/kelp2
+cd /vol/funmic/test/kelpbinning/kelp2
+
+fast1=/vol/funmic/datasets/kelpBiofilm/ERR3801542_1.fastq
+fast2=/vol/funmic/datasets/kelpBiofilm/ERR3801542_2.fastq
+assembly=/vol/funmic/test/kelpAssemblies/kelp2/final.contigs.fa
+nohup bbmap.sh \
+   threads=14 \
+   minid=.97 \
+   idfilter=.95 \
+   ref=$assembly \
+   in=$fast1 \
+   in2=$fast2 \
+   outm=rawReads_to_assembly.sam \
+   bamscript=rawReads_to_assembly_to_bam.sh &
+
+## stopped on jan29, wed, here
+
+conda activate binning
+
+\time -v bash rawReads_to_assembly_to_bam.sh ## 
+
+
+mkdir /vol/funmic/test/kelpbinning/kelp1/coverage
+
+cd /vol/funmic/test/kelpbinning/kelp1/coverage
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp1/rawReads_to_assembly_sorted.bam
+\time -v jgi_summarize_bam_contig_depths \
+           --outputDepth coverage_Depths.txt \
+           --referenceFasta  $assembly \
+           $sortedBAM
+
+## not run ## 
 
 ### metabat ###
 
