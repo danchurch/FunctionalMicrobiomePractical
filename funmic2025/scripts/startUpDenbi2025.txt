@@ -559,25 +559,58 @@ nohup bbmap.sh \
    outm=rawReads_to_assembly.sam \
    bamscript=rawReads_to_assembly_to_bam.sh &
 
-## stopped on jan29, wed, here
 
-conda activate binning
+conda activate binning ## need samtools
 
-\time -v bash rawReads_to_assembly_to_bam.sh ## 
+bash rawReads_to_assembly_to_bam.sh 
+
+#mkdir /vol/funmic/test/kelpbinning/kelp2/coverage
+cd /vol/funmic/test/kelpbinning/kelp2/coverage
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp2/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp2/rawReads_to_assembly_sorted.bam
+
+jgi_summarize_bam_contig_depths \
+  --outputDepth coverage_Depths.txt \
+  --referenceFasta  $assembly \
+  $sortedBAM
 
 
-mkdir /vol/funmic/test/kelpbinning/kelp1/coverage
+## kelp3:
 
-cd /vol/funmic/test/kelpbinning/kelp1/coverage
+mkdir -p /vol/funmic/test/kelpbinning/kelp3
 
-assembly=/vol/funmic/test/kelpAssemblies/kelp1/final.contigs.fa
-sortedBAM=/vol/funmic/test/kelpbinning/kelp1/rawReads_to_assembly_sorted.bam
-\time -v jgi_summarize_bam_contig_depths \
-           --outputDepth coverage_Depths.txt \
-           --referenceFasta  $assembly \
-           $sortedBAM
+cd /vol/funmic/test/kelpbinning/kelp3
 
-## not run ## 
+fast1=/vol/funmic/datasets/kelpBiofilm/ERR3801603_1.fastq
+fast2=/vol/funmic/datasets/kelpBiofilm/ERR3801603_2.fastq
+assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
+
+nohup bbmap.sh \
+   threads=14 \
+   minid=.97 \
+   idfilter=.95 \
+   ref=$assembly \
+   in=$fast1 \
+   in2=$fast2 \
+   outm=rawReads_to_assembly.sam \
+   bamscript=rawReads_to_assembly_to_bam.sh &
+
+conda activate binning ## need samtools
+
+bash rawReads_to_assembly_to_bam.sh 
+
+mkdir /vol/funmic/test/kelpbinning/kelp3/coverage
+
+cd /vol/funmic/test/kelpbinning/kelp3/coverage
+
+assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
+sortedBAM=/vol/funmic/test/kelpbinning/kelp3/rawReads_to_assembly_sorted.bam
+
+jgi_summarize_bam_contig_depths \
+  --outputDepth coverage_Depths.txt \
+  --referenceFasta  $assembly \
+  $sortedBAM
 
 ### metabat ###
 
