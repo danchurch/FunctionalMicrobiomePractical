@@ -170,6 +170,8 @@ nohup bash getKelpReads.sh &
 
 ## first, is conda using the mamba solver?
 
+conda update -n base -c defaults conda
+
 conda update -n base conda
 conda install -n base conda-libmamba-solver
 conda config --set solver libmamba
@@ -321,6 +323,40 @@ conda create -n refine -c bioconda das_tool
 ## we need derep for the multiple metagenomes that dimitri has
 
 conda create -n dereplication -c bioconda  drep
+
+##### assign taxonomy to bins #####
+
+## gtdb-tk, as per: https://ecogenomics.github.io/GTDBTk/installing/bioconda.html
+
+conda create -n assignTaxonomy -c conda-forge -c bioconda gtdbtk=2.4.0
+
+conda remove -n assignTaxonomy --all
+
+conda activate assignTaxonomy 
+
+## looks ok, we also need the database:
+
+cd /vol/funmic/databases/gtdb
+
+nohup wget https://data.ace.uq.edu.au/public/gtdb/data/releases/latest/auxillary_files/gtdbtk_package/full_package/gtdbtk_data.tar.gz &> gtdb-download.txt &
+
+tar xvzf gtdbtk_data.tar.gz
+
+## I think we need to tell gtbk-tk this path, I guess they have a script for this?i
+## can't find it, try manually:
+
+export GTDBTK_DATA_PATH=/vol/funmic/databases/gtdb/release220/
+
+## but this is more sustainable:
+
+conda env config vars set GTDBTK_DATA_PATH="/vol/funmic/databases/gtdb/release220/"
+
+## check it with their script:
+
+gtdbtk check_install ## this takes a long time, they check all genomes
+
+gtdbtk check_install --db_version
+
 
 ######### software tests ############
 
@@ -1010,4 +1046,93 @@ DAS_Tool \
 
 ## should have changed the output directory. But anyway, looks like it worked. 
 
-## try drep next
+###### dRep ######
+
+conda activate dereplication
+
+## for these, we need to give unique names to each kelp metagenome
+
+## names of directories are screwed up, because reused old code. But here they are:
+
+cd /vol/funmic/test/kelprefine/kelp1/zymoMC_das_DASTool_bins
+ls -1 | wc -l ## 23
+
+for i in *; do
+  mv $i "kelp1_"${i}
+done
+
+cd /vol/funmic/test/kelprefine/kelp2/zymoMC_das_DASTool_bins
+ls -1 | wc -l ## 28
+
+for i in *; do
+  mv $i "kelp2_"${i}
+done
+
+cd /vol/funmic/test/kelprefine/kelp3/zymoMC_das_DASTool_bins
+ls -1 | wc -l ## 29
+
+for i in *; do
+  mv $i "kelp3_"${i}
+done
+
+## get them all into one directory:
+
+mkdir -p /vol/funmic/test/kelpDrep/all_bins
+mkdir /vol/funmic/test/kelpDrep/dereplicated_bins
+
+cp /vol/funmic/test/kelprefine/kelp?/zymoMC_das_DASTool_bins/* /vol/funmic/test/kelpDrep/all_bins
+
+ls /vol/funmic/test/kelpDrep/all_bins -1 | wc -l ## all there
+
+cd /vol/funmic/test/kelpDrep
+
+## try dRep
+ALL_BINS_DIRECTORY=/vol/funmic/test/kelpDrep/all_bins
+DEREP_BINS_DIRECTORY=/vol/funmic/test/kelpDrep/dereplicated_bins
+\time -v dRep dereplicate \
+      ${DEREP_BINS_DIRECTORY} \
+      -p 12 \
+      -g ${ALL_BINS_DIRECTORY}/*.fa \
+      -comp 40 \
+      -l 500000 \
+      -comW 1 \
+      -sizeW 1 \
+      -conW 5 \
+      -strW 1 \
+      -N50W 0.5 \
+      --run_tertiary_clustering 
+
+## this runs for a ~long time, 24 min, 36 gig
+
+## great, now what? 
+
+## looks like we get checkm scores of the final contigs
+## with "dereplicated_bins/data_tables/Widb.csv"
+
+## now onto taxonomy...
+
+##### gtdb-tk ########
+
+conda activate assignTaxonomy
+
+cd /vol/funmic/test/kelpAssignTaxonomy 
+
+mags=/vol/funmic/test/kelpDrep/dereplicated_bins/dereplicated_genomes
+
+
+## do the gene predictions, and find the marker genes present in each mag
+
+\time -v gtdbtk identify --genome_dir $mags --out_dir ./identify --extension "fa" --cpus 12 &> gtdb-identify.log &
+## less than a gig, 2 minutes
+
+## run multiple alignments of these markers, figure out which domain of life
+## we are dealing with.
+\time -v gtdbtk align --identify_dir ./identify --out_dir ./align --cpus 12 &> gtdb-align.log &
+## 9 gig ram, 6 minutes
+
+\time -v gtdbtk classify --genome_dir $mags \
+                         --align_dir ./align \
+                         --out_dir ./classify -x "fa" \
+                         --out_dir ./classify -x "fa" \
+                         --mash_db ./mashDB &> gtdb-classify.log &
+
