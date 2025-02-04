@@ -1136,3 +1136,15 @@ mags=/vol/funmic/test/kelpDrep/dereplicated_bins/dereplicated_genomes
                          --out_dir ./classify -x "fa" \
                          --mash_db ./mashDB &> gtdb-classify.log &
 
+## that took 80 gig RAM (expected), 5 hours (!!)
+
+## did it work?
+
+cd ./kelpAssignTaxonomy/classify/
+
+less gtdbtk.bac120.summary.tsv
+
+## this seems to have worked. 
+
+## now deal with the new metabarcode pipeline and see what Dimitri is thinking for annotation.
+
