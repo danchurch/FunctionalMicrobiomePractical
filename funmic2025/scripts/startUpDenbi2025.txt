@@ -1148,3 +1148,96 @@ less gtdbtk.bac120.summary.tsv
 
 ## now deal with the new metabarcode pipeline and see what Dimitri is thinking for annotation.
 
+###############################################
+
+### metabarcoding ###
+
+cd /vol/funmic/test/metabarcoding
+
+
+conda activate qualityControlRawSequences 
+
+## start with a fastqc review:
+
+## data is here:
+
+metabarcodeD=/vol/funmic/datasets/Barcode2024/raw_reads/
+
+## combine into one fasta
+
+
+cat ${metabarcodeD}*.gz > allfastqs.fastq.gz
+
+## look at it:
+
+fastqc -o . -t 12 allfastqs.fastq.gz
+
+## get it local:
+
+getFile=/vol/funmic/test/metabarcoding/allfastqs_fastqc.html
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
+scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## we'll need to cut the primers.
+
+## use cutadapt. What are our primers again?  
+
+## if they are regular 16sV4 with illumina tags:
+
+gunzip  allfastqs.fastq.gz
+
+## here are the phased versions of the 515f:
+tcgtcggcagcgtcagatgtgtataagagacag  gtgycagcmgccgcggtaa
+tcgtcggcagcgtcagatgtgtataagagacag cgtgycagcmgccgcggtaa
+tcgtcggcagcgtcagatgtgtataagagacagtcgtgycagcmgccgcggtaa
+
+grep  GTG.CAGC.GCCGCGGTAA allfastqs.fastq
+
+grep -c  GTG.CAGC.GCCGCGGTAA allfastqs.fastq ## 794,095 primers found
+
+grep -c  @FS1 allfastqs.fastq ## 1,241,090 reads total
+
+## anyway, how do we get rid of these with cutadapt? 
+
+
+## test out cutadapt
+
+cutadapt -g TCGTGYCAGCMGCCGCGGTAA -o test.fastq allfastqs.fastq | tee test.log
+
+grep GTG.CAGC.GCCGCGGTAA test.fastq ## one slipped through:
+
+cutadapt -g XTCGTGYCAGCMGCCGCGGTAA -o test2.fastq allfastqs.fastq | tee test2.log
+
+grep GTG.CAGC.GCCGCGGTAA test2.fastq ## two slipped through. 
+
+cutadapt -g XTCGTGYCAGCMGCCGCGGTAA -o test2.fastq --rc allfastqs.fastq | tee test2.log
+
+## reverse compliment is:
+
+GGACTACNVGGGTWTCTAAT
+
+grep -c GGACTAC..GGGT.TCTAAT allfastqs.fastq ## 32, not many. But there. 
+
+## to remove these:
+cutadapt -g GGACTACNVGGGTWTCTAAT -o test3.fastq --rc test2.fastq 
+
+grep -c GGACTAC..GGGT.TCTAAT test3.fastq ## 
+
+## so try some thing like this, for all files:
+
+cat ${metabarcodeD}*.gz > allfastqs.fastq.gz
+
+cd /vol/funmic/datasets/Barcode2024/
+
+mkdir trimmed_reads
+
+cd /vol/funmic/datasets/Barcode2024/raw_reads
+
+for i in *fastq.gz; do
+  ls $i
+  trimmedFASTQ=${i/.fastq\.gz/_trimmed.fastq.gz }
+  echo $trimmedFASTQ
+  cutadapt -g TCGTGYCAGCMGCCGCGGTAA -o $trimmedFASTQ $i | tee -a cutadapt.log
+done
+
+## check this
