@@ -1225,19 +1225,60 @@ grep -c GGACTAC..GGGT.TCTAAT test3.fastq ##
 
 ## so try some thing like this, for all files:
 
+cd /vol/funmic/test/metabarcoding
+
 cat ${metabarcodeD}*.gz > allfastqs.fastq.gz
 
-cd /vol/funmic/datasets/Barcode2024/
+conda activate qualityControlRawSequences 
 
-mkdir trimmed_reads
+mkdir /vol/funmic/test/metabarcoding/trimmed_reads
 
-cd /vol/funmic/datasets/Barcode2024/raw_reads
+conda activate qualityControlRawSequences 
 
-for i in *fastq.gz; do
+metabarcodeD=/vol/funmic/datasets/Barcode2024/raw_reads/
+outDir=/vol/funmic/test/metabarcoding/trimmed_reads/
+cd $metabarcodeD
+for i in *.gz; do
   ls $i
-  trimmedFASTQ=${i/.fastq\.gz/_trimmed.fastq.gz }
+  trimmedFASTQ=${outDir}${i/.fastq\.gz/_trimmed.fastq.gz }
   echo $trimmedFASTQ
-  cutadapt -g TCGTGYCAGCMGCCGCGGTAA -o $trimmedFASTQ $i | tee -a cutadapt.log
+  cutadapt --rc -g TCGTGYCAGCMGCCGCGGTAA -o ${trimmedFASTQ} $i | tee -a cutadapt.log
 done
 
-## check this
+## too complicated for students. Maybe?:
+
+## set up files, maybe do this for them.
+cp /vol/funmic/datasets/Barcode2024/raw_reads/* /vol/funmic/test/metabarcoding/trimmed_reads
+cd /vol/funmic/test/metabarcoding/trimmed_reads
+chmod 777 *
+
+## show them one:
+
+cd /vol/funmic/test/metabarcoding/trimmed_reads
+
+## define some variables
+inputFastq=A12-05.fastq.gz 
+outputFastq=A12-05_trimmed.fastq.gz
+
+cutadapt \
+  --rc \
+  -g TCGTGYCAGCMGCCGCGGTAA \
+  -o $outputFastq \
+     $inputFastq  
+
+## then show them a loop:
+
+for inputFastq in *; do
+  outputFastq=${inputFastq/.fastq.gz/_trimmed.fastq.gz } ## BASH string magic
+  cutadapt \
+    --rc \
+    -g TCGTGYCAGCMGCCGCGGTAA \
+    -o $outputFastq \
+       $inputFastq  
+done
+
+## something like that. 
+
+## if we had more time, 
+
+##  and then? dada2...
