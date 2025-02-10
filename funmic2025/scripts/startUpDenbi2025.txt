@@ -58,6 +58,39 @@ sudo apt install unzip
 
 ## and now get conda going
 
+### x11 forwarding ###
+
+## We will be using the R plotter, can we setup x11 forwarding?
+
+## following: https://www.strongdm.com/what-is/x11-forwarding
+
+## server side:
+
+sudo apt-get install xauth xorg
+
+cp /etc/ssh/sshd_config ~/sshd_config.bk
+
+vim /etc/ssh/sshd_config
+
+## changed the following lines to
+X11Forwarding yes  
+X11DisplayOffset 10 
+X11UseLocalhost yes
+## lines 90,91, 92
+
+## find the service:
+
+systemctl -l --type service --all|grep ssh
+
+sudo systemctl restart ssh.service
+
+## on local side, turned on the same at:
+/etc/ssh/ssh_config
+
+## remember to check x11 forwarding on mobaXterm
+
+
+
 ####### install conda #############
 ## let's start with miniconda, and put it on the volume:
 
@@ -356,6 +389,62 @@ conda env config vars set GTDBTK_DATA_PATH="/vol/funmic/databases/gtdb/release22
 gtdbtk check_install ## this takes a long time, they check all genomes
 
 gtdbtk check_install --db_version
+
+#### metabarcode software ####
+
+### bioconductor ###
+
+## in R, as sudo:
+
+install.packages("BiocManager", repos = "https://cloud.r-project.org")
+
+### dada2 ###
+
+## actually, looks like there is a newer version of dada2 than the documentation says:
+
+BiocManager::install("dada2", version = "3.20")
+
+## of course this failed. Always does.
+## debugging dada2 install:
+
+sudo apt install libcurl4-openssl-dev
+
+install.packages("curl")
+
+sudo apt install libssl-dev
+
+install.packages('openssl')
+
+## /usr/bin/ld: cannot find -llapack: No such file or directory
+
+ld -llapack --verbose
+
+sudo apt install libblas-dev liblapack-dev
+
+install.packages('RcppEigen')
+
+sudo apt install libpng-dev
+
+install.packages("png")
+
+sudo apt install libjpeg-dev
+
+install.packages("jpeg")
+
+sudo apt install liblzma-dev
+sudo apt install libbz2-dev
+
+BiocManager::install('Rhtslib')
+
+## this fixed the dada2 install, as far as I can tell.
+
+### vegan ###
+
+install.packages('vegan')
+
+### phyloseq ###
+
+BiocManager::install("phyloseq")
 
 
 ######### software tests ############
@@ -1248,37 +1337,103 @@ done
 ## too complicated for students. Maybe?:
 
 ## set up files, maybe do this for them.
-cp /vol/funmic/datasets/Barcode2024/raw_reads/* /vol/funmic/test/metabarcoding/trimmed_reads
-cd /vol/funmic/test/metabarcoding/trimmed_reads
-chmod 777 *
 
-## show them one:
+cd /vol/funmic/datasets/Barcode2024/raw_reads/
 
-cd /vol/funmic/test/metabarcoding/trimmed_reads
 
 ## define some variables
 inputFastq=A12-05.fastq.gz 
 outputFastq=A12-05_trimmed.fastq.gz
+outputDir=/vol/funmic/test/metabarcoding/trimmed_reads/
 
 cutadapt \
   --rc \
   -g TCGTGYCAGCMGCCGCGGTAA \
-  -o $outputFastq \
+  --cut 10 \
+  -o $outputDir$outputFastq \
      $inputFastq  
 
+ls $outputDir$inputFastq  
+
 ## then show them a loop:
+
+cd /vol/funmic/datasets/Barcode2024/raw_reads/
 
 for inputFastq in *; do
   outputFastq=${inputFastq/.fastq.gz/_trimmed.fastq.gz } ## BASH string magic
   cutadapt \
     --rc \
+  --length 280 \
     -g TCGTGYCAGCMGCCGCGGTAA \
-    -o $outputFastq \
+    -o $outputDir${outputFastq} \
        $inputFastq  
 done
 
+## check on these:
+
+cd /vol/funmic/test/metabarcoding/trimmed_reads
+
+cat *.fastq.gz > alltrimmedreads.fastq.gz
+
+mv alltrimmedreads.fastq.gz alltrimmedreads280.fastq.gz
+
+conda activate qualityControlRawSequences 
+
+fastqc -o . -t 12 alltrimmedreads280.fastq.gz
+
+#getFile=/vol/funmic/test/metabarcoding/trimmed_reads/alltrimmedreads_fastqc.html
+getFile=/vol/funmic/test/metabarcoding/trimmed_reads/alltrimmedreads280_fastqc.html
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
+scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
 ## something like that. 
 
-## if we had more time, 
+## if we had more time, would do more checks. But we have just an afternoon.
 
-##  and then? dada2...
+## and then?
+
+### dada2 ###
+
+## following the same old tutorial: http://benjjneb.github.io/dada2/tutorial.html
+
+## trimmed reads are here:
+
+R
+
+library(dada2); packageVersion("dada2")
+
+path <- "/vol/funmic/test/metabarcoding/trimmed_reads" 
+
+list.files(path)
+
+fns <- sort(list.files(path, pattern=".fastq.gz", full.names = TRUE))
+
+sample.names <- sapply(strsplit(basename(fns), "_"), '[', 1)
+
+plotQualityProfile(fns[1])
+
+# Place filtered files in filtered/ subdirectory
+
+filtFns <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+
+names(filtFns) <- sample.names
+
+out <- filterAndTrim(fns, filtFns,
+              maxN=0, maxEE=2, truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE) 
+
+head(out)
+
+out
+
+errF <- learnErrors(filtFns, multithread=TRUE)
+## started around 16:20, all 
+## ran for ~15 min. memory no problem
+
+plotErrors(errF, nominalQ=TRUE)
+
+dadaF <- dada(filtFns, err=errF, pool=TRUE, multithread=TRUE)
+
+dadaF[[1]]
+
+seqtab <- makeSequenceTable
