@@ -438,6 +438,12 @@ BiocManager::install('Rhtslib')
 
 ## this fixed the dada2 install, as far as I can tell.
 
+## also need to get the dada2 formatted version of silva:
+
+cd /vol/funmic/databases/metabarcodingSilvaDB
+
+wget https://zenodo.org/records/14169026/files/silva_nr99_v138.2_toGenus_trainset.fa.gz
+
 ### vegan ###
 
 install.packages('vegan')
@@ -1396,9 +1402,13 @@ scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ## following the same old tutorial: http://benjjneb.github.io/dada2/tutorial.html
 
+cd /vol/funmic/test/metabarcoding/
+
 ## trimmed reads are here:
 
 R
+
+setwd("/vol/funmic/test/metabarcoding/")
 
 library(dada2); packageVersion("dada2")
 
@@ -1414,7 +1424,9 @@ plotQualityProfile(fns[1])
 
 # Place filtered files in filtered/ subdirectory
 
-filtFns <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filterPath <- "/vol/funmic/test/metabarcoding/filtered"
+
+filtFns <- file.path(filterPath, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
 
 names(filtFns) <- sample.names
 
@@ -1424,16 +1436,65 @@ out <- filterAndTrim(fns, filtFns,
 
 head(out)
 
+## we could probably do the above code ourselves, give the filtered reads
+## to the class, preprepared?
+
 out
 
-errF <- learnErrors(filtFns, multithread=TRUE)
-## started around 16:20, all 
-## ran for ~15 min. memory no problem
-
+### start time 8:55 ###
+errF <- learnErrors(filtFns, multithread=TRUE) ## ran for ~15 min. memory no problem
 plotErrors(errF, nominalQ=TRUE)
-
 dadaF <- dada(filtFns, err=errF, pool=TRUE, multithread=TRUE)
 
-dadaF[[1]]
+dadaF[[1]] ## 1769 ASVs
 
-seqtab <- makeSequenceTable
+seqtab <- makeSequenceTable(dadaF) ## that took 20+ minutes. 
+
+## taking a break:
+#saveRDS(dadaF, "dadaF.rds")
+#saveRDS(errF, "errF.rds")
+#saveRDS(seqtab, "seqtab.rds")
+### starting back, rerun the above code:
+#dadaF <- readRDS("dadaF.rds")
+#errF <- readRDS("errF.rds")
+
+dim(seqtab) ## 2614 columns. how can this have more columns than our number of asvs? 
+
+table(nchar(getSequences(seqtab))) ## most are 273 bp long.
+
+barplot(table(nchar(getSequences(seqtab)))) 
+
+table(nchar(getSequences(seqtab))) |> barplot() 
+
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+
+dim(seqtab.nochim)
+
+## this dropped us to 1868 columns. Still don't understand how I can have more columns than ASVs...
+
+getN <- function(x) sum(getUniques(x))
+
+track <- cbind(out, sapply(dadaF, getN), rowSums(seqtab.nochim))
+
+colnames(track) <- c("input", "filtered", "denoised","nonchim")
+
+rownames(track) <- sample.names
+
+track
+
+path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
+
+taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE) ## started 11:58 on tuesday
+
+
+taxa.print <- taxa # Removing sequence rownames for display only
+rownames(taxa.print) <- NULL
+head(taxa.print)
+
+## from here play with phyloseq
+## rarify down
+## stacked tax graphs
+## ordinations 
+## permanova by treatments of interest.
+## PCoAs also.
+
