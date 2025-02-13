@@ -1441,19 +1441,22 @@ head(out)
 
 out
 
-### start time 8:55 ###
+### computationally intensive dada2 steps ###
+print ("started:"); Sys.time()
 errF <- learnErrors(filtFns, multithread=TRUE) ## ran for ~15 min. memory no problem
 plotErrors(errF, nominalQ=TRUE)
 dadaF <- dada(filtFns, err=errF, pool=TRUE, multithread=TRUE)
+seqtab <- makeSequenceTable(dadaF) ## 
+saveRDS(dadaF, "dadaF.rds")
+saveRDS(errF, "errF.rds")
+saveRDS(seqtab, "seqtab.rds")
+print ("finished:"); Sys.time()
+### end computationally intensive dada2 steps ####
+## that took 1 hour, 11 minutes
+## jeezus. Try to get them there over lunch? 
 
 dadaF[[1]] ## 1769 ASVs
 
-seqtab <- makeSequenceTable(dadaF) ## that took 20+ minutes. 
-
-## taking a break:
-#saveRDS(dadaF, "dadaF.rds")
-#saveRDS(errF, "errF.rds")
-#saveRDS(seqtab, "seqtab.rds")
 ### starting back, rerun the above code:
 #dadaF <- readRDS("dadaF.rds")
 #errF <- readRDS("errF.rds")
@@ -1466,7 +1469,9 @@ barplot(table(nchar(getSequences(seqtab))))
 
 table(nchar(getSequences(seqtab))) |> barplot() 
 
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE) ## 746 bimeras
+
+## not run ##
 
 dim(seqtab.nochim)
 
@@ -1483,9 +1488,9 @@ rownames(track) <- sample.names
 track
 
 path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
-
+print ("started:"); Sys.time()
 taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE) ## started 11:58 on tuesday
-
+print ("finished:"); Sys.time() ## only took 3 minutes. Why do I remember that being more intensive?
 
 taxa.print <- taxa # Removing sequence rownames for display only
 rownames(taxa.print) <- NULL
@@ -1497,4 +1502,57 @@ head(taxa.print)
 ## ordinations 
 ## permanova by treatments of interest.
 ## PCoAs also.
+
+##### phyloseq #####
+
+library(dada2)
+library(phyloseq)
+library(Biostrings)
+library(ggplot2)
+
+samples.out <- rownames(seqtab.nochim)
+
+substrate <- sapply(samples.out, substring, 1,1)
+isotope <- sapply(samples.out, substring, 2,3)
+fraction <- sapply(samples.out, substring, 5,6)
+samdf <- data.frame(Substrate=substrate, Isotope=isotope, Fraction=fraction)
+rownames(samdf) <- samples.out
+
+## check it: 
+samdf
+
+ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE), 
+               sample_data(samdf), 
+               tax_table(taxa))
+
+dna <- Biostrings::DNAStringSet(taxa_names(ps))
+names(dna) <- taxa_names(ps)
+ps <- merge_phyloseq(ps, dna)
+taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+#save(ps, file="ps.rda")
+
+plot_richness(ps, x="Substrate", measures=c("Observed", "Simpson"), color="Isotope")
+
+## maybe do this after rarefaction
+
+ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
+ord.nmds.bray <- ordinate(ps.prop, method="NMDS", distance="bray")
+
+plot_ordination(ps.prop, ord.nmds.bray, color="Substrate", shape="Isotope", title="Bray NMDS")
+
+## which fraction should we be looking at?
+
+## just realized, I think there is no real repetition here. As, in
+## there should be one or two fractions that represent the heavy fraction of 
+## DNA, and these should be enriched in various microbes 
+
+## shit. Not good for multivariate analysis. But, run a few permanovas?
+
+top20 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
+ps.top20 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+ps.top20 <- prune_taxa(top20, ps.top20)
+
+plot_bar(ps.top20, x="Isotope", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
+
+
 
