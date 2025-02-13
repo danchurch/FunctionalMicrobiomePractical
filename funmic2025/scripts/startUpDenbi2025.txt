@@ -1552,7 +1552,14 @@ top20 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
 ps.top20 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
 ps.top20 <- prune_taxa(top20, ps.top20)
 
-plot_bar(ps.top20, x="Isotope", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
 
+plot_bar(ps.top20, x="Fraction", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
 
+c13 <- rownames(sample_data(ps)[sample_data(ps)$Isotope == "13",])
 
+psC13 = prune_samples(c13, ps)
+
+top20 <- names(sort(taxa_sums(psC13), decreasing=TRUE))[1:20]
+psC13.top20 <- transform_sample_counts(psC13, function(OTU) OTU/sum(OTU))
+psC13.top20 <- prune_taxa(top20, psC13.top20)
+plot_bar(psC13.top20, x="Fraction", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
