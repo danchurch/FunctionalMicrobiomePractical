@@ -452,6 +452,48 @@ install.packages('vegan')
 
 BiocManager::install("phyloseq")
 
+### microtraits  ###
+
+library(BiocManager)
+
+devtools::install_github("jlw-ecoevo/gRodon") ## fails, something about API rates...weird
+
+## try it without dependencies.
+
+devtools::install_github("jlw-ecoevo/gRodon", dependencies = FALSE) ## fails, same prob
+
+## try getting a local copy of the repo:
+
+git clone https://github.com/jlw-ecoevo/gRodon.git
+
+## or get zip:
+wget https://github.com/jlw-ecoevo/gRodon2/archive/refs/heads/master.zip
+
+## it's here /vol/funmic/.gRodon
+
+#devtools::install_github("jlw-ecoevo/gRodon", dependencies = FALSE) ## fails, same prob
+devtools::install_local("/vol/funmic/.gRodon/master.zip") ## this works.
+
+## now microtraits 
+
+devtools::install_github("ukaraoz/microtrait") ## fails as above
+
+mkdir /vol/funmic/.microtraits
+
+cd /vol/funmic/.microtraits
+
+wget https://github.com/ukaraoz/microtrait/archive/refs/heads/master.zip
+
+## again in R:
+
+## needs:
+install.packages("seqinr")
+
+BiocManager::install("Biostrings")
+
+install.packages("seqinr")
+
+devtools::install_local("/vol/funmic/.microtraits/master.zip") ## this works
 
 ######### software tests ############
 
@@ -953,7 +995,9 @@ cd /vol/funmic/test/kelpbinning/kelp3/concoct/
 assembly=/vol/funmic/test/kelpAssemblies/kelp3/final.contigs.fa
 sortedBAM=/vol/funmic/test/kelpbinning/kelp3/rawReads_to_assembly_sorted.bam
 outdir=/vol/funmic/test/kelpbinning/kelp3/concoct/
+
 coverageTable=/vol/funmic/test/kelpbinning/kelp3/coverage/coverage_Depths.txt
+
 cut -f 1,4 $coverageTable | sed '1d' | sed '1i contig_id\tsample_1' > concoct_coverage.txt
 concoct \
    --composition_file $assembly \
@@ -1460,6 +1504,7 @@ dadaF[[1]] ## 1769 ASVs
 ### starting back, rerun the above code:
 #dadaF <- readRDS("dadaF.rds")
 #errF <- readRDS("errF.rds")
+#seqtab <- readRDS("seqtab.rds")
 
 dim(seqtab) ## 2614 columns. how can this have more columns than our number of asvs? 
 
@@ -1471,9 +1516,10 @@ table(nchar(getSequences(seqtab))) |> barplot()
 
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE) ## 746 bimeras
 
-## not run ##
 
 dim(seqtab.nochim)
+
+table(nchar(getSequences(seqtab.nochim))) |> barplot() 
 
 ## this dropped us to 1868 columns. Still don't understand how I can have more columns than ASVs...
 
@@ -1494,7 +1540,10 @@ print ("finished:"); Sys.time() ## only took 3 minutes. Why do I remember that b
 
 taxa.print <- taxa # Removing sequence rownames for display only
 rownames(taxa.print) <- NULL
+
 head(taxa.print)
+
+taxa.print[2,]
 
 ## from here play with phyloseq
 ## rarify down
@@ -1511,7 +1560,6 @@ library(Biostrings)
 library(ggplot2)
 
 samples.out <- rownames(seqtab.nochim)
-
 substrate <- sapply(samples.out, substring, 1,1)
 isotope <- sapply(samples.out, substring, 2,3)
 fraction <- sapply(samples.out, substring, 5,6)
@@ -1520,6 +1568,8 @@ rownames(samdf) <- samples.out
 
 ## check it: 
 samdf
+
+## probably best to make a csv of this and have the students import it
 
 ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE), 
                sample_data(samdf), 
@@ -1563,3 +1613,13 @@ top20 <- names(sort(taxa_sums(psC13), decreasing=TRUE))[1:20]
 psC13.top20 <- transform_sample_counts(psC13, function(OTU) OTU/sum(OTU))
 psC13.top20 <- prune_taxa(top20, psC13.top20)
 plot_bar(psC13.top20, x="Fraction", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
+
+## can we export the data as Tillmann uses it?
+
+sink('finishInstall27.2.txt')
+Sys.time()
+sink()
+
+print("finished:")
+Sys.time()
+
