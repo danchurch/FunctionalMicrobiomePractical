@@ -1494,6 +1494,8 @@ seqtab <- makeSequenceTable(dadaF) ##
 saveRDS(dadaF, "dadaF.rds")
 saveRDS(errF, "errF.rds")
 saveRDS(seqtab, "seqtab.rds")
+
+
 print ("finished:"); Sys.time()
 ### end computationally intensive dada2 steps ####
 ## that took 1 hour, 11 minutes
@@ -1515,7 +1517,7 @@ barplot(table(nchar(getSequences(seqtab))))
 table(nchar(getSequences(seqtab))) |> barplot() 
 
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE) ## 746 bimeras
-
+saveRDS(seqtab.nochim, "seqtab.nochim.rds")
 
 dim(seqtab.nochim)
 
@@ -1535,8 +1537,9 @@ track
 
 path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
 print ("started:"); Sys.time()
-taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE) ## started 11:58 on tuesday
+taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE) 
 print ("finished:"); Sys.time() ## only took 3 minutes. Why do I remember that being more intensive?
+saveRDS(taxa, "taxa.rds")
 
 taxa.print <- taxa # Removing sequence rownames for display only
 rownames(taxa.print) <- NULL
@@ -1544,6 +1547,7 @@ rownames(taxa.print) <- NULL
 head(taxa.print)
 
 taxa.print[2,]
+
 
 ## from here play with phyloseq
 ## rarify down
@@ -1554,10 +1558,19 @@ taxa.print[2,]
 
 ##### phyloseq #####
 
+cd /vol/funmic/test/metabarcoding
+
+R
+
 library(dada2)
 library(phyloseq)
-library(Biostrings)
 library(ggplot2)
+
+#dadaF <- readRDS("dadaF.rds")
+#errF <- readRDS("errF.rds")
+#seqtab <- readRDS("seqtab.rds")
+seqtab.nochim <- readRDS("seqtab.nochim.rds")
+taxa <- readRDS("taxa.rds")
 
 samples.out <- rownames(seqtab.nochim)
 substrate <- sapply(samples.out, substring, 1,1)
@@ -1567,7 +1580,20 @@ samdf <- data.frame(Substrate=substrate, Isotope=isotope, Fraction=fraction)
 rownames(samdf) <- samples.out
 
 ## check it: 
+
 samdf
+
+samdf[samdf$Substrate == "G",]
+
+sort_by(samdf[samdf$Substrate == "A",], ~ Substrate + Fraction)
+
+sort_by(samdf[samdf$Substrate == "G",], ~ Substrate + Fraction)
+
+sort_by(samdf[samdf$Substrate == "M",], ~ Substrate + Fraction)
+
+sort_by(samdf, ~ Substrate + Fraction)
+
+
 
 ## probably best to make a csv of this and have the students import it
 
@@ -1576,9 +1602,16 @@ ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
                tax_table(taxa))
 
 dna <- Biostrings::DNAStringSet(taxa_names(ps))
+
 names(dna) <- taxa_names(ps)
 ps <- merge_phyloseq(ps, dna)
 taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+
+barplot(sort(sample_sums(ps)), las=2) ## ranges from 10 000 to 70 000. Should probably rarify
+
+## another way to do this...
+plot_bar(ps, x="Sample", y="Abundance")
+
 #save(ps, file="ps.rda")
 
 plot_richness(ps, x="Substrate", measures=c("Observed", "Simpson"), color="Isotope")
@@ -1586,40 +1619,158 @@ plot_richness(ps, x="Substrate", measures=c("Observed", "Simpson"), color="Isoto
 ## maybe do this after rarefaction
 
 ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
+
 ord.nmds.bray <- ordinate(ps.prop, method="NMDS", distance="bray")
 
-plot_ordination(ps.prop, ord.nmds.bray, color="Substrate", shape="Isotope", title="Bray NMDS")
+aa <- plot_ordination(ps.prop, ord.nmds.bray, color="Substrate", shape="Isotope", title="Bray NMDS")
+
+aa + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.prop)$Fraction, 
+                                  nudge_x = 0.05, nudge_y = 0.05, 
+                                  check_overlap = T)
+
+
+
 
 ## which fraction should we be looking at?
+## who knows. But for now, Tillmann wants to try a PCA approach. 
 
-## just realized, I think there is no real repetition here. As, in
-## there should be one or two fractions that represent the heavy fraction of 
-## DNA, and these should be enriched in various microbes 
+## if we ordinate by individual substrates?
+
+## let's try subsetting by substrate:
+
+samp.a <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "A",])
+samp.g <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "G",])
+samp.m <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "M",])
+
+ps.a <- prune_samples(samp.a, ps)
+ps.g <- prune_samples(samp.g, ps)
+ps.m <- prune_samples(samp.m, ps)
+
+
+?transform_sample_counts
+
+## proportional transform
+ps.a.prop <- transform_sample_counts(ps.a, function(otu) otu/sum(otu))
+ps.g.prop <- transform_sample_counts(ps.g, function(otu) otu/sum(otu))
+ps.m.prop <- transform_sample_counts(ps.m, function(otu) otu/sum(otu))
+
+## hellinger:
+ps.a.hell <- transform_sample_counts(ps.a, function(x) sqrt(x / sum(x)))
+ps.g.hell <- transform_sample_counts(ps.g, function(x) sqrt(x / sum(x)))
+ps.m.hell <- transform_sample_counts(ps.m, function(x) sqrt(x / sum(x)))
+
+#ord.nmds.bray.a <- ordinate(ps.a.prop, method="NMDS", distance="bray")
+
+## pcoa acetate
+ord.pcoa.bray.a <- ordinate(ps.a.prop, method="PCoA", distance="bray")
+plot.a.ord <- plot_ordination(ps.a.prop, ord.pcoa.bray.a, color="Isotope", shape="Isotope")
+plot.a.ord + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.a.prop)$Fraction, 
+                                  nudge_x = 0.01, nudge_y = 0.01, 
+                                  check_overlap = T) + ggtitle("Acetate Bray PCoA")
+
+## pca acetate
+ord.PCA.a <- ordinate(ps.a.hell, method="RDA")
+plot.a.ord <- plot_ordination(ps.a.hell, ord.PCA.a, color="Isotope", shape="Isotope")
+plot.a.ord + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.a.hell)$Fraction, 
+                                  nudge_x = 0.01, nudge_y = 0.01, 
+                                  check_overlap = T) + ggtitle("Acetate PCA")
+
+## pcoa glucose
+ord.pcoa.bray.g <- ordinate(ps.g.prop, method="PCoA", distance="bray")
+plot.g.ord <- plot_ordination(ps.g.prop, ord.pcoa.bray.g, color="Isotope", shape="Isotope")
+plot.g.ord + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.g.prop)$Fraction, 
+                                  nudge_x = 0.01, nudge_y = 0.01, 
+                                  check_overlap = T) + ggtitle("Glucose Bray PCoA")
+
+## pca glucose
+ord.PCA.g <- ordinate(ps.g.hell, method="RDA")
+plot.g.ord <- plot_ordination(ps.g.hell, ord.PCA.g, color="Isotope", shape="Isotope")
+plot.g.ord + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.g.hell)$Fraction, 
+                                  nudge_x = 0.01, nudge_y = 0.01, 
+                                  check_overlap = T) + ggtitle("Glucose PCA")
+
+## pcoa methonal
+ord.pcoa.bray.m <- ordinate(ps.m.prop, method="PCoA", distance="bray")
+plot.m.ord <- plot_ordination(ps.m.prop, ord.pcoa.bray.m, color="Isotope", shape="Isotope")
+plot.m.ord + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.m.prop)$Fraction, 
+                                  nudge_x = 0.01, nudge_y = 0.01, 
+                                  check_overlap = T) + ggtitle("Methanol Bray PCoA")
+
+## pca methanol
+ord.PCA.m <- ordinate(ps.m.hell, method="RDA")
+plot.m.ord <- plot_ordination(ps.m.hell, ord.PCA.m, color="Isotope", shape="Isotope")
+plot.m.ord + geom_point(size=3.5) + geom_text(
+                                  label=sample_data(ps.m.hell)$Fraction, 
+                                  nudge_x = 0.01, nudge_y = 0.01, 
+                                  check_overlap = T) + ggtitle("Methanol PCA")
+
+str(ord.PCA.m)
+
+str(ord.PCA.m$CA)
+
+head(ord.PCA.m$CA$v)
+
+dim(ord.PCA.m$CA$v) ## yup, this is them, species loading scores.
+
+class(ord.PCA.m$CA$v) ## yup, this is them, species loading scores.
+
+str(dim(ord.PCA.m$CA$v))
+
+## to find our most important?:
+
+## PC1
+
+ord.PCA.m[1]
+
+
+dim(ord.PCA.m$CA$u) ## this is sites.
+
+## looking here: https://github.com/joey711/phyloseq/issues/816
+## and here: http://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html#constrained_ordinations
+
+vegan::scores(ord.PCA.m, display="sites", scaling=1)
+
+vegan::scores(ord.PCA.m, display="species", scaling=1)
+
+
+cbind(vegan::scores(ord.PCA.m, display="sites", scaling=1), 
+
+vegan::scores(gp.rda, display="sites", scaling=2),
+"ptCA1"=pt$data$CA1,"ptCA2"=pt$data$CA2)
+
+## ugh, they don't have good biplot functionality. Of course. This sucks. 
+## could go to microviz?
+## or vegan?
+
+ord.RDA.g <- ordinate(ps.g.hell, method="RDA")
+
 
 ## shit. Not good for multivariate analysis. But, run a few permanovas?
 
-top20 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
-ps.top20 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
-ps.top20 <- prune_taxa(top20, ps.top20)
+top30 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:30]
+ps.top30 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+ps.top30 <- prune_taxa(top30, ps.top30)
+plot_bar(ps.top30, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x") 
 
-
-plot_bar(ps.top20, x="Fraction", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
-
-c13 <- rownames(sample_data(ps)[sample_data(ps)$Isotope == "13",])
-
-psC13 = prune_samples(c13, ps)
-
-top20 <- names(sort(taxa_sums(psC13), decreasing=TRUE))[1:20]
-psC13.top20 <- transform_sample_counts(psC13, function(OTU) OTU/sum(OTU))
-psC13.top20 <- prune_taxa(top20, psC13.top20)
-plot_bar(psC13.top20, x="Fraction", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
+plot_bar(psC13.top100, x="Fraction", fill="Family") + facet_wrap(~Substrate, scales="free_x") 
 
 ## can we export the data as Tillmann uses it?
 
-sink('finishInstall27.2.txt')
-Sys.time()
-sink()
+## Tillmann isn't going to analyze this. I think we are. 
 
-print("finished:")
-Sys.time()
+## looks like the basis of modern sip analysis is just applied differential abundance, deSeq etc. 
 
+## how can we fit kind-of complex analysis into an hour?
+
+## first, run through the analysis - find out the important fractions, then run deseq on them. 
+
+
+## barplot of sample sizes
+## rarefaction?
+## 
