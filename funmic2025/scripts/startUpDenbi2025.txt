@@ -1718,7 +1718,7 @@ head(ord.PCA.m$CA$v)
 
 dim(ord.PCA.m$CA$v) ## yup, this is them, species loading scores.
 
-class(ord.PCA.m$CA$v) ## yup, this is them, species loading scores.
+class(ord.PCA.m$CA$v) 
 
 str(dim(ord.PCA.m$CA$v))
 
@@ -1734,24 +1734,68 @@ dim(ord.PCA.m$CA$u) ## this is sites.
 ## looking here: https://github.com/joey711/phyloseq/issues/816
 ## and here: http://deneflab.github.io/MicrobeMiseq/demos/mothur_2_phyloseq.html#constrained_ordinations
 
-vegan::scores(ord.PCA.m, display="sites", scaling=1)
-
-vegan::scores(ord.PCA.m, display="species", scaling=1)
 
 
-cbind(vegan::scores(ord.PCA.m, display="sites", scaling=1), 
+## there are two scaling methods for species scores:
 
-vegan::scores(gp.rda, display="sites", scaling=2),
-"ptCA1"=pt$data$CA1,"ptCA2"=pt$data$CA2)
+scalingType=1
+scalingAmount=3
+speciesMat <- vegan::scores(ord.PCA.m, display="species", scaling=scalingType)
+labeldf <- data.frame(labels = rownames(speciesMat), speciesMat*scalingAmount)
+label_map <- aes(x = PC1, 
+    y = PC2, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels,
+)
+plot.m.ord + geom_point(size=3.5) + 
+geom_text( label=sample_data(ps.m.hell)$Fraction, 
+    nudge_x = 0.01, nudge_y = 0.01, 
+    check_overlap = T) + ggtitle("Methanol PCA") + 
+  geom_text(
+    mapping = label_map, 
+    size = 4,  
+    data = labeldf, 
+    show.legend = FALSE,
+    check_overlap = T
+  )
 
-## ugh, they don't have good biplot functionality. Of course. This sucks. 
-## could go to microviz?
-## or vegan?
+## make a function for this:
 
-ord.RDA.g <- ordinate(ps.g.hell, method="RDA")
+plotPCAWithSpecies <- function (ps, scalingType=1, scalingAmount=3, ptitle) {
+    ps.hell <- transform_sample_counts(ps, function(x) sqrt(x / sum(x)))
+    ord.PCA <- ordinate(ps.hell, method="RDA")
+    plot.ord <- plot_ordination(ps.hell, ord.PCA, color="Isotope", shape="Isotope")
+    speciesMat <- vegan::scores(ord.PCA, display="species", scaling=scalingType)
+    labeldf <- data.frame(labels = rownames(speciesMat), speciesMat*scalingAmount)
+    label_map <- aes(x = PC1, 
+        y = PC2, 
+        shape = NULL, 
+        color = NULL, 
+        label = labels,
+    )
+    plot.ord + geom_point(size=3.5) + 
+    geom_text( label=sample_data(ps.hell)$Fraction, 
+        nudge_x = 0.01, nudge_y = 0.01, 
+        check_overlap = T) + ggtitle(ptitle) + 
+      geom_text(
+        mapping = label_map, 
+        size = 4,  
+        data = labeldf, 
+        show.legend = FALSE,
+        check_overlap = T
+      )
+}
+
+plotPCAWithSpecies(ps=ps.m, ptitle="Methanol PCA")
+
+plotPCAWithSpecies(ps=ps.a, ptitle="Acetate PCA")
+
+plotPCAWithSpecies(ps=ps.g, ptitle="Glucose PCA")
 
 
-## shit. Not good for multivariate analysis. But, run a few permanovas?
+dev.new()
+
 
 top30 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:30]
 ps.top30 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
