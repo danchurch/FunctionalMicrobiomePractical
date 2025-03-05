@@ -1,0 +1,189 @@
+## Let's go through the results of last year's SIP experiment. 
+## Next year they will do the same with your data!
+
+## activate a conda environment with the software we need:
+conda activate qualityControlRawSequences
+
+## let's make a working directory, and find our raw data
+
+## I'll put my working directory for this here:
+
+mkdir /vol/funmic/metabarcoding
+
+cd /vol/funmic/metabarcoding
+
+## our raw sequence data is stored here:
+ls /vol/funmic/datasets/Barcode2024/raw_reads
+
+## the file names contain the substrate, isotope, and fraction information for each sample 
+
+## let's take a look at the quality of these reads...
+
+## for convenience, we made a single file out of all of the samples for you, so you can look at them all at once,
+## here:
+
+ls /vol/funmic/datasets/Barcode2024/allRawReads.gz
+
+
+## we can run a quality check using the program fastqc
+fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2024/allRawReads.gz
+
+## get the output files onto your computer, especially the html file
+
+############## I have to do this, but you probably don't, just use MobaXterm!! ###############
+getFile=/vol/funmic/metabarcoding/allRawReads_fastqc.html
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
+scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+##############################################################################################
+
+## look at this quality report with a browser - what do you see?
+
+#### raw read quality control #####
+
+## we have a set of forward 16s primers (515F) that look like this:
+  GTGYCAGCMGCCGCGGTAA
+ CGTGYCAGCMGCCGCGGTAA
+TCGTGYCAGCMGCCGCGGTAA
+
+## our 16S 806 reverse primer is:
+GGACTACNVGGGTWTCTAAT
+
+## (https://www.bioinformatics.org/sms/iupac.html)
+
+## we can feed this info to our primer-cutting software
+
+## make a folder to put your trimmed reads:
+
+mkdir /vol/funmic/metabarcoding/trimmed_reads/
+
+## for one file, we would run it like this:
+
+## make a directory to put our trimmed files:
+mkdir /vol/funmic/metabarcoding/trimmed_reads/
+
+## go to the directory with the raw read files
+cd /vol/funmic/datasets/Barcode2024/raw_reads
+
+inputFastq=A12-05.fastq.gz ## example file
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+cutadapt --rc \
+    -g TCGTGYCAGCMGCCGCGGTAA \
+    --length 280 \
+    -a GGACTACNVGGGTWTCTAAT \
+    -o ${outputDir}${inputFastq} \
+       ${inputFastq}
+
+
+## but we have lots of files (23). We need a loop. Remember how to do this?:
+
+for i in *; do
+  echo here is a file: $i
+done
+
+## so a loop to trim out primers from all of our files would look like this:
+
+## make a directory to put our trimmed files, if you didn't already above
+mkdir /vol/funmic/metabarcoding/trimmed_reads/
+
+## go to the directory with the raw read files
+cd /vol/funmic/datasets/Barcode2024/raw_reads
+
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+for inputFastq in *; do
+    cutadapt --rc \
+        -g TCGTGYCAGCMGCCGCGGTAA \
+        --length 280 \
+        -a GGACTACNVGGGTWTCTAAT \
+        -o ${outputDir}${inputFastq} \
+           ${inputFastq}
+done
+
+## primers should be gone! onward...
+
+###### denoising #######
+
+## here we need R. 
+## back to our working directory
+
+cd /vol/funmic/metabarcoding/trimmed_reads
+
+
+## start R!
+
+R
+
+library(dada2)
+library(phyloseq)
+
+## where are our trimmed reads?
+
+fileNames <- list.files()
+
+## did that work?:
+fileNames
+
+## do some quality filtering on these reads before denoising
+
+## where should we put these? 
+filterPath <- "/vol/funmic/metabarcoding/filtered"
+
+out <- filterAndTrim(fileNames, filterPath,
+              maxN=0, maxEE=2, truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE)
+
+## did we lose a lot of reads?:
+out 
+
+## move over to the filtered reads:
+setwd("/vol/funmic/metabarcoding/filtered")
+
+## use characterize the errors in the base calling of the sequencer
+err <- learnErrors(fileNames, multithread=TRUE) 
+plotErrors(err, nominalQ=TRUE)
+
+## this step defines our ASVs:
+dadaF <- dada(fileNames, err=err, pool=TRUE, multithread=TRUE)
+
+## now that we have ASVs, we can make an OTU table:
+seqtab <- makeSequenceTable(dadaF) 
+
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+
+## make the sample names prettier
+rownames(seqtab.nochim) <- unlist(strsplit(rownames(seqtab.nochim), ".fastq.gz"))
+
+## now we have OTUs (ASVs) and an otu table
+## let's get taxonomic assignments:
+
+path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
+
+taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
+
+## sample information is contained in the file names,
+## but we need it in a different form:
+
+
+write.csv(samdf, "/vol/funmic/datasets/Barcode2024/sip2024.csv")
+
+samdf <- read.csv("/vol/funmic/datasets/Barcode2024/sip2024.csv", row.names=1)
+
+## how does it look?
+
+samdf
+
+## now we have ASVs with their DNA sequences, and OTU table showing their abundances, 
+## taxonomic assignments for these ASVs, and sample information
+## These are the basic components of a microbial community ecology dataset. 
+## let's bring these together into a single object using the Phyloseq package
+
+ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
+               sample_data(samdf),
+               tax_table(taxa))
+
+## insert our representative sequences for our OTUs:
+dna <- Biostrings::DNAStringSet(taxa_names(ps))
+names(dna) <- taxa_names(ps)
+ps <- merge_phyloseq(ps, dna)
+## give our OTUs pretty names instead of DNA sequences:
+taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+

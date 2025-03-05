@@ -1341,6 +1341,24 @@ grep -c  @FS1 allfastqs.fastq ## 1,241,090 reads total
 
 ## test out cutadapt
 
+cd /vol/funmic/test/metabarcoding
+
+cp /vol/funmic/datasets/Barcode2024/raw_reads/A12-05.fastq.gz .
+
+zgrep -c "@FS1"  A12-05.fastq.gz ## 17633
+
+grep -c "@FS1"  allfastqs.fastq ## 1 241 090
+
+grep -c "GTG.CAGC.GCCGCGGTAA" allfastqs.fastq  ## 794095
+
+zgrep -c "GTG.CAGC.GCCGCGGTAA" A12-05.fastq.gz  ## 11156
+
+cutadapt --rc -g TCGTGYCAGCMGCCGCGGTAA A12-05.fastq.gz  ## 15,827 trimmed
+
+cutadapt --rc -g GTGYCAGCMGCCGCGGTAA A12-05.fastq.gz  ## 15,178 trimmed
+
+cutadapt --rc -g TCGTGYCAGCMGCCGCGGTAA A12-05.fastq.gz 
+
 cutadapt -g TCGTGYCAGCMGCCGCGGTAA -o test.fastq allfastqs.fastq | tee test.log
 
 grep GTG.CAGC.GCCGCGGTAA test.fastq ## one slipped through:
@@ -1371,6 +1389,36 @@ cat ${metabarcodeD}*.gz > allfastqs.fastq.gz
 conda activate qualityControlRawSequences 
 
 mkdir /vol/funmic/test/metabarcoding/trimmed_reads
+
+## check for reverse 806R sequences:
+GGACTACNVGGGTWTCTAAT
+
+## so 806 forward barcoded grep:
+
+gunzip -c allRawReads.gz > allRawReads.fastq
+
+grep GGACTAC..GGGT.TCTAAT allRawReads.fastq
+grep -c GGACTAC..GGGT.TCTAAT allRawReads ## 32 reads, huh. 
+
+## RC of this:
+ATTAGA.ACCC..GTAGTCC
+## 806 reverse barcoded:
+
+gunzip -c A12-05.fastq.gz > A12-05.fastq.fastq
+
+zgrep ATTAGA.ACCC..GTAGTCC allRawReads.gz
+
+grep -c  ATTAGA.ACCC..GTAGTCC allRawReads.fastq ## they are in there, 622406 reads. ~1/2
+grep -c  @FS1 allRawReads.fastq
+
+grep -c  ATTAGA.ACCC..GTAGTCC A12-05.fastq.fastq ## 8930, ~1/2
+grep -c  @FS1 A12-05.fastq.fastq
+
+## so really we need something like this:
+cutadapt --rc -g TCGTGYCAGCMGCCGCGGTAA -a GGACTACNVGGGTWTCTAAT A12-05.fastq.gz
+
+
+zgrep allRawReads.gz
 
 conda activate qualityControlRawSequences 
 
