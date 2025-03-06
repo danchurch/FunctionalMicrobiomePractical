@@ -162,9 +162,6 @@ taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
 ## sample information is contained in the file names,
 ## but we need it in a different form:
 
-
-write.csv(samdf, "/vol/funmic/datasets/Barcode2024/sip2024.csv")
-
 samdf <- read.csv("/vol/funmic/datasets/Barcode2024/sip2024.csv", row.names=1)
 
 ## how does it look?
@@ -184,6 +181,13 @@ ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
 dna <- Biostrings::DNAStringSet(taxa_names(ps))
 names(dna) <- taxa_names(ps)
 ps <- merge_phyloseq(ps, dna)
-## give our OTUs pretty names instead of DNA sequences:
+## give our ASVs pretty names instead of DNA sequences:
 taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 
+## now you can explore your data with phyloseq!
+## for a good intro to phyloseq, see: https://vaulot.github.io/tutorials/Phyloseq_tutorial.html#gettin-started
+sample_names(ps)
+
+## save this object for later!
+
+save(ps, file="sipPS.rda")
