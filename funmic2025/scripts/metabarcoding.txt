@@ -154,13 +154,12 @@ rownames(seqtab.nochim) <- unlist(strsplit(rownames(seqtab.nochim), ".fastq.gz")
 
 ## now we have OTUs (ASVs) and an otu table
 ## let's get taxonomic assignments:
-
 path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
 
 taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
 
 ## sample information is contained in the file names,
-## but we need it in a different form:
+## but we need it in a dataframe:
 
 samdf <- read.csv("/vol/funmic/datasets/Barcode2024/sip2024.csv", row.names=1)
 
@@ -186,7 +185,6 @@ taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 
 ## now you can explore your data with phyloseq!
 ## for a good intro to phyloseq, see: https://vaulot.github.io/tutorials/Phyloseq_tutorial.html#gettin-started
-sample_names(ps)
 
 ## save this object for later!
 

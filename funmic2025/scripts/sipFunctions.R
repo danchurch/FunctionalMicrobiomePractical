@@ -48,3 +48,9 @@ getFractionAbundances = function(ASVname,whichPS,ptitle=""){
       geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
 }
 
+plotFamilies = function(howManyASVs=30){
+    topX <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:howManyASVs]
+    ps.topX <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+    ps.topX <- prune_taxa(topX, ps.topX)
+    plot_bar(ps.topX, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x")
+}
