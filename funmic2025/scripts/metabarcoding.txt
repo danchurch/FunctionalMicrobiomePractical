@@ -161,7 +161,14 @@ taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
 ## sample information is contained in the file names,
 ## but we need it in a dataframe:
 
-samdf <- read.csv("/vol/funmic/datasets/Barcode2024/sip2024.csv", row.names=1)
+samdf <- read.csv("/vol/funmic/datasets/Barcode2024/sip2024.csv", 
+                   row.names=1,)
+
+## we have to tell R that the isotope variable is categorical:
+samdf$Isotope <- as.factor( samdf$Isotope )
+
+
+
 
 ## how does it look?
 
@@ -186,6 +193,10 @@ taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 ## now you can explore your data with phyloseq!
 ## for a good intro to phyloseq, see: https://vaulot.github.io/tutorials/Phyloseq_tutorial.html#gettin-started
 
-## save this object for later!
+## save this object for later!:
+
+## move back to our working directory:
+setwd("/vol/funmic/metabarcoding/")
 
 save(ps, file="sipPS.rda")
+

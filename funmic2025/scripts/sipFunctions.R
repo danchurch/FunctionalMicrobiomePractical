@@ -12,7 +12,7 @@ plotPCAWithSpecies <- function (ps, scalingType=1, scalingAmount=3, ptitle) {
     )
     plot.ord + geom_point(size=3.5) +
     geom_text( label=sample_data(ps.hell)$Fraction,
-        nudge_x = 0.01, nudge_y = 0.01,
+        nudge_x = 0.03, nudge_y = 0.03,
         check_overlap = T) + ggtitle(ptitle) +
         geom_text(
           mapping = label_map,
@@ -53,4 +53,13 @@ plotFamilies = function(howManyASVs=30){
     ps.topX <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
     ps.topX <- prune_taxa(topX, ps.topX)
     plot_bar(ps.topX, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x")
+}
+
+NMS_braycurtis = function(physeq){
+    ord.nmds.bray <- ordinate(physeq, method="NMDS", distance="bray")
+    aa <- plot_ordination(physeq, ord.nmds.bray, color="Substrate", shape="Isotope", title="Bray NMDS")
+    aa + geom_point(size=3.5) + geom_text(
+                                      label=sample_data(physeq)$Fraction,
+                                      nudge_x = 0.05, nudge_y = 0.05,
+                                      check_overlap = T)
 }
