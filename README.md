@@ -1,1 +1,1 @@
-# FunctionalMicrobiomePractical2022
+# Functional Microbiome practical course
