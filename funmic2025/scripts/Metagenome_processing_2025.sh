@@ -1,6 +1,11 @@
 #!/bin/bash
 
 #### Metagenome analysis #######
+## First, create a folder  for all the new files that you will generate during the analysis.
+## We will keep it organized and structured to easily find the output produced by the different tools
+
+# Make a new directory "Kelp" under /vol/funmic/
+mkdir /vol/funmic/Kelp
 
 ## I. Checking the Illumina sequence reads: quality of the data? Microbial composituion of the raw data: What did get sequenced?
 
