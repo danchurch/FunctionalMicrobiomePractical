@@ -1,17 +1,1 @@
-#### Metagenome analysis #######
 
-## I. Checking the Illumina sequence reads: quality of the data? Microbial composituion of the raw data: What did get sequenced?
-
-conda activate qualityControlRawSequences
-
-mkdir /vol/funmic/Kelp/logs
-
-## The Illumina reads from the white kelp biofims from Helgoland is here:
-READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
-
-#paper: Van Erk et al. 2021, doi.org/mgt4
-#dataset accession number on NCBI/ENA: PRJEB36085
-
-#Checking read quality with FastQC for all reads. FastQC can also be run with an interactive GUI by typing 'fastqc' into the command line
-mkdir /vol/funmic/Kelp/rawReadQC
-OUTPUTDIRECTORY=/vol/funmic/Kelp/rawReadQC
