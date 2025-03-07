@@ -1,23 +1,25 @@
 #!/bin/bash
 
 #### Metagenome analysis #######
+
+
+## In this course we are analyzing DNA shotgun sequencing data from the following publication:
+## paper: Van Erk et al. 2021, doi.org/mgt4
+## dataset accession number on NCBI/ENA: PRJEB36085
+
 ## First, create a folder  for all the new files that you will generate during the analysis.
 ## We will keep it organized and structured to easily find the output produced by the different tools
 
 # Make a new directory "Kelp" under /vol/funmic/
 mkdir /vol/funmic/Kelp
 
-## I. Checking the Illumina sequence reads: quality of the data? Microbial composituion of the raw data: What did get sequenced?
-
-conda activate qualityControlRawSequences
-
+# Make a sub directory to store log files of some programs
 mkdir /vol/funmic/Kelp/logs
 
-## The Illumina reads from the white kelp biofims from Helgoland is here:
+## The Illumina reads from the white kelp biofims from Helgoland is here: /vol/funmic/datasets/kelpBiofilm
+## We store this location under the variable READ_DIRECTORY
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 
-#paper: Van Erk et al. 2021, doi.org/mgt4
-#dataset accession number on NCBI/ENA: PRJEB36085
 
 #Checking read quality with FastQC for all reads. FastQC can also be run with an interactive GUI by typing 'fastqc' into the command line
 mkdir /vol/funmic/Kelp/rawReadQC
