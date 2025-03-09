@@ -2000,7 +2000,6 @@ ssh -Xi /Users/evahoffmann/.ssh/testMacKey ubuntu@129.70.51.6 -p 30423
 
 #### test out VMs, keys
 
-
 Alica Heid
 funmicStudent01
 ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30299
@@ -2088,89 +2087,100 @@ done
 
 ## let's add these: 
 
-## path to key
 path2key="/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys/"
 
-ssh-copy-id -p 30361 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
-
+## funmicStudent1
+ssh-copy-id -p 30299 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
 ## test login:
-ssh -X -i ${path2key}funmicStudent1 ubuntu@129.70.51.6 -p 30361 
+ssh -Xvi ${path2key}funmicStudent1.pub ubuntu@129.70.51.6 -p 30299 
 
 ## seems to work. repeat for the remaining: 
 
+## funmicStudent2
+ssh-copy-id -p 30361 -i ${path2key}funmicStudent2.pub ubuntu@129.70.51.6  
+## test login:
+ssh -Xvi ${path2key}funmicStudent2.pub ubuntu@129.70.51.6 -p 30361 
 
-cd /home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys/
+## funmicStudent3
+ssh-copy-id -p 30311 -i ${path2key}funmicStudent3.pub ubuntu@129.70.51.6  
+## test login:
+ssh -Xvi ${path2key}funmicStudent3.pub ubuntu@129.70.51.6 -p 30311
 
-ssh-copy-id -p 30361 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
-ssh-copy-id -p 30311 -i ${path2key}funmicStudent2.pub ubuntu@129.70.51.6  
-ssh-copy-id -p 30414 -i ${path2key}funmicStudent3.pub ubuntu@129.70.51.6  
-ssh-copy-id -p 30425 -i ${path2key}funmicStudent4.pub ubuntu@129.70.51.6  
-ssh-copy-id -p 30494 -i ${path2key}funmicStudent5.pub ubuntu@129.70.51.6  
+## funmicStudent4
+ssh-copy-id -p 30414 -i ${path2key}funmicStudent4.pub ubuntu@129.70.51.6  
+## test login:
+ssh -Xvi ${path2key}funmicStudent4.pub ubuntu@129.70.51.6 -p 30414
 
-funmicStudent06
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30494
-
-ssh-copy-id -p 30337 -i ${path2key}funmicStudent6.pub ubuntu@129.70.51.6  
-
-#ssh -X ubuntu@129.70.51.6 -p 30337 
-#ssh -X ubuntu@129.70.51.6 -p 30349 
-#ssh -X ubuntu@129.70.51.6 -p 30362 
-#ssh -X ubuntu@129.70.51.6 -p 30463
-#ssh -X ubuntu@129.70.51.6 -p 30370
-
-funmicStudent01
-ssh-copy-id -p 30299 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
-
-## here
-
-ssh -vi ./keys/funmicStudent1 ubuntu@129.70.51.6 -p 30299
-
-ssh -vi ./keys/funmicStudent2 ubuntu@129.70.51.6 -p 30299
-
-ssh -vi ./keys/funmicStudent3 ubuntu@129.70.51.6 -p 30299
+## funmicStudent5
+ssh-copy-id -p 30425 -i ${path2key}funmicStudent5.pub ubuntu@129.70.51.6  
+## test login:
+ssh -Xvi ${path2key}funmicStudent5.pub ubuntu@129.70.51.6 -p 30425
 
 
-funmicStudent02
-ssh-copy-id -p 30361: -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+## funmic student6 
+ssh-copy-id -p 30494 -i ${path2key}funmicStudent6.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent6.pub ubuntu@129.70.51.6 -p 30494
 
-ssh -i ./funmicStudent2 ubuntu@129.70.51.6 -p 30361
 
-funmicStudent03
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30311
-ssh-copy-id -p 30361: -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+## funmicStudent07
+ssh-copy-id -p 30344 -i ${path2key}funmicStudent7.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent7.pub ubuntu@129.70.51.6 -p 30344
 
-Tobias Lehmann
-funmicStudent04
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30414
 
-Sascha Neuhaus
-funmicStudent05
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30425
+## funmicStudent08
+ssh-copy-id -p 30337 -i ${path2key}funmicStudent8.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent8.pub ubuntu@129.70.51.6 -p 30337
 
-Nelly Ramser
-funmicStudent06
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30494
 
-Rika Stute
-funmicStudent07
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30344
+## funmicStudent09
+ssh-copy-id -p 30349 -i ${path2key}funmicStudent9.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent9.pub ubuntu@129.70.51.6 -p 30349
 
-Hanna Wöhr
-funmicStudent08
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30337
+## funmicStudent10
+ssh-copy-id -p 30362 -i ${path2key}funmicStudent10.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent10.pub ubuntu@129.70.51.6 -p 30362
 
-Silena Rausch
-funmicStudent09
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30349
+## funmicStudent11
+ssh-copy-id -p 30463 -i ${path2key}funmicStudent11.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent11.pub ubuntu@129.70.51.6 -p 30463
 
-Floyd Betz
-funmicStudent10
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30362
+## funmicStudent12
+ssh-copy-id -p 30370 -i ${path2key}funmicStudent12.pub ubuntu@129.70.51.6  
+ssh -Xvi ${path2key}funmicStudent12.pub ubuntu@129.70.51.6 -p 30370
 
-Carolina Steger
-funmicStudent11
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30463
+## check these by removing .ssh:
+https://apple.stackexchange.com/questions/166970/ssh-key-persists-even-after-i-delete-the-private-key-from-ssh-why
+ssh-add -D
 
-Ana-Lena Knöll
-funmicStudent12
-ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30370
+## I think dimitri's key should be in these already, because we cloned the teaching computer.
+
+## these are the key file assignments:
+Alica Heid, funmicStudent1
+Gabriela Goscinska Twigg, funmicStudent2
+Johannes Feldmeier, funmicStudent3
+Tobias Lehmann, funmicStudent4
+Sascha Neuhaus, funmicStudent5
+Nelly Ramser, funmicStudent6
+Rika Stute, funmicStudent7
+Hanna Wöhr, funmicStudent8
+Silena Rausch, funmicStudent9
+Floyd Betz, funmicStudent10
+Carolina Steger, funmicStudent11
+Ana-Lena Knöll, funmicStudent12
+
+## for the login slide
+Your name,VM name,Username,Remote host,SSH port
+Alica Heid, funmicStudent01, ubuntu, 129.70.51.6, 30299
+Gabriela Goscinska Twigg, funmicStudent02, ubuntu, 129.70.51.6, 30361
+Johannes Feldmeier, funmicStudent03, ubuntu, 129.70.51.6, 30311
+Tobias Lehmann, funmicStudent04, ubuntu, 129.70.51.6, 30414
+Sascha Neuhaus, funmicStudent05, ubuntu, 129.70.51.6, 30425
+Nelly Ramser, funmicStudent06, ubuntu, 129.70.51.6, 30494
+Rika Stute, funmicStudent07, ubuntu, 129.70.51.6, 30344
+Hanna Wöhr, funmicStudent08, ubuntu, 129.70.51.6, 30337
+Silena Rausch, funmicStudent09, ubuntu, 129.70.51.6, 30349
+Floyd Betz, funmicStudent10, ubuntu, 129.70.51.6, 30362
+Carolina Steger, funmicStudent11, ubuntu, 129.70.51.6, 30463
+Ana-Lena Knöll, funmicStudent12, ubuntu, 129.70.51.6, 30370
+
+## also update the links

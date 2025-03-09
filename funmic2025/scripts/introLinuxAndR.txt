@@ -1,8 +1,9 @@
 ## to log in with a terminal:
 
-ssh -Y -p 30476 -i /home/daniel/.ssh/./id_ed25519 ubuntu@129.70.51.6
+ssh -X -i  ubuntu@129.70.51.6 -p 30423
+ssh ubuntu@129.70.51.6 -p 30423
 
-## you can try this, or you can use MobaXterm
+## you can try this (especially if you are a mac user!), or you can use MobaXterm
 
 ## playing around with BASH (the linux command line)
 
@@ -223,10 +224,14 @@ cd /vol/funMicStorage
 ## Make sure you can find it on both computers.
 
 
-## you probably don't need to do this, just use MobaXterm
-getFile=/vol/funMicStorage/zymoAnalysis/rawReadQC/ERR7255689_?_fastqc.html
+############### For mac users ####################
+
+## you will get your files the old-fashioned way!
+
+getFile=
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
 scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+
 ##
 
 
