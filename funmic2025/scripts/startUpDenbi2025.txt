@@ -1977,5 +1977,200 @@ getFractionAbundances (ASVname="ASV20", whichPS=ps.m, ptitle="methanol, ASV20")
 dev.new()
 getFractionAbundances (ASVname="ASV3", whichPS=ps.m, ptitle="methanol, ASV3")
 
- 
+##### get everything  working on mac ####
 
+## for the mac terminal, I setup an .ssh folder in /Users/evahoffmann
+
+## set privileges for it and my private key
+
+chmod 700 .ssh/
+chmod 600 .ssh/testMacKey
+
+## macs need xQuartz:
+
+## following https://www.cyberciti.biz/faq/apple-osx-mountain-lion-mavericks-install-xquartz-server/
+
+## install from the website:
+https://www.xquartz.org/
+## was easy, open dowloads, double click, follow  instructions, restart after install
+
+## ssh command:
+ssh -Xi /Users/evahoffmann/.ssh/testMacKey ubuntu@129.70.51.6 -p 30423
+
+
+#### test out VMs, keys
+
+
+Alica Heid
+funmicStudent01
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30299
+
+Gabriela "Goscinska Twigg"
+funmicStudent02
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30361
+
+Johannes Feldmeier
+funmicStudent03
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30311
+
+Tobias Lehmann
+funmicStudent04
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30414
+
+Sascha Neuhaus
+funmicStudent05
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30425
+
+Nelly Ramser
+funmicStudent06
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30494
+
+Rika Stute
+funmicStudent07
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30344
+
+Hanna Wöhr
+funmicStudent08
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30337
+
+Silena Rausch
+funmicStudent09
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30349
+
+Floyd Betz
+funmicStudent10
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30362
+
+Carolina Steger
+funmicStudent11
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30463
+
+Ana-Lena Knöll
+funmicStudent12
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30370
+
+## try these out. For funmic1:
+## funmicStudent01
+ssh -X ubuntu@129.70.51.6 -p 30299 ## vol not mounted?
+sudo mount /dev/vdd /vol/funmic/
+## conda not working...
+## had to run first:
+conda init 
+## seems okay
+
+## rerun on all of the others:
+#ssh -X ubuntu@129.70.51.6 -p 30361 
+#ssh -X ubuntu@129.70.51.6 -p 30311 
+#ssh -X ubuntu@129.70.51.6 -p 30414 
+#ssh -X ubuntu@129.70.51.6 -p 30425 
+#ssh -X ubuntu@129.70.51.6 -p 30494 
+#ssh -X ubuntu@129.70.51.6 -p 30344 
+#ssh -X ubuntu@129.70.51.6 -p 30337 
+#ssh -X ubuntu@129.70.51.6 -p 30349 
+#ssh -X ubuntu@129.70.51.6 -p 30362 
+#ssh -X ubuntu@129.70.51.6 -p 30463
+#ssh -X ubuntu@129.70.51.6 -p 30370
+
+## as above, some of these aren't mounted:
+sudo mount /dev/vdc /vol/funmic/
+conda init #bash 
+
+## seems okay
+
+## store keys for these on laptop at:
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys
+
+## make 12 keys:
+for i in {1..12}; do 
+  echo $i
+  ssh-keygen -f funmicStudent$i -N ""
+done
+
+## let's add these: 
+
+## path to key
+path2key="/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys/"
+
+ssh-copy-id -p 30361 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+
+## test login:
+ssh -X -i ${path2key}funmicStudent1 ubuntu@129.70.51.6 -p 30361 
+
+## seems to work. repeat for the remaining: 
+
+
+cd /home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys/
+
+ssh-copy-id -p 30361 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+ssh-copy-id -p 30311 -i ${path2key}funmicStudent2.pub ubuntu@129.70.51.6  
+ssh-copy-id -p 30414 -i ${path2key}funmicStudent3.pub ubuntu@129.70.51.6  
+ssh-copy-id -p 30425 -i ${path2key}funmicStudent4.pub ubuntu@129.70.51.6  
+ssh-copy-id -p 30494 -i ${path2key}funmicStudent5.pub ubuntu@129.70.51.6  
+
+funmicStudent06
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30494
+
+ssh-copy-id -p 30337 -i ${path2key}funmicStudent6.pub ubuntu@129.70.51.6  
+
+#ssh -X ubuntu@129.70.51.6 -p 30337 
+#ssh -X ubuntu@129.70.51.6 -p 30349 
+#ssh -X ubuntu@129.70.51.6 -p 30362 
+#ssh -X ubuntu@129.70.51.6 -p 30463
+#ssh -X ubuntu@129.70.51.6 -p 30370
+
+funmicStudent01
+ssh-copy-id -p 30299 -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+
+## here
+
+ssh -vi ./keys/funmicStudent1 ubuntu@129.70.51.6 -p 30299
+
+ssh -vi ./keys/funmicStudent2 ubuntu@129.70.51.6 -p 30299
+
+ssh -vi ./keys/funmicStudent3 ubuntu@129.70.51.6 -p 30299
+
+
+funmicStudent02
+ssh-copy-id -p 30361: -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+
+ssh -i ./funmicStudent2 ubuntu@129.70.51.6 -p 30361
+
+funmicStudent03
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30311
+ssh-copy-id -p 30361: -i ${path2key}funmicStudent1.pub ubuntu@129.70.51.6  
+
+Tobias Lehmann
+funmicStudent04
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30414
+
+Sascha Neuhaus
+funmicStudent05
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30425
+
+Nelly Ramser
+funmicStudent06
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30494
+
+Rika Stute
+funmicStudent07
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30344
+
+Hanna Wöhr
+funmicStudent08
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30337
+
+Silena Rausch
+funmicStudent09
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30349
+
+Floyd Betz
+funmicStudent10
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30362
+
+Carolina Steger
+funmicStudent11
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30463
+
+Ana-Lena Knöll
+funmicStudent12
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 30370
