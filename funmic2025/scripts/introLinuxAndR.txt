@@ -154,7 +154,7 @@ echo "this a file" > file.txt
 
 one program | second program
 
-*.fastq.gz | sed 's/.fastq.gz//g' > Sample_list.txt
+ls *.fastq.gz | sed 's/.fastq.gz//g' > Sample_list.txt
 
 ## ;  ##
 
