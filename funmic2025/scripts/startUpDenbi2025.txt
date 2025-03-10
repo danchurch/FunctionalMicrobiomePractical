@@ -49,9 +49,11 @@ cp /etc/fstab ~/fstab.bk
 
 ## let's add this to the fstab:
 UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    defaults        0       2
+     861ebc07-e98a-4c2f-aacd-f9a96bfeac6f
 
 ## works on reboot.
 ## we may need to change the UUIDs for the student computers when we start them up.
+
 
 ## need the old fashioned zip tools for alfons data?
 sudo apt install unzip
@@ -2185,6 +2187,67 @@ Floyd Betz, funmicStudent10, ubuntu, 129.70.51.6, 30362
 Carolina Steger, funmicStudent11, ubuntu, 129.70.51.6, 30463
 Ana-Lena Knöll, funmicStudent12, ubuntu, 129.70.51.6, 30370
 
-## also update the links
+## so my ssh commands to access these computers would be:
 
-ssh-keygen -f funmicStudent7 -N ""
+ssh -X ubuntu@129.70.51.6 -p 30299 ## Alica 
+
+ssh -X ubuntu@129.70.51.6 -p 30361 ## Gabriela 
+
+
+ssh -X ubuntu@129.70.51.6 -p 30311 ## Johannes 
+ssh -X ubuntu@129.70.51.6 -p 30414 ## Tobias 
+ssh -X ubuntu@129.70.51.6 -p 30425 ## Sascha 
+ssh -X ubuntu@129.70.51.6 -p 30494 ## Nelly 
+ssh -X ubuntu@129.70.51.6 -p 30344 ## Rika 
+ssh -X ubuntu@129.70.51.6 -p 30337 ## Hanna 
+ssh -X ubuntu@129.70.51.6 -p 30349 ## Silena 
+ssh -X ubuntu@129.70.51.6 -p 30362 ## Floyd 
+ssh -X ubuntu@129.70.51.6 -p 30463 ## Carolina 
+ssh -X ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
+
+## for some reason, the teaching computer won't mount
+
+## using alica's computer for now:
+ssh -X ubuntu@129.70.51.6 -p 30299
+
+## does the problem lie with the volume or the VM?
+
+## try attaching it to Alica's machine. 
+
+ssh -X ubuntu@129.70.51.6 -p 30299 ## alica
+
+ssh -X ubuntu@129.70.51.6 -p 30370 ## Ana-Lena
+
+sudo mount vde /media/testVol
+
+## fails, with same error
+
+## inverse - let's see if the teaching machine will accept a different volume
+
+sudo mount vdc /vol/funmic
+
+## also fails?
+
+
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
+
+sudo mount 861ebc07-e98a-4c2f-aacd-f9a96bfeac6f /vol/funmic
+
+## great, now I fucked up the student computer. 
+## can we restore the teaching computer using the fstab?
+
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
+
+UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f ## why is this exactly the same as the other? something is wrong.
+
+## adding this vol back into the fstab brings things back to 
+## life. 
+
+## and what about the student VM/vol?
+
+## can't remount the drive 
+
+## try putting it in the fstab? as above:
+UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    defaults        0       2
+
+
