@@ -1,7 +1,7 @@
 ## to log in with a terminal:
 
-ssh -X -i  ubuntu@129.70.51.6 -p 30423
-ssh ubuntu@129.70.51.6 -p 30423
+ssh -X ubuntu@129.70.51.6 -p 30299
+
 
 ## you can try this (especially if you are a mac user!), or you can use MobaXterm
 
@@ -27,48 +27,86 @@ ls
 
 cd  /
 
+cd 
+
 ## look at the storage volume:
 
-cd /vol/funMicStorage
+cd /vol/funmic
 
 ## btw there should be a shortcut stored on your computer:
 vol ## typing this should get you to the volume.
 
 cp 
 
-cp bin1.fa zoop.fa
+cp sipFunctions.R zoop.R
 
-mv zoop.fa ../  
+
+
+
+mv zoop.R ../  
+
+
+cd ..  
+
+
+
 
 mv zoop.fa /vol/funMicStorage
 
 
-mkdir newDirectory
 
-mkdir /vol/funMicStorage/zoop
 
-rmdir 
+mkdir zoop/
 
-echo 
+
+
+
+mkdir zoop
+
+rmdir zoop
+
+
+
+
+
+echo "I am text"
+
+
+
+echo $PWD
+
+
 
 cat 
 
+
+
+
 rm 
+
+
+
 
 sudo 
 
+
 top 
 
-man top
+
+
 top --help
-top -h
 
 
-head 
 
-tail 
 
-less 
+head sip2024.csv
+
+
+
+
+tail sip2024.csv
+
+less sip2024.csv
 
 ## special characters
 
@@ -77,7 +115,10 @@ less
 
 ## ~  ##
 
+
+
 cd ~
+
 
 ## .  ##
 
@@ -88,15 +129,22 @@ cd ~
 
 
 
-cd ..
+cd ../../../
 
 
+
+ls ..
 
 
 
 
 
 ## > ##
+
+
+
+echo "this a file" 
+
 
 echo "this a file" > file.txt
 
@@ -105,6 +153,8 @@ echo "this a file" > file.txt
 ## |  ##
 
 one program | second program
+
+*.fastq.gz | sed 's/.fastq.gz//g' > Sample_list.txt
 
 ## ;  ##
 
