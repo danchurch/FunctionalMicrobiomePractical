@@ -2123,8 +2123,10 @@ ssh -Xvi ${path2key}funmicStudent6.pub ubuntu@129.70.51.6 -p 30494
 
 
 ## funmicStudent07
+
 ssh-copy-id -p 30344 -i ${path2key}funmicStudent7.pub ubuntu@129.70.51.6  
-ssh -Xvi ${path2key}funmicStudent7.pub ubuntu@129.70.51.6 -p 30344
+
+ssh -vi ${path2key}funmicStudent7.pub ubuntu@129.70.51.6 -p 30344
 
 
 ## funmicStudent08
@@ -2184,3 +2186,5 @@ Carolina Steger, funmicStudent11, ubuntu, 129.70.51.6, 30463
 Ana-Lena Knöll, funmicStudent12, ubuntu, 129.70.51.6, 30370
 
 ## also update the links
+
+ssh-keygen -f funmicStudent7 -N ""

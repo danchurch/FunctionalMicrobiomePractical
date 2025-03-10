@@ -156,12 +156,19 @@ one program | second program
 
 ls *.fastq.gz | sed 's/.fastq.gz//g' > Sample_list.txt
 
+*.fastq.gz
+
 ## ;  ##
+
+
+
 
 ls; cd ~
 
-ls
+ls 
 cd ~
+
+
 
 
 ## /  ##
@@ -183,7 +190,10 @@ top &
 
 ## = and $ ##
 
+
+
 X="this is a variable"
+
 echo $X
 
 
@@ -199,14 +209,14 @@ cd someFiles
 
 ls bin*
 
-## ? ##
-
-ls bin??fa
 
 
 
 
-## this is a note 
+
+# this is a note 
+
+# cd ~
 
 
 
@@ -217,14 +227,18 @@ ls bin??fa
 
 ## loops ##
 
+for ZOOP in $(cat Sample_list.txt);
+
 for ZOOP in *
 do
   echo $ZOOP
 done
 
-echo $FILENAME
 
-FILENAME="zzoop"
+
+
+
+
 
 echo $FILENAME
 
