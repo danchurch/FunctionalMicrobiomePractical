@@ -38,6 +38,45 @@ for FILE in $(ls ${READ_DIRECTORY}/*.fastq.gz | xargs -n 1 basename | sed 's/.fa
 		${READ_DIRECTORY}/${FILE}.fastq.gz > /vol/funmic/Kelp/logs/${FILE}.fastqcLog.txt
 	done
 
+## The quality statistics are summarized in the fastqc.html files for each read file
+## Can be opened in a browser, for example by navigating to the containing folder in MobaXterm file browser (left side), right-clicking the html and select "open with " e.g. Chrome
+
+##### Analyzing taxonomic composition of the datasets with phyloflash: mapping of reads to small subunit ribosomal RNA database
+## and targeted assembly SSU rRNA sequences #####
+
+conda deactivate
+conda activate communityComposition
+
+phyloFlash.pl -man
+
+## Defining the location of the SSU rRNA database
+##(SILVA non-redundnat reference sequences, edition 138.1, pre-processed and formatted for phyloFlash)
+phyloDB=/vol/funmic/databases/phyloflashSilvaDB
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/phyloFlashOut/
+
+## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
+## As reads for each sample are split into two files, we should only list one of the pair in order not to have samples listed twice.
+
+for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
+	do
+		mkdir ${OUTPUTDIRECTORY}/${SAMPLE}
+		phyloFlash.pl \
+			-lib PhyloFlash_Kelp_${SAMPLE} \
+			-read1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
+			-read2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
+			-readlength 250 \
+			-clusterid 98 \
+			-taxlevel 7 \
+			-dbhome $phyloDB \
+			-CPUs 12 > /vol/funmicoflashlog.txt
+
+		mv PhyloFlash_Kelp_${SAMPLE}* ${OUTPUTDIRECTORY}/${SAMPLE}
+	done
+
+
+
+
 
 
 
