@@ -95,7 +95,7 @@ OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
 
 for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
 	do
-		nohup megahit \
+		megahit \
 			-1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
 			-2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
 			-o ${OUTPUTDIRECTORY}/${SAMPLE} \
@@ -103,7 +103,7 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 			--k-max 249 \
 			--k-step 10 \
 			-m 1 \
-			-t 16 \
+			-t 14 \
 			--min-contig-len 1000 \
 			--out-prefix ${SAMPLE} > /vol/funmic/Kelp/logs/${SAMPLE}_megahitlog.txt
 
