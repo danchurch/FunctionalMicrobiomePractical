@@ -69,7 +69,7 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 			-clusterid 98 \
 			-taxlevel 7 \
 			-dbhome $phyloDB \
-			-CPUs 12 > /vol/funmicoflashlog.txt
+			-CPUs 12 > /vol/funmic/Kelp/logs/Phyloflashlog.txt
 
 		mv PhyloFlash_Kelp_${SAMPLE}* ${OUTPUTDIRECTORY}/${SAMPLE}
 	done
