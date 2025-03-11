@@ -95,7 +95,7 @@ OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
 
 for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
 	do
-		megahit \
+		nohup megahit \
 			-1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
 			-2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
 			-o ${OUTPUTDIRECTORY}/${SAMPLE} \
