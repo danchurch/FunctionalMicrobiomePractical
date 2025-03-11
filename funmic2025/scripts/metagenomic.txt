@@ -28,6 +28,8 @@ OUTPUTDIRECTORY=/vol/funmic/Kelp/rawReadQC
 ## xargs ensures only the file names and not the entire path is listed
 ## sed performs a search and replace operation replacing .fastq.gz with nothing, so that only the sample names are read into the vaiable and the file type extension is not dragged along
 
+conda activate qualityControlRawSequences
+
 for FILE in $(ls ${READ_DIRECTORY}/*.fastq.gz | xargs -n 1 basename | sed 's/.fastq.gz//g');
 	do
 		fastqc \
