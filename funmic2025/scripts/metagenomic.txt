@@ -85,7 +85,7 @@ conda deactivate
 
 conda activate assembly
 
-mkdir -p /vol/funmic/Kelp/assemblies
+mkdir  /vol/funmic/Kelp/assemblies
 
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
