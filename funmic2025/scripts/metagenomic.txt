@@ -53,6 +53,7 @@ phyloFlash.pl -man
 ##(SILVA non-redundnat reference sequences, edition 138.1, pre-processed and formatted for phyloFlash)
 
 mkdir /vol/funmic/Kelp/phyloFlashOut
+cd /vol/funmic/Kelp/phyloFlashOut
 
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
