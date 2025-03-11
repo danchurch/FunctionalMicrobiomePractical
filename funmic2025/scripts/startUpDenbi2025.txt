@@ -2208,6 +2208,7 @@ ssh -X ubuntu@129.70.51.6 -p 30370 ## Ana-Lena
 ## for some reason, the teaching computer won't mount
 
 ## using alica's computer for now:
+
 ssh -X ubuntu@129.70.51.6 -p 30299
 
 ## does the problem lie with the volume or the VM?
@@ -2238,7 +2239,7 @@ sudo mount 861ebc07-e98a-4c2f-aacd-f9a96bfeac6f /vol/funmic
 
 lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
 
-UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f ## why is this exactly the same as the other? something is wrong.
+UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f ## why is this exactly the same as the other? weird.
 
 ## adding this vol back into the fstab brings things back to 
 ## life. 
@@ -2246,8 +2247,10 @@ UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f ## why is this exactly the same as the
 ## and what about the student VM/vol?
 
 ## can't remount the drive 
+## anyway
 
-## try putting it in the fstab? as above:
+## try putting it in the fstab? as above, since the UUID is same:
 UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    defaults        0       2
 
+## this seems to restore function this vm (funmic01).
 
