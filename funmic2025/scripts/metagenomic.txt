@@ -53,7 +53,7 @@ phyloFlash.pl -man
 ##(SILVA non-redundnat reference sequences, edition 138.1, pre-processed and formatted for phyloFlash)
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
-OUTPUTDIRECTORY=/vol/funmic/phyloFlashOut/
+OUTPUTDIRECTORY=/vol/funmic/Kelp/phyloFlashOut/
 
 ## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
 ## As reads for each sample are split into two files, we should only list one of the pair in order not to have samples listed twice.
