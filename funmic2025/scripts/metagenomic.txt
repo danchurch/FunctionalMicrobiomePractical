@@ -51,6 +51,9 @@ phyloFlash.pl -man
 
 ## Defining the location of the SSU rRNA database
 ##(SILVA non-redundnat reference sequences, edition 138.1, pre-processed and formatted for phyloFlash)
+
+mkdir /vol/funmic/Kelp/phyloFlashOut
+
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 OUTPUTDIRECTORY=/vol/funmic/Kelp/phyloFlashOut/
