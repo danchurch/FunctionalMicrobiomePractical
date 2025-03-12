@@ -166,12 +166,14 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 				in2=${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
 				outm=${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sam \
 				bamscript=${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sh \
+				overwrite=T  \
 				> /vol/funmic/Kelp/logs/${SAMPLE}_to_${ASSEMBLY}_bbmaplog.txt
 
 				bash ${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sh
 				rm ${OUTPUTDIRECTORY}/*.sam
 			done
 	done
+
 
 
 
