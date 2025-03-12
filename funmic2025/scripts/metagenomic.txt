@@ -140,6 +140,39 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
 conda deactivate
 ## trivial amount of time and memory used.
 
+conda activate binning
+
+mkdir /vol/funmic/Kelp/mapping
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/mapping
+
+## each of the three read sets is mapped to each of the three assemblies: 9 mapping operations in total
+## minid specifies the approximate nucleotide sequence identity to aim for when mapping reads.
+## Real identity of the alignment may be slightly higher or lower.
+## idfilter parameter sets the real cut-off for reported alignments/mappings. Reads that map with an nucleotide identity less than 95% won't be reported.
+## 95% is the average nucleotide identity between microbial genomes of the same species (e.g. different strains of the same species).
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+		for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
+			do
+				bbmap.sh \
+				threads=12 \
+				minid=97 \
+				idfilter=95 \
+				ref=${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+				in=${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
+				in2=${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
+				outm=${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sam \
+				bamscript=${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sh \
+				> /vol/funmic/Kelp/logs/${SAMPLE}_to_${ASSEMBLY}_bbmaplog.txt
+
+				bash ${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sh
+				rm ${OUTPUTDIRECTORY}/*.sam
+			done
+	done
+
 
 
 
