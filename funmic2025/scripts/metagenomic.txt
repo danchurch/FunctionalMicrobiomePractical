@@ -110,6 +110,36 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 	done
 
 
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
+
+## Simplify contig names down to simple IDs, removing everything that follows the space in the header
+sed -i 's/\ .*//g' ${OUTPUTDIRECTORY}/*/*.contigs.fa
+for ASSEMBLY in $(ls ${OUTPUTDIRECTORY} | xargs -n 1 basename);
+	do
+		sed -i 's/>/>'$ASSEMBLY'_/g' ${OUTPUTDIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa
+	done
+
+## okay, let's look at it with quast
+conda deactivate
+
+conda activate assemblyQC
+
+mkdir /vol/funmic/Kelp/assemblyQC
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblyQC/
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+		quast -t 12 \
+			-o ${OUTPUTDIRECTORY}/${ASSEMBLY}/ \
+			${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+			> /vol/funmic/Kelp/logs/${ASSEMBLY}_quastLog.txt
+	done
+
+conda deactivate
+## trivial amount of time and memory used.
+
 
 
 
