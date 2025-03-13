@@ -248,6 +248,24 @@ BINNING_DIRECTORY=/vol/funmic/Kelp/binning
 ## Start from column 4, pick out every second column (CONCOCT doesn't need the coverage variation columns, only the coverage itself) until you got all the samples.
 ## Also remove the first line with the headers.
 
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct
+		cut -f 1,4,6,8 ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt > ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt
+	done
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+	concoct \
+		-t 14 \
+        --composition_file ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        --coverage_file ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt \
+		-r 250 \
+        -b ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_CONCOCT \
+        --no_original_data
+	done
+
+
 
 ## Choosing best bins from the results of different binning tools for each assembly with DAStool. DAStool judges bin size, completeness and contamination values
 ## generate DAS_Tool input files: Tables with two columns assigning each contig to a putative genomic bin. For each assembly we need such tables from every binning tool.
