@@ -58,8 +58,6 @@ mkdir /vol/funmic/metabarcoding/trimmed_reads/
 
 ## for one file, we would run it like this:
 
-## make a directory to put our trimmed files:
-mkdir /vol/funmic/metabarcoding/trimmed_reads/
 
 ## go to the directory with the raw read files
 cd /vol/funmic/datasets/Barcode2024/raw_reads
