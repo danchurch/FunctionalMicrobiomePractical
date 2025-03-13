@@ -296,6 +296,21 @@ getFile=
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
 scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
-##
+#####################################################
 
+cd 
+
+R
+
+## let's play with R a little bit
+
+## where are we?
+
+getwd()
+
+## where do we want to be?
+
+setwd()
+
+df <- mtcars
 
