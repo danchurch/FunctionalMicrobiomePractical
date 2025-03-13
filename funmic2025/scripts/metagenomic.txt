@@ -187,7 +187,6 @@ MAPPING_DIRECTORY=/vol/funmic/Kelp/mapping
 ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies
 BINNING_DIRECTORY=/vol/funmic/Kelp/binning
 
-
 #Binning of the metagenomes co-assembly
 
 #This script is part of the MetaBAT module and reads out the bam files to generate a coverage table (incl. coverage variation) for the contigs
@@ -202,6 +201,15 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
 			${MAPPING_DIRECTORY}/*_to_${ASSEMBLY}_sorted.bam
     done
 
+#run MetaBAT
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+	metabat2 \
+        -i ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        -a ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt \
+        -o ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_MetaBAT \
+        -t 12
+	done
 
 
 
