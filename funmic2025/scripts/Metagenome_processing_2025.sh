@@ -174,6 +174,8 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 
 ####### BINNING ######
 
+
+
 mkdir /vol/funmic/Kelp/binning
 
 #defining some variables. DATA_FOLDER should be an absolute path to where the data for the project is stored, with fastq reads being in a subfolder called "reads".
@@ -232,15 +234,13 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
         -contig ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
         -abund_list ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundances_list.txt \
         -out ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_MaxBin \
-        -thread 12
+        -thread 14
   done
 
 
 ## Time: 2 h 7 min.
 
 ## perform binning with CONCOCT
-conda deactivate
-conda activate concoct
 
 MAPPING_DIRECTORY=/vol/funmic/Kelp/mapping
 ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
@@ -260,7 +260,7 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 	do     
 	concoct \
-		-t 12 \
+		-t 14 \
         --composition_file ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
         --coverage_file ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt \
 		-r 250 \
@@ -334,6 +334,8 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
   done
 
 ## Time 7 min
+
+
 
 conda deactivate
 
