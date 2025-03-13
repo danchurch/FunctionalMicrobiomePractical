@@ -332,6 +332,54 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 
 
 
+  conda deactivate
+
+## Dereplicate bins from different samples
+## As the community is very similar between the samples, same genomes will be obtained from each of the assemblies
+## dRep identifies "identical" bins and keeps the bins with the best metrics (size, completeness, contamination)
+## In the end we should obtain one optimized set of non-redundant bins from the three different samples.
+
+conda activate dereplication
+
+mkdir /vol/funmic/Kelp/binning/drep
+mkdir /vol/funmic/Kelp/binning/drep/all_bins
+mkdir /vol/funmic/Kelp/binning/drep/dereplicated_bins
+
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+ALL_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/all_bins
+DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/dereplicated_bins
+
+scp ${BINNING_DIRECTORY}/ERR3801*/DAStool/*_bins/*.fa ${ALL_BINS_DIRECTORY}/
+
+export OMP_NUM_THREADS=12
+export NUMEXPR_MAX_THREADS=12
+
+dRep dereplicate \
+    ${DEREP_BINS_DIRECTORY} \
+    -p 14 \
+    -g ${ALL_BINS_DIRECTORY}/*.fa \
+    -comp 40 \
+    -l 500000 \
+    -comW 1 \
+    -sizeW 1 \
+    -conW 5 \
+    -strW 1 \
+    -N50W 0.5 \
+    --run_tertiary_clustering
+
+mkdir /vol/funmic/Kelp/Final_bins
+
+FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
+
+mkdir ${FINAL_BINS_DIRECTORY}/contigs
+scp ${DEREP_BINS_DIRECTORY}/*.fa ${FINAL_BINS_DIRECTORY}/contigs/
+
+## Time 1 h 20 min
+
+conda deactivate
+
+
+
 
 
 
