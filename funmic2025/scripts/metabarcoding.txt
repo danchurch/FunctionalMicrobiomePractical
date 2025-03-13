@@ -13,6 +13,7 @@ mkdir /vol/funmic/metabarcoding
 cd /vol/funmic/metabarcoding
 
 ## our raw sequence data is stored here:
+
 ls /vol/funmic/datasets/Barcode2024/raw_reads
 
 ## the file names contain the substrate, isotope, and fraction information for each sample 
@@ -20,12 +21,14 @@ ls /vol/funmic/datasets/Barcode2024/raw_reads
 ## let's take a look at the quality of these reads...
 
 ## for convenience, we made a single file out of all of the samples for you, so you can look at them all at once,
+
 ## here:
 
 ls /vol/funmic/datasets/Barcode2024/allRawReads.gz
 
 
 ## we can run a quality check using the program fastqc
+
 fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2024/allRawReads.gz
 
 ## get the output files onto your computer, especially the html file
@@ -126,24 +129,50 @@ getwd()
 
 df <- mtcars
 
+df = mtcars
+
 df
 
 head(df)
 
+tail(df)
+
 ## how to get a vecter of data out of a dataframe:
+
+
 
 df$mpg
 
+
+
+
 df$hp
+
+
 
 ## we can check to see what variables we have defined in our
 ## environment
 
+
+
 ls()
+
+
+
 
 ## R has a basic plotter - does it work for you?
 
+
+
+
 plot(df$mpg, df$hp)
+
+
+q()
+
+quit()
+
+
 
 
 ## R base is extended by loading packages
@@ -151,14 +180,11 @@ plot(df$mpg, df$hp)
 
 library(ggplot2)
 
-
-ggplot(mtcars, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
-    geom_point(size=3)
-
 df$cyl <- as.factor(df$cyl)
 
 ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
     geom_point(size=3)
+
 
 ## if you want to start a different plotter:
 
