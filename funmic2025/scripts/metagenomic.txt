@@ -372,7 +372,7 @@ mkdir /vol/funmic/Kelp/Final_bins
 FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
 
 mkdir ${FINAL_BINS_DIRECTORY}/contigs
-scp ${DEREP_BINS_DIRECTORY}/*.fa ${FINAL_BINS_DIRECTORY}/contigs/
+scp ${DEREP_BINS_DIRECTORY}/dereplicated_genomes/*.fa ${FINAL_BINS_DIRECTORY}/contigs/
 
 ## Time 1 h 20 min
 
