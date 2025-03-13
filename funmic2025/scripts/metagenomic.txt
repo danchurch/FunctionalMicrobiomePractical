@@ -332,7 +332,7 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 
 
 
-  conda deactivate
+conda deactivate
 
 ## Dereplicate bins from different samples
 ## As the community is very similar between the samples, same genomes will be obtained from each of the assemblies
