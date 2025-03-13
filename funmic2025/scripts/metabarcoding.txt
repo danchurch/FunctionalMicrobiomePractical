@@ -32,11 +32,15 @@ fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2024/allRawReads.gz
 
 ############## I have to do this, but you probably don't, just use MobaXterm!! ###############
 getFile=/vol/funmic/metabarcoding/allRawReads_fastqc.html
-putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad
 scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 ##############################################################################################
 
 ## look at this quality report with a browser - what do you see?
+
+## here is the blast website if you want to look at one of your 
+## sequences: 
+https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 #### raw read quality control #####
 
