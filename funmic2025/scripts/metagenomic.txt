@@ -214,6 +214,7 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
 	done
 
 ## perform binning with MaxBin
+
 for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
   do
     mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin
@@ -235,6 +236,34 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
         -out ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_MaxBin \
         -thread 14
   done
+
+  ## perform binning with CONCOCT
+
+MAPPING_DIRECTORY=/vol/funmic/Kelp/mapping
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+
+## create contig coverage tables for CONCOCT from the MetaBAT coverage tables.
+## The first column with coverage is actually column 4.
+## Start from column 4, pick out every second column (CONCOCT doesn't need the coverage variation columns, only the coverage itself) until you got all the samples.
+## Also remove the first line with the headers.
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct
+		cut -f 1,4,6,8 ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt > ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt
+	done
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+	concoct \
+		-t 14 \
+        --composition_file ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        --coverage_file ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt \
+		-r 250 \
+        -b ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_CONCOCT \
+        --no_original_data
+	done
 
 
 
