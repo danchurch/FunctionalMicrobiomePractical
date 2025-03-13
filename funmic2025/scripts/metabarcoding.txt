@@ -178,12 +178,26 @@ quit()
 ## R base is extended by loading packages
 ## let's try a different plotting software, ggplot:
 
+
+
+
 library(ggplot2)
+
+
+
+
 
 df$cyl <- as.factor(df$cyl)
 
+
 ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
     geom_point(size=3)
+
+
+ggplot(df, aes(x=disp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+
 
 
 ## if you want to start a different plotter:
@@ -194,8 +208,10 @@ ggplot(df, aes(x=hp, y=qsec, color=cyl, shape=cyl)) +
     geom_point(size=3)
 
 ## if you want to save this graphic:
-
 png("HPvsMPG.png")
+
+
+pdf("HPvsMPG.pdf")
 ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
     geom_point(size=3)
 dev.off()
@@ -226,6 +242,7 @@ library(phyloseq)
 fileNames <- list.files()
 
 ## did that work?:
+
 fileNames
 
 ## do some quality filtering on these reads before denoising
@@ -238,13 +255,23 @@ out <- filterAndTrim(fileNames, filterPath,
               compress=TRUE, multithread=TRUE)
 
 ## did we lose a lot of reads?:
+
 out 
 
 ## move over to the filtered reads:
 setwd("/vol/funmic/metabarcoding/filtered")
 
 ## use characterize the errors in the base calling of the sequencer
+
 err <- learnErrors(fileNames, multithread=TRUE) 
+
+
+save(err, file="err.rda")
+
+
+load("err.rda")
+
+
 plotErrors(err, nominalQ=TRUE)
 
 ## this step defines our ASVs:
@@ -253,13 +280,24 @@ dadaF <- dada(fileNames, err=err, pool=TRUE, multithread=TRUE)
 ## now that we have ASVs, we can make an OTU table:
 seqtab <- makeSequenceTable(dadaF) 
 
+seqtab
+
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+
+
+
+
 
 ## make the sample names prettier
 rownames(seqtab.nochim) <- unlist(strsplit(rownames(seqtab.nochim), ".fastq.gz"))
 
+
+
+
+
 ## now we have OTUs (ASVs) and an otu table
 ## let's get taxonomic assignments:
+
 path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
 
 taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
@@ -282,6 +320,16 @@ samdf
 ## taxonomic assignments for these ASVs, and sample information
 ## These are the basic components of a microbial community ecology dataset. 
 ## let's bring these together into a single object using the Phyloseq package
+
+
+
+
+rownames(seqtab.nochim)
+
+
+
+
+
 
 ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
                sample_data(samdf),
@@ -306,3 +354,9 @@ save(ps, file="sipPS.rda")
 
 
 
+load("sipPS.rda")
+
+
+
+
+rownames(seqtab.nochimera)
