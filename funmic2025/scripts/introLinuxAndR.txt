@@ -331,6 +331,7 @@ head(df)
 df$mpg
 
 df$hp
+###############
 
 ## we can check to see what variables we have defined in our 
 ## environment
