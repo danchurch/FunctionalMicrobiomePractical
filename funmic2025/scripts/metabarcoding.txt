@@ -32,11 +32,15 @@ fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2024/allRawReads.gz
 
 ############## I have to do this, but you probably don't, just use MobaXterm!! ###############
 getFile=/vol/funmic/metabarcoding/allRawReads_fastqc.html
-putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad
 scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 ##############################################################################################
 
 ## look at this quality report with a browser - what do you see?
+
+## here is the blast website if you want to look at one of your 
+## sequences: 
+https://blast.ncbi.nlm.nih.gov/Blast.cgi
 
 #### raw read quality control #####
 
@@ -58,8 +62,6 @@ mkdir /vol/funmic/metabarcoding/trimmed_reads/
 
 ## for one file, we would run it like this:
 
-## make a directory to put our trimmed files:
-mkdir /vol/funmic/metabarcoding/trimmed_reads/
 
 ## go to the directory with the raw read files
 cd /vol/funmic/datasets/Barcode2024/raw_reads
@@ -100,9 +102,87 @@ done
 
 ## primers should be gone! onward...
 
-###### denoising #######
+## first we need an introduction to R ##
+############# Introduction to R #####################
 
-## here we need R. 
+cd
+
+R
+
+## let's play with R a little bit
+
+## where are we?
+
+getwd()
+
+## where do we want to be?
+
+setwd("/vol/funmic")
+
+getwd()
+
+
+### let's make a dataframe
+
+df <- mtcars
+
+df
+
+head(df)
+
+## how to get a vecter of data out of a dataframe:
+
+df$mpg
+
+df$hp
+
+## we can check to see what variables we have defined in our
+## environment
+
+ls()
+
+## R has a basic plotter - does it work for you?
+
+plot(df$mpg, df$hp)
+
+
+## R base is extended by loading packages
+## let's try a different plotting software, ggplot:
+
+library(ggplot2)
+
+
+ggplot(mtcars, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+df$cyl <- as.factor(df$cyl)
+
+ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+## if you want to start a different plotter:
+
+dev.new()
+
+ggplot(df, aes(x=hp, y=qsec, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+## if you want to save this graphic:
+
+png("HPvsMPG.png")
+ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+dev.off()
+
+## now lets get back to our pipeline...
+
+########### end of intro to R! ############
+
+
+
+###### denoising and ASV definition #######
+
+## we here we need R. 
 ## back to our working directory
 
 cd /vol/funmic/metabarcoding/trimmed_reads
@@ -168,8 +248,6 @@ samdf <- read.csv("/vol/funmic/datasets/Barcode2024/sip2024.csv",
 samdf$Isotope <- as.factor( samdf$Isotope )
 
 
-
-
 ## how does it look?
 
 samdf
@@ -199,4 +277,6 @@ taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 setwd("/vol/funmic/metabarcoding/")
 
 save(ps, file="sipPS.rda")
+
+
 
