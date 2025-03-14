@@ -2315,6 +2315,7 @@ ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carol
 ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
 
 ## test login:
+
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30361 ## Gabriela 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30311 ## Johannes 
@@ -2444,14 +2445,33 @@ otu_table(ps.g)[,"ASV13"]
 
 ## found some typos in the scripts. 
 
+##############################
 ## fixed, deploy to students
 
+
+#for i in 30362 30463 30370; do
 ## local fixed version:
-/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2025/scripts/sipFunctions.R
+#fixed=/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2025/scripts/sipFunctions.R
 ## old file to replace is here:
-/vol/funmic/scripts/sipFunctions.R
+#broken=/vol/funmic/scripts/sipFunctions.R
 
 for i in $(cat allports); do
   echo $i
-  scp -P $i -i ~/.ssh/funmicTeachingMachine ./.sipPS.rda  ubuntu@129.70.51.6:/home/ubuntu/
-done
+  ssh -p $i ubuntu@129.70.51.6 "mv /home/ubuntu/sipFunctions.R /vol/funmic/scripts/sipFunctions.R"
+  ssh -p $i ubuntu@129.70.51.6 "ls /home/ubuntu/sipFunctions.R"
+  ssh -p $i ubuntu@129.70.51.6 "ls /vol/funmic/scripts/sipFunctions.R"
+  #scp -P $i  $fixed  ubuntu@129.70.51.6:$broken
+done &
+
+## failing, rerun with a better connection
+##############################
+
+## could also source it this way:
+
+## in r, to use in interpreter
+source("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R")
+
+## to update from denbi:
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R"
+
+
