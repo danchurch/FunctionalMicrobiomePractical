@@ -172,7 +172,7 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 
 ##Time: 3h 20 min
 
-####### binning ######
+####### BINNING ######
 
 mkdir /vol/funmic/Kelp/binning
 

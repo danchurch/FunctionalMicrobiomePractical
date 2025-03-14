@@ -296,6 +296,78 @@ getFile=
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
 scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
 
-##
+#####################################################
+
+
+############# Introduction to R #####################
+
+cd 
+
+R
+
+## let's play with R a little bit
+
+## where are we?
+
+getwd()
+
+## where do we want to be?
+
+setwd("/vol/funmic")
+
+getwd()
+
+
+### let's make a dataframe
+
+df <- mtcars
+
+df
+
+head(df)
+
+## how to get a vecter of data out of a dataframe:
+
+df$mpg
+
+df$hp
+###############
+
+## we can check to see what variables we have defined in our 
+## environment
+
+ls()
+
+## R has a basic plotter - does it work for you?
+
+plot(df$mpg, df$hp)
+
+
+## R base is extended by loading packages:
+
+library(ggplot2)
+
+
+ggplot(mtcars, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+df$cyl <- as.factor(df$cyl)
+
+ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+## if you want to start a different plotter:
+
+dev.new()
+
+ggplot(df, aes(x=hp, y=qsec, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+
+## if you want to save this graphic:
+
+png("HPvsMPG.png")
+ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+    geom_point(size=3)
+dev.off()
 
 

@@ -2254,7 +2254,65 @@ UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    default
 
 ## this seems to restore function this vm (funmic01).
 
-## just checking, how would we modify the metagenome script to include nohup?:
+### get Aileen data:
 
+getFile=/vol/funmic/datasets/kelpBiofilm/
+putDir=/media/daniel/AEDB-B2EA/funmic/2025
+scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## scratch that, get her a key to the data instead:
+
+path2key=/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys/
+
+cd $path2key
+
+
+#ssh-keygen -f funmicStudentAileen -N ""
+
+ssh-copy-id -p 30299 -i ${path2key}funmicStudentAileen.pub ubuntu@129.70.51.6  
+
+ssh -X ubuntu@129.70.51.6 -p 30299 ## Alica 
+
+##############
+
+## get Alica and Anna-Lena a copy of the assmeblies and mapping files 
+
+## need a new keyset:
+
+ssh-keygen -f funmicTeachingMachine -N ""
+
+## put on Anna Lena
+
+ssh -X ubuntu@129.70.51.6 -p 30370 ## Ana-Lena
+#ssh-copy-id -p 30370 -i funmicTeachingMachine.pub ubuntu@129.70.51.6  
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 
+
+## for example, put mapping files
+getFile=/vol/funmic/Kelp/mapping/
+putDir=/vol/funmic/Kelp/
+scp -i ~/.ssh/funmicTeachingMachine -P 30370 -r ubuntu@129.70.51.6:$putDir $getFile
+
+## seems to work
+
+## Alica:
+
+getFile=/vol/funmic/Kelp/assemblies/
+putDir=/vol/funmic/Kelp/
+scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+
+
+## from denbi, does this work:
+
+
+getFile=/vol/funmic/Kelp/assemblies/
+putDir=/vol/funmic/Kelp/
+scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+
+getFile=/vol/funmic/Kelp/mapping/
+putDir=/vol/funmic/Kelp/
+scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+
+
+ssh -X -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
 
 

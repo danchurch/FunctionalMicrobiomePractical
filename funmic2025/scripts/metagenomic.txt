@@ -21,5 +21,366 @@ READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 
 #Checking read quality with FastQC for all reads. FastQC can also be run with an interactive GUI by typing 'fastqc' into the command line
 mkdir /vol/funmic/Kelp/rawReadQC
+
 OUTPUTDIRECTORY=/vol/funmic/Kelp/rawReadQC
+
+## The variable FILE is read from listing all files ending with fastq.gz in the folder containing the data.
+## xargs ensures only the file names and not the entire path is listed
+## sed performs a search and replace operation replacing .fastq.gz with nothing, so that only the sample names are read into the vaiable and the file type extension is not dragged along
+
+conda activate qualityControlRawSequences
+
+for FILE in $(ls ${READ_DIRECTORY}/*.fastq.gz | xargs -n 1 basename | sed 's/.fastq.gz//g');
+	do
+		fastqc \
+		-t 12 \
+		-o ${OUTPUTDIRECTORY} \
+		${READ_DIRECTORY}/${FILE}.fastq.gz > /vol/funmic/Kelp/logs/${FILE}.fastqcLog.txt
+	done
+
+## The quality statistics are summarized in the fastqc.html files for each read file
+## Can be opened in a browser, for example by navigating to the containing folder in MobaXterm file browser (left side), right-clicking the html and select "open with " e.g. Chrome
+
+##### Analyzing taxonomic composition of the datasets with phyloflash: mapping of reads to small subunit ribosomal RNA database
+## and targeted assembly SSU rRNA sequences #####
+
+conda deactivate
+conda activate communityComposition
+
+phyloFlash.pl -man
+
+## Defining the location of the SSU rRNA database
+##(SILVA non-redundnat reference sequences, edition 138.1, pre-processed and formatted for phyloFlash)
+
+mkdir /vol/funmic/Kelp/phyloFlashOut
+cd /vol/funmic/Kelp/phyloFlashOut
+
+phyloDB=/vol/funmic/databases/phyloflashSilvaDB
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/phyloFlashOut/
+
+## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
+## As reads for each sample are split into two files, we should only list one of the pair in order not to have samples listed twice.
+
+for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
+	do
+		mkdir ${OUTPUTDIRECTORY}/${SAMPLE}
+		phyloFlash.pl \
+			-lib PhyloFlash_Kelp_${SAMPLE} \
+			-read1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
+			-read2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
+			-readlength 250 \
+			-clusterid 98 \
+			-taxlevel 7 \
+			-dbhome $phyloDB \
+			-CPUs 12 > /vol/funmic/Kelp/logs/Phyloflashlog.txt
+
+		mv PhyloFlash_Kelp_${SAMPLE}* ${OUTPUTDIRECTORY}/${SAMPLE}
+	done
+
+
+conda deactivate
+
+####### assembly #####
+
+conda activate assembly
+
+mkdir  /vol/funmic/Kelp/assemblies
+
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
+
+## Iterative assembly with different k-mer sizes. K-mer size must be odd. K-mer sizes range from 21 and up to the full read length in increments of 10 bp
+## At the end contigs shorter than 1000 bp are discarded from the final assembly, as they cannot be reliably attributed to genomes or annotated in a meaningful way
+
+for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
+	do
+		megahit \
+			-1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
+			-2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
+			-o ${OUTPUTDIRECTORY}/${SAMPLE} \
+			--k-min 21 \
+			--k-max 249 \
+			--k-step 10 \
+			-m 1 \
+			-t 14 \
+			--min-contig-len 1000 \
+			--out-prefix ${SAMPLE} > /vol/funmic/Kelp/logs/${SAMPLE}_megahitlog.txt
+
+	done
+
+
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
+
+## Simplify contig names down to simple IDs, removing everything that follows the space in the header
+sed -i 's/\ .*//g' ${OUTPUTDIRECTORY}/*/*.contigs.fa
+for ASSEMBLY in $(ls ${OUTPUTDIRECTORY} | xargs -n 1 basename);
+	do
+		sed -i 's/>/>'$ASSEMBLY'_/g' ${OUTPUTDIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa
+	done
+
+## okay, let's look at it with quast
+conda deactivate
+
+conda activate assemblyQC
+
+mkdir /vol/funmic/Kelp/assemblyQC
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblyQC/
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+		quast -t 12 \
+			-o ${OUTPUTDIRECTORY}/${ASSEMBLY}/ \
+			${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+			> /vol/funmic/Kelp/logs/${ASSEMBLY}_quastLog.txt
+	done
+
+conda deactivate
+## trivial amount of time and memory used.
+
+conda activate binning
+
+mkdir /vol/funmic/Kelp/mapping
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/mapping
+
+## each of the three read sets is mapped to each of the three assemblies: 9 mapping operations in total
+## minid specifies the approximate nucleotide sequence identity to aim for when mapping reads.
+## Real identity of the alignment may be slightly higher or lower.
+## idfilter parameter sets the real cut-off for reported alignments/mappings. Reads that map with an nucleotide identity less than 95% won't be reported.
+## 95% is the average nucleotide identity between microbial genomes of the same species (e.g. different strains of the same species).
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+		for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
+			do
+				bbmap.sh \
+				threads=12 \
+				minid=97 \
+				idfilter=95 \
+				ref=${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+				in=${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
+				in2=${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
+				outm=${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sam \
+				bamscript=${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sh \
+				overwrite=T  \
+				> /vol/funmic/Kelp/logs/${SAMPLE}_to_${ASSEMBLY}_bbmaplog.txt
+
+				bash ${OUTPUTDIRECTORY}/${SAMPLE}_to_${ASSEMBLY}.sh
+				rm ${OUTPUTDIRECTORY}/*.sam
+			done
+	done
+
+####### BINNING ######
+
+conda activate binning
+
+mkdir /vol/funmic/Kelp/binning
+
+#defining some variables. DATA_FOLDER should be an absolute path to where the data for the project is stored, with fastq reads being in a subfolder called "reads".
+#PROJECTNAME is a prefix which was used for the assembly etc.
+#METAWATTPATH should be the absolute path to the folder with the Metawatt jar file. METAWATT_DATABASES is the absolute path to the Metawatt databases
+#CONCOCTPATH should be the absolute path to the concoct folder containing subfolders "bin" and "scripts"
+
+MAPPING_DIRECTORY=/vol/funmic/Kelp/mapping
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+
+#Binning of the metagenomes co-assembly
+
+#This script is part of the MetaBAT module and reads out the bam files to generate a coverage table (incl. coverage variation) for the contigs
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT
+		jgi_summarize_bam_contig_depths \
+			--outputDepth ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt \
+			--referenceFasta  ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+			${MAPPING_DIRECTORY}/*_to_${ASSEMBLY}_sorted.bam
+    done
+
+#run MetaBAT
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+	metabat2 \
+        -i ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        -a ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt \
+        -o ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_MetaBAT \
+        -t 12
+	done
+
+## perform binning with MaxBin
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+  do
+    mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin
+# create MaxBin input tables by extracting the coverage columns from the metabat input table and saving as separate files. Header line is removed in the process
+    for i in $(seq 4 +2 8);
+        do
+            cut -f 1,"$i"  ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt | perl -0pe 's/contigName.*\n//g' > ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundance_"$i".txt
+        done
+
+    ls ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/*.txt > ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundances_list.txt
+done
+
+# run MaxBin
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+  do
+    run_MaxBin.pl \
+        -contig ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        -abund_list ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundances_list.txt \
+        -out ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_MaxBin \
+        -thread 14
+  done
+
+## perform binning with CONCOCT
+
+MAPPING_DIRECTORY=/vol/funmic/Kelp/mapping
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+
+## create contig coverage tables for CONCOCT from the MetaBAT coverage tables.
+## The first column with coverage is actually column 4.
+## Start from column 4, pick out every second column (CONCOCT doesn't need the coverage variation columns, only the coverage itself) until you got all the samples.
+## Also remove the first line with the headers.
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct
+		cut -f 1,4,6,8 ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt > ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt
+	done
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+	do
+	concoct \
+		-t 14 \
+        --composition_file ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        --coverage_file ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_coverage_Depths.txt \
+		-r 250 \
+        -b ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_CONCOCT \
+        --no_original_data
+	done
+
+
+
+## Choosing best bins from the results of different binning tools for each assembly with DAStool. DAStool judges bin size, completeness and contamination values
+## generate DAS_Tool input files: Tables with two columns assigning each contig to a putative genomic bin. For each assembly we need such tables from every binning tool.
+
+## Attribution of contigs to bins according to MetaBAT
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+  do
+	mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool
+	  for BIN in $(ls ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_MetaBAT.*.fa | xargs -n 1 basename | sed 's/\.fa//g');
+		do
+			grep '^>' ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/"$BIN".fa | sed "s/\t.*/\t$BIN/g" | sed 's/>//g' \
+					>> ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool/${ASSEMBLY}_MetaBAT_binning.txt
+		done
+  done
+
+## Attribution of contigs to bins according to MaxBin
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+  do
+	  for BIN in $(ls ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/*.fasta | xargs -n 1 basename | sed 's/\.fasta//g');
+		do
+			grep '^>' ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${BIN}.fasta | sed "s/$/\t$BIN/g" | sed 's/>//g' \
+					>> ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool/${ASSEMBLY}_MaxBin_binning.txt
+		done
+  done
+
+
+## Attribution of contigs to bins according to CONCOCT
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+  do
+	sed '1d' ${BINNING_DIRECTORY}/${ASSEMBLY}/concoct/${ASSEMBLY}_CONCOCT_clustering_gt1000.csv | \
+	perl -0pe "s/\,/\t$ASSEMBLY\_CONCOCT/g" \
+	> ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool/${ASSEMBLY}_CONCOCT_binning.txt
+  done
+
+conda deactivate
+
+## Run DAS_Tool to generate consensus bins from the results of different binners
+conda activate refine
+
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
+  do
+	BINNING_FILES=$(ls ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool/*_binning.txt | \
+					perl -0pe 's/\n/\,/g' | \
+					sed 's/\,$//g')
+
+	BINNERS=$(ls ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool/*_binning.txt | xargs -n 1 basename | \
+			sed "s/${ASSEMBLY}\_//g" | \
+			sed 's/\_binning.txt//g' | \
+			perl -0pe 's/\n/\,/g' | \
+			sed 's/\,$//g')
+
+	DAS_Tool \
+		-i "$BINNING_FILES" \
+		-l "$BINNERS" \
+		-c ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+		-o ${BINNING_DIRECTORY}/${ASSEMBLY}/DAStool/${ASSEMBLY} \
+		--score_threshold 0.25 \
+		-t 12 \
+		--write_bins
+  done
+
+
+
+conda deactivate
+
+## Dereplicate bins from different samples
+## As the community is very similar between the samples, same genomes will be obtained from each of the assemblies
+## dRep identifies "identical" bins and keeps the bins with the best metrics (size, completeness, contamination)
+## In the end we should obtain one optimized set of non-redundant bins from the three different samples.
+
+conda activate dereplication
+
+mkdir /vol/funmic/Kelp/binning/drep
+mkdir /vol/funmic/Kelp/binning/drep/all_bins
+mkdir /vol/funmic/Kelp/binning/drep/dereplicated_bins
+
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+ALL_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/all_bins
+DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/dereplicated_bins
+
+scp ${BINNING_DIRECTORY}/ERR3801*/DAStool/*_bins/*.fa ${ALL_BINS_DIRECTORY}/
+
+export OMP_NUM_THREADS=12
+export NUMEXPR_MAX_THREADS=12
+
+dRep dereplicate \
+    ${DEREP_BINS_DIRECTORY} \
+    -p 14 \
+    -g ${ALL_BINS_DIRECTORY}/*.fa \
+    -comp 40 \
+    -l 500000 \
+    -comW 1 \
+    -sizeW 1 \
+    -conW 5 \
+    -strW 1 \
+    -N50W 0.5 \
+    --run_tertiary_clustering
+
+mkdir /vol/funmic/Kelp/Final_bins
+
+FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
+
+mkdir ${FINAL_BINS_DIRECTORY}/contigs
+scp ${DEREP_BINS_DIRECTORY}/dereplicated_genomes/*.fa ${FINAL_BINS_DIRECTORY}/contigs/
+
+## Time 1 h 20 min
+
+conda deactivate
+
+
+
+
+
+
 
