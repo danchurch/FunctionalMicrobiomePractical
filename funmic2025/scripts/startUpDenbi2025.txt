@@ -2254,3 +2254,7 @@ UUID=861ebc07-e98a-4c2f-aacd-f9a96bfeac6f       /vol/funmic      auto    default
 
 ## this seems to restore function this vm (funmic01).
 
+## just checking, how would we modify the metagenome script to include nohup?:
+
+
+
