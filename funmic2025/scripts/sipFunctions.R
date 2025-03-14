@@ -25,7 +25,7 @@ plotPCAWithSpecies <- function (ps, scalingType=1, scalingAmount=3, ptitle) {
 
 getFractionAbundances = function(ASVname,whichPS,ptitle=""){
     samp.12 <- rownames(sample_data(whichPS)[sample_data(whichPS)$Isotope == "12",])
-    ps.12 <- prune_samples(samp.12, ps)
+    ps.12 <- prune_samples(samp.12, whichPS)
     ps.12.ASV <- prune_taxa(ASVname, ps.12)
     df12 <- as.data.frame(cbind(sample_data(ps.12.ASV)$Fraction, otu_table(ps.12.ASV)))
     df12[] <- sapply(df12, as.numeric)
@@ -33,7 +33,7 @@ getFractionAbundances = function(ASVname,whichPS,ptitle=""){
     df12$Isotope <- 12
     ## repeat for 13 isos
     samp.13 <- rownames(sample_data(whichPS)[sample_data(whichPS)$Isotope == "13",])
-    ps.13 <- prune_samples(samp.13, ps)
+    ps.13 <- prune_samples(samp.13, whichPS)
     ps.13.ASV <- prune_taxa(ASVname, ps.13)
     df13 <- as.data.frame(cbind(sample_data(ps.13.ASV)$Fraction, otu_table(ps.13.ASV)))
     df13[] <- sapply(df13, as.numeric)
