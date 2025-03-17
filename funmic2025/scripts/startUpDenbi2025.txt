@@ -2458,12 +2458,12 @@ otu_table(ps.g)[,"ASV13"]
 for i in $(cat allports); do
   echo $i
   ssh -p $i ubuntu@129.70.51.6 "mv /home/ubuntu/sipFunctions.R /vol/funmic/scripts/sipFunctions.R"
-  ssh -p $i ubuntu@129.70.51.6 "ls /home/ubuntu/sipFunctions.R"
-  ssh -p $i ubuntu@129.70.51.6 "ls /vol/funmic/scripts/sipFunctions.R"
+  #ssh -p $i ubuntu@129.70.51.6 "ls /home/ubuntu/sipFunctions.R"
+  #ssh -p $i ubuntu@129.70.51.6 "ls /vol/funmic/scripts/sipFunctions.R"
   #scp -P $i  $fixed  ubuntu@129.70.51.6:$broken
-done &
+done 
 
-## failing, rerun with a better connection
+## failing, I think it may be a bad idea to run so many ssh commands in a loop
 ##############################
 
 ## could also source it this way:
@@ -2473,5 +2473,67 @@ source("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractica
 
 ## to update from denbi:
 wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R"
+
+## do it without a loop, with individual ssh logins. Each one:
+mv /home/ubuntu/sipFunctions.R /vol/funmic/scripts/sipFunctions.R
+
+ls /home/ubuntu/sipFunctions.R
+
+ls -l /vol/funmic/scripts/sipFunctions.R
+
+vim -M /vol/funmic/scripts/sipFunctions.R
+
+
+## think we are in business. 
+
+########### tillmann CSVs ##################
+
+## now, how do we get tillmann his data?
+
+## using level 6 abundances:
+
+## get the otu matrix:
+
+cd /vol/funmic/metabarcoding
+
+R
+
+library(phyloseq)
+load("sipPS.rda")
+
+aa <- as.data.frame(otu_table(ps))
+
+## tillmann likes the full taxonomy, how can we get this?
+## we want our headers to be taxonomy, to match Tillmann's old formatting:
+bb <- as.data.frame(tax_table(ps))
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family,";g__",bb$Genus, sep="")
+## do the rownames of our OTUtable match the order of our taxonomic names?
+all(rownames(tax_table(ps)) == colnames(aa)) ## yes
+## so use these as our colnames:
+colnames(aa) <- cc
+## and he wants the sample info as the last columns:
+dd <- cbind(aa,sample_data(ps))
+level6df <- dd
+rm(aa,bb,cc,dd)
+
+## so that would be for level six. Don't think we did level 7 (species ids), so we can send him family and genus level.
+
+## how to do the family level?
+ps.family <- tax_glom( ps, taxrank = "Family")
+aa <- as.data.frame(otu_table(ps.family))
+bb <- as.data.frame(tax_table(ps.family)[,1:5])
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family, sep="")
+## do the rownames of our OTUtable match the order of our taxonomic names?
+all(rownames(tax_table(ps.family)) == colnames(aa)) ## yes
+## so use these as our colnames:
+colnames(aa) <- cc
+## and he wants the sample info as the last columns:
+dd <- cbind(aa,sample_data(ps.family))
+level5df <- dd
+rm(aa,bb,cc,dd)
+
+## these should be the data he needs.
+write.csv(level6df, "level6.csv")
+write.csv(level5df, "level5.csv")
 
 
