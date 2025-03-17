@@ -2190,10 +2190,7 @@ Ana-Lena Knöll, funmicStudent12, ubuntu, 129.70.51.6, 30370
 ## so my ssh commands to access these computers would be:
 
 ssh -X ubuntu@129.70.51.6 -p 30299 ## Alica 
-
 ssh -X ubuntu@129.70.51.6 -p 30361 ## Gabriela 
-
-
 ssh -X ubuntu@129.70.51.6 -p 30311 ## Johannes 
 ssh -X ubuntu@129.70.51.6 -p 30414 ## Tobias 
 ssh -X ubuntu@129.70.51.6 -p 30425 ## Sascha 
@@ -2260,12 +2257,6 @@ getFile=/vol/funmic/datasets/kelpBiofilm/
 putDir=/media/daniel/AEDB-B2EA/funmic/2025
 scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
-## scratch that, get her a key to the data instead:
-
-path2key=/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2025admin/keys/
-
-cd $path2key
-
 
 #ssh-keygen -f funmicStudentAileen -N ""
 
@@ -2275,7 +2266,7 @@ ssh -X ubuntu@129.70.51.6 -p 30299 ## Alica
 
 ##############
 
-## get Alica and Anna-Lena a copy of the assmeblies and mapping files 
+## get access to all student computers from teaching funmic
 
 ## need a new keyset:
 
@@ -2284,35 +2275,274 @@ ssh-keygen -f funmicTeachingMachine -N ""
 ## put on Anna Lena
 
 ssh -X ubuntu@129.70.51.6 -p 30370 ## Ana-Lena
+
 #ssh-copy-id -p 30370 -i funmicTeachingMachine.pub ubuntu@129.70.51.6  
-ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 
+
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 -v
+
+## seems to work
 
 ## for example, put mapping files
 getFile=/vol/funmic/Kelp/mapping/
 putDir=/vol/funmic/Kelp/
-scp -i ~/.ssh/funmicTeachingMachine -P 30370 -r ubuntu@129.70.51.6:$putDir $getFile
+scp -i ~/.ssh/funmicTeachingMachine -P 30370 -r ubuntu@129.70.51.6:$getFile $putDir
 
 ## seems to work
 
 ## Alica:
+ssh-copy-id -p 30299 -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6  
 
-getFile=/vol/funmic/Kelp/assemblies/
-putDir=/vol/funmic/Kelp/
-scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+ssh -X ubuntu@129.70.51.6 -i ~/.ssh/funmicTeachingMachine -p 30299 ## Alica 
+
+#getFile=/vol/funmic/Kelp/assemblies/
+#putDir=/vol/funmic/Kelp/
+#scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+## etc.
+
+## expand this to the rest of the machines, working from my own machines
+
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30361 ## Gabriela 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30311 ## Johannes 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30414 ## Tobias 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30425 ## Sascha 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30494 ## Nelly 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30344 ## Rika 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30337 ## Hanna 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30349 ## Silena 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
+ssh-copy-id -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
+
+## test login:
+
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30361 ## Gabriela 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30311 ## Johannes 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30414 ## Tobias 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30425 ## Sascha 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30494 ## Nelly 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30344 ## Rika 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30337 ## Hanna 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30349 ## Silena 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
+
+## we also need a backup copy of our phyloseq object for everyone in case 
+## something failed with their metabarcode pipeline:
+
+## our teaching copy is here:
+sipPSfile=/vol/funmic/metabarcoding/sipPS.rda
+## we can hide it on the home
+putfile=/home/ubuntu/.sipPS.rda
+
+ln -s $sipPSfile $putfile
+
+## using a file list of all the ports from above:
+
+for i in $(cat allports); do
+  echo $i
+  scp -P $i -i ~/.ssh/funmicTeachingMachine ./.sipPS.rda  ubuntu@129.70.51.6:/home/ubuntu/
+done
+
+## check a few...looks good. 
+
+## make sure this PS works, by getting tillmann his data.
+
+##### get tillmann taxonomic data #####
 
 
-## from denbi, does this work:
+## last year I gave tillmann 3 spreadsheets, family/genus/species level
+## I don't think we have species level assignments here. We'll give him 
+## the last three levels we have.
 
 
-getFile=/vol/funmic/Kelp/assemblies/
-putDir=/vol/funmic/Kelp/
-scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+cd /home/daniel/Documents/teaching/funmic/scratchpad/metabarcode_tax_data_object_for_SIP_analysis_with_students
 
-getFile=/vol/funmic/Kelp/mapping/
-putDir=/vol/funmic/Kelp/
-scp -i ~/.ssh/funmicTeachingMachine -P 30299 -r ubuntu@129.70.51.6:$getFile $putDir
+#level-5.csv  level-6.csv  level-7.csv
+
+R
+
+lev5 <- read.csv("level-5.csv")
+## rows are sites. 
+
+lev5[1:5,(ncol(lev5)-5):ncol(lev5)]
+
+## okay, how to extract this from our phyloseq obj?:
+
+lev5[1:5,(ncol(lev5)-5):ncol(lev5)]
 
 
-ssh -X -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
+## back on denbi
+
+R
+
+library(phyloseq)
+library(ggplot2)
+
+setwd("/vol/funmic/metabarcoding")
+
+## test our functions again, just in case
+
+source("/vol/funmic/scripts/sipFunctions.R")
+
+load("sipPS.rda")
 
 
+plot_bar(ps)
+
+ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
+
+NMS_braycurtis(ps.prop)
+
+samp.a <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "A",])
+samp.g <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "G",])
+samp.m <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "M",])
+
+ps.a <- prune_samples(samp.a, ps)
+ps.g <- prune_samples(samp.g, ps)
+ps.m <- prune_samples(samp.m, ps)
+
+plotPCAWithSpecies(ps=ps.m, ptitle="Methanol PCA")
+
+dev.new()
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m, ptitle="methanol, ASV21")
+
+dev.new()
+getFractionAbundances(ASVname="ASV40", whichPS=ps.m, ptitle="methanol, ASV40")
+
+dev.new()
+getFractionAbundances(ASVname="ASV11", whichPS=ps.m, ptitle="methanol, ASV11")
+
+
+plotPCAWithSpecies(ps=ps.g, ptitle="Glucose PCA")
+
+getFractionAbundances(ASVname="ASV13", whichPS=ps.g, ptitle="glucose, ASV13")
+
+## in cases like this (both 12/13 heavy fractions high but higher in 13, how do we know which the
+## higher abundances in 13 are not due to deeper sequencing?
+
+## try a proportion-transformed ps object. Not sure if the hellinger transform 
+## built into the function will break from this?
+
+ps.g.prop <- transform_sample_counts(ps.g, function(otu) otu/sum(otu))
+
+otu_table(ps.g.prop)[1:4,1:4]
+
+
+getFractionAbundances(ASVname="ASV13", whichPS=ps.g.prop, ptitle="glucose, hellinger and proportional, ASV13")
+dev.new()
+getFractionAbundances(ASVname="ASV13", whichPS=ps.g, ptitle="glucose, hellinger, ASV13")
+
+otu_table(ps.g.prop)[,"ASV13"]
+
+rowSums(otu_table(ps.g.prop)[1:2,])
+
+otu_table(ps.g)[,"ASV13"]
+
+## nothing is changing. Why not? These axes are still in read numbers...
+
+## found some typos in the scripts. 
+
+##############################
+## fixed, deploy to students
+
+
+#for i in 30362 30463 30370; do
+## local fixed version:
+#fixed=/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2025/scripts/sipFunctions.R
+## old file to replace is here:
+#broken=/vol/funmic/scripts/sipFunctions.R
+
+for i in $(cat allports); do
+  echo $i
+  ssh -p $i ubuntu@129.70.51.6 "mv /home/ubuntu/sipFunctions.R /vol/funmic/scripts/sipFunctions.R"
+  #ssh -p $i ubuntu@129.70.51.6 "ls /home/ubuntu/sipFunctions.R"
+  #ssh -p $i ubuntu@129.70.51.6 "ls /vol/funmic/scripts/sipFunctions.R"
+  #scp -P $i  $fixed  ubuntu@129.70.51.6:$broken
+done 
+
+## failing, I think it may be a bad idea to run so many ssh commands in a loop
+##############################
+
+## could also source it this way:
+
+## in r, to use in interpreter
+source("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R")
+
+## to update from denbi:
+wget "https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R"
+
+## do it without a loop, with individual ssh logins. Each one:
+mv /home/ubuntu/sipFunctions.R /vol/funmic/scripts/sipFunctions.R
+
+ls /home/ubuntu/sipFunctions.R
+
+ls -l /vol/funmic/scripts/sipFunctions.R
+
+vim -M /vol/funmic/scripts/sipFunctions.R
+
+
+## think we are in business. 
+
+########### tillmann CSVs ##################
+
+## now, how do we get tillmann his data?
+
+## using level 6 abundances:
+
+## get the otu matrix:
+
+cd /vol/funmic/metabarcoding
+
+R
+
+library(phyloseq)
+load("sipPS.rda")
+
+aa <- as.data.frame(otu_table(ps))
+
+## tillmann likes the full taxonomy, how can we get this?
+## we want our headers to be taxonomy, to match Tillmann's old formatting:
+bb <- as.data.frame(tax_table(ps))
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family,";g__",bb$Genus, sep="")
+## do the rownames of our OTUtable match the order of our taxonomic names?
+all(rownames(tax_table(ps)) == colnames(aa)) ## yes
+## so use these as our colnames:
+colnames(aa) <- cc
+## and he wants the sample info as the last columns:
+dd <- cbind(aa,sample_data(ps))
+level6df <- dd
+rm(aa,bb,cc,dd)
+
+## so that would be for level six. Don't think we did level 7 (species ids), so we can send him family and genus level.
+
+## how to do the family level?
+ps.family <- tax_glom( ps, taxrank = "Family")
+aa <- as.data.frame(otu_table(ps.family))
+bb <- as.data.frame(tax_table(ps.family)[,1:5])
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family, sep="")
+## do the rownames of our OTUtable match the order of our taxonomic names?
+all(rownames(tax_table(ps.family)) == colnames(aa)) ## yes
+## so use these as our colnames:
+colnames(aa) <- cc
+## and he wants the sample info as the last columns:
+dd <- cbind(aa,sample_data(ps.family))
+level5df <- dd
+rm(aa,bb,cc,dd)
+
+## these should be the data he needs.
+write.csv(level6df, "level6.csv")
+write.csv(level5df, "level5.csv")
+
+getFile=/vol/funmic/metabarcoding/level*.csv
+putDir=/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2025/metabarcodeSpreadsheets/
+scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## do the students need these?
+## can point them to the data with wget:
+
+
+
+##########################################################
