@@ -2536,4 +2536,13 @@ rm(aa,bb,cc,dd)
 write.csv(level6df, "level6.csv")
 write.csv(level5df, "level5.csv")
 
+getFile=/vol/funmic/metabarcoding/level*.csv
+putDir=/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2025/metabarcodeSpreadsheets/
+scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
+## do the students need these?
+## can point them to the data with wget:
+
+
+
+##########################################################
