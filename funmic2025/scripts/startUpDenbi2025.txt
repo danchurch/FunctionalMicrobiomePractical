@@ -2543,6 +2543,16 @@ scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $put
 ## do the students need these?
 ## can point them to the data with wget:
 
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/metabarcodeSpreadsheets/level5.csv
+
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/metabarcodeSpreadsheets/level6.csv
 
 
 ##########################################################
+
+## get the checkM down to local
+
+getFile=/vol/funmic/Kelp/Final_bins/CheckM/quality_report.tsv
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad
+scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
