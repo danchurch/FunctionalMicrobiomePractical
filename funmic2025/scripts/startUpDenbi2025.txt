@@ -2329,6 +2329,16 @@ ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
 
+## for updating the sipFunctions script from github:
+#cd /vol/funmic/scripts/
+#rm sipFunctions.R
+#wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R
+#exit
+
+## plot function not fixed
+
+
+
 ## we also need a backup copy of our phyloseq object for everyone in case 
 ## something failed with their metabarcode pipeline:
 
@@ -2556,3 +2566,5 @@ getFile=/vol/funmic/Kelp/Final_bins/CheckM/quality_report.tsv
 putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad
 scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
+## note, to close all windows:
+graphics.off()

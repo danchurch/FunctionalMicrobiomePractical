@@ -86,9 +86,8 @@ tax_table(ps)["ASV21",]
 ## remember that if you want to save a plot, try the pdf() or png() functions:
 
 png(file="fractionAbundances_ASV33_glucose.png")
-getFractionAbundances(ASVname="ASV33", whichPS=ps.g, ptitle="glucose, ASV33")
+getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33")
 dev.off()
-
 
 
 ############## I have to do this to get my file, but you probably don't, just use MobaXterm!! ###############
