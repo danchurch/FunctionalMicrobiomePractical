@@ -427,7 +427,7 @@ library(microtrait)
 require(stringr)
 
 # Microtrait for one genome
-results <- extract.traits(in_file="contigs/YOUR_BIN.fa",
+results <- extract.traits(in_file="contigs/ERR3801542_CONCOCT61.fa",
                                     out_dir = "microtrait/",
                                     type="genomic",
                                     mode="single",
@@ -435,7 +435,7 @@ results <- extract.traits(in_file="contigs/YOUR_BIN.fa",
                                     optimalT_predict = T)
 
 write.table(results$microtrait_result$trait_counts_atgranularity3,
-              file="microtrait/YOUR_BIN_trait_counts_atgranularity3.tsv",
+              file="microtrait/ERR3801542_CONCOCT61_trait_counts_atgranularity3.tsv",
               sep="\t",
               quote=F,
               row.names=F)
@@ -443,7 +443,7 @@ write.table(results$microtrait_result$trait_counts_atgranularity3,
 results$microtrait_result$ogt
 
 write.table(results$microtrait_result$ogt,
-              file="microtrait/YOUR_BIN_optimal_growth_T.tsv",
+              file="microtrait/ERR3801542_CONCOCT61_optimal_growth_T.tsv",
               sep="\t",
               quote=F,
               row.names=F)
@@ -451,7 +451,7 @@ write.table(results$microtrait_result$ogt,
 results$microtrait_result$growthrate_d
 
 write.table(results$microtrait_result$growthrate_d,
-              file="microtrait/YOUR_BIN_fastest_doubling_time_days.tsv",
+              file="microtrait/ERR3801542_CONCOCT61_fastest_doubling_time_days.tsv",
               sep="\t",
               quote=F,
               row.names=F)
@@ -459,7 +459,7 @@ write.table(results$microtrait_result$growthrate_d,
 # A table showing how the decisions about presence or absence of a metabolism were made
 
 write.table(results$microtrait_result$rules_asserted,
-              file="microtrait/YOUR_BIN_Rules_asserted.tsv",
+              file="microtrait/ERR3801542_CONCOCT61_Rules_asserted.tsv",
               sep="\t",
               quote=F,
               row.names=F)
