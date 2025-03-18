@@ -435,7 +435,7 @@ results <- extract.traits(in_file="contigs/YOUR_BIN.fa",
                                     optimalT_predict = T)
 
 write.table(results$microtrait_result$trait_counts_atgranularity3,
-              file="contigs/YOUR_BIN_trait_counts_atgranularity3.tsv",
+              file="microtrait/YOUR_BIN_trait_counts_atgranularity3.tsv",
               sep="\t",
               quote=F,
               row.names=F)
