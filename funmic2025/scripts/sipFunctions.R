@@ -1,5 +1,6 @@
-plotPCAWithSpecies <- function (ps, scalingType=1, scalingAmount=3, ptitle) {
-    ps.hell <- transform_sample_counts(ps, function(x) sqrt(x / sum(x)))
+plotPCAWithSpecies <- function (whichPS, scalingType=1, scalingAmount=3, ptitle) {
+    sample_data(whichPS)$Isotope = as.factor(sample_data(whichPS)$Isotope)
+    ps.hell <- transform_sample_counts(whichPS, function(x) sqrt(x / sum(x)))
     ord.PCA <- ordinate(ps.hell, method="RDA")
     plot.ord <- plot_ordination(ps.hell, ord.PCA, color="Isotope", shape="Isotope")
     speciesMat <- vegan::scores(ord.PCA, display="species", scaling=scalingType)

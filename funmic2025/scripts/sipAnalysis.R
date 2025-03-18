@@ -7,6 +7,9 @@ cd /vol/funmic/metabarcoding
 
 R 
 
+## just make sure we are in the right place
+setwd("/vol/funmic/metabarcoding") 
+
 library(phyloseq)
 library(ggplot2)
 
@@ -31,11 +34,8 @@ plotFamilies(30)
 
 dev.new() ## start a new plotter, so we don't clobber the old figure
 
-
-#sample_data(ps.prop)$Isotope = as.factor(sample_data(ps.prop)$Isotope)
-
-
 NMS_braycurtis(ps.prop)
+
 
 ## let's break up our data by substrate:
 samp.a <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "A",])
