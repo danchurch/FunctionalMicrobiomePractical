@@ -407,7 +407,7 @@ gtdbtk classify_wf \
 	--pplacer_cpus 12 \
 	--genome_dir ${FINAL_BINS_DIRECTORY}/contigs/ \
 	-x fa \
-	--out_dir {FINAL_BINS_DIRECTORY}/GTDB
+	--out_dir ${FINAL_BINS_DIRECTORY}/GTDB
 
 ##-------------------------------------------------------------------------------------------------------------------------
 ## Functional prediction with MicroTrait
