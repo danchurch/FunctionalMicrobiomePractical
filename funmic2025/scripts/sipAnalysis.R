@@ -31,6 +31,10 @@ plotFamilies(30)
 
 dev.new() ## start a new plotter, so we don't clobber the old figure
 
+
+#sample_data(ps.prop)$Isotope = as.factor(sample_data(ps.prop)$Isotope)
+
+
 NMS_braycurtis(ps.prop)
 
 ## let's break up our data by substrate:

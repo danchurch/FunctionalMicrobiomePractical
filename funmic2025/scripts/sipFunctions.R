@@ -56,6 +56,7 @@ plotFamilies = function(howManyASVs=30){
 }
 
 NMS_braycurtis = function(physeq){
+    sample_data(physeq)$Isotope = as.factor(sample_data(physeq)$Isotope)
     ord.nmds.bray <- ordinate(physeq, method="NMDS", distance="bray")
     aa <- plot_ordination(physeq, ord.nmds.bray, color="Substrate", shape="Isotope", title="Bray NMDS")
     aa + geom_point(size=3.5) + geom_text(
