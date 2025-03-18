@@ -413,6 +413,61 @@ gtdbtk classify_wf \
 ## Functional prediction with MicroTrait
 ##-------------------------------------------------------------------------------------------------------------------------
 
+conda activate annotation
+
+FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
+
+cd ${FINAL_BINS_DIRECTORY}
+
+mkdir microtrait
+
+/usr/bin/R
+
+library(microtrait)
+require(stringr)
+
+# Microtrait for one genome
+results <- extract.traits(in_file="contigs/YOUR_BIN.fa",
+                                    out_dir = "microtrait/",
+                                    type="genomic",
+                                    mode="single",
+                                    growthrate_predict = T,
+                                    optimalT_predict = T)
+
+write.table(results$microtrait_result$trait_counts_atgranularity3,
+              file="contigs/YOUR_BIN_trait_counts_atgranularity3.tsv",
+              sep="\t",
+              quote=F,
+              row.names=F)
+
+results$microtrait_result$ogt
+
+write.table(results$microtrait_result$ogt,
+              file="microtrait/YOUR_BIN_optimal_growth_T.tsv",
+              sep="\t",
+              quote=F,
+              row.names=F)
+
+results$microtrait_result$growthrate_d
+
+write.table(results$microtrait_result$growthrate_d,
+              file="microtrait/YOUR_BIN_fastest_doubling_time_days.tsv",
+              sep="\t",
+              quote=F,
+              row.names=F)
+
+# A table showing how the decisions about presence or absence of a metabolism were made
+
+write.table(results$microtrait_result$rules_asserted,
+              file="microtrait/YOUR_BIN_Rules_asserted.tsv",
+              sep="\t",
+              quote=F,
+              row.names=F)
+
+
+quit(save="no")
+
+
 
 
 
