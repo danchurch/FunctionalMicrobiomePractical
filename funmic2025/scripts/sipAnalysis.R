@@ -81,11 +81,6 @@ getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="methanol, ASV1"
 dev.new()
 getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33")
 
-getFractionAbundances(ASVname="ASV80", whichPS=ps.a.prop, ptitle="acetate, ASV80")
-
-getFractionAbundances(ASVname="ASV80", whichPS=ps.a.prop, ptitle="acetate, ASV80")
-
-getFractionAbundances(ASVname="ASV8", whichPS=ps.g.prop, ptitle="acetate, ASV8")
 
 ## that function reports taxonomy. But we can also get it this way, with phyloseq:
 
@@ -103,16 +98,4 @@ getFile=/vol/funmic/metabarcoding/fractionAbundances_ASV33_glucose.png
 putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
 scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 #############################################################################################################
-
-
-
-
-
-
-
-mkdir metabarcoding 
-
-
-cp /home/ubuntu/.sipPS.rda /vol/funmic/metabarcoding/sipPS.rda
-
 
