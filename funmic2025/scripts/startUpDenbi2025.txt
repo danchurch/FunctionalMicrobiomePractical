@@ -2571,7 +2571,6 @@ graphics.off()
 
 #### 
 
-## Caro needs the backup
 
 /vol/funmic/.Kelp_backup/Final_bins/contigs
 /vol/funmic/.Kelp_backup/Final_bins/CheckM
@@ -2595,3 +2594,5 @@ find . -name gtdbtk.bac120.summary.tsv
 
 
 ssh  ubuntu@129.70.51.6 -p 30414 ## Tobias 
+
+
