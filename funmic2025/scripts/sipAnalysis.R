@@ -108,10 +108,11 @@ scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 
 
 
-cp /home/ubuntu/.sipPS.rda /vol/funmic/metabarcoding
 
 
+mkdir metabarcoding 
 
 
+cp /home/ubuntu/.sipPS.rda /vol/funmic/metabarcoding/sipPS.rda
 
 
