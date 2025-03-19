@@ -485,8 +485,6 @@ MAG=ERR3801502_MetaBAT.8
         -i contigs/${MAG}.fa \
         -a proteins/${MAG}.faa \
 
-
-
 # prodigal generates amino acid sequences which end with an aesterix, *, symbolizing the stop codon.
 # InterProScan does not accept such seqeunces. The aesterix has to be removed with search & replace
 
