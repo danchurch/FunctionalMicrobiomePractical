@@ -2568,3 +2568,30 @@ scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $put
 
 ## note, to close all windows:
 graphics.off()
+
+#### 
+
+## Caro needs the backup
+
+/vol/funmic/.Kelp_backup/Final_bins/contigs
+/vol/funmic/.Kelp_backup/Final_bins/CheckM
+/vol/funmic/.Kelp_backup/Final_bins/GTDB
+
+#getFile=/vol/funmic/.Kelp_backup/Final_bins/contigs
+#getFile=/vol/funmic/.Kelp_backup/Final_bins/CheckM
+#getFile=/vol/funmic/.Kelp_backup/Final_bins/GTDB
+putDir=/vol/funmic/Kelp/Final_bins
+#scp -i ~/.ssh/funmicTeachingMachine -P 30463 -r $getFile ubuntu@129.70.51.6:$putDir
+
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
+
+cd /vol/funmic/Kelp/Final_bins
+
+ssh -X ubuntu@129.70.51.6 -p 30299 ## alica
+
+find . -name gtdbtk.bac120.summary.tsv
+
+## can we convert the tsv to csv?
+
+
+ssh  ubuntu@129.70.51.6 -p 30414 ## Tobias 

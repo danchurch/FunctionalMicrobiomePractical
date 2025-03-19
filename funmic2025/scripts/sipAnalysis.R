@@ -1,6 +1,7 @@
 ## let's look at our SIP data now that it is cleaned up and in a phyloseq object
 
 ## go back to our metabarcoding working directory:
+
 cd /vol/funmic/metabarcoding
 
 ## start R and get libraries:
@@ -12,7 +13,6 @@ setwd("/vol/funmic/metabarcoding")
 
 library(phyloseq)
 library(ggplot2)
-
 source("/vol/funmic/scripts/sipFunctions.R") ## some extra functions
 
 ## load up our phyloseq object from our metabarcoding pipeline:
@@ -58,13 +58,15 @@ ps.a.prop <- transform_sample_counts(ps.a, function(otu) otu/sum(otu))
 ## and let's look at these with a PCA approach:
 
 dev.new()
-plotPCAWithSpecies(whichPS=ps.m.prop, ptitle="Methanol PCA")
+plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
 
 dev.new()
-plotPCAWithSpecies(whichPS=ps.a.prop, ptitle="Acetate PCA")
+plotPCAWithSpecies(ps.a.prop, ptitle="Acetate PCA")
 
 ## how would you plot the glucose plot? Try it on your own.
 
+dev.new()
+plotPCAWithSpecies(ps.g.prop, ptitle="glucose PCA")
 
 ## the PCA and species scoring algorithms are such that the species are positioned close to 
 ## the sites that they are most important in distinguishing. 
@@ -73,15 +75,21 @@ plotPCAWithSpecies(whichPS=ps.a.prop, ptitle="Acetate PCA")
 ## here is a function that take the ASV name, the phyloseq object, and the title you want to give it:
 
 dev.new()
-getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="methanol, ASV21")
+
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="methanol, ASV1")
 
 dev.new()
 getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33")
 
+getFractionAbundances(ASVname="ASV80", whichPS=ps.a.prop, ptitle="acetate, ASV80")
+
+getFractionAbundances(ASVname="ASV80", whichPS=ps.a.prop, ptitle="acetate, ASV80")
+
+getFractionAbundances(ASVname="ASV8", whichPS=ps.g.prop, ptitle="acetate, ASV8")
 
 ## that function reports taxonomy. But we can also get it this way, with phyloseq:
 
-tax_table(ps)["ASV21",]
+tax_table(ps)["ASV8",]
 
 ## remember that if you want to save a plot, try the pdf() or png() functions:
 
@@ -95,4 +103,15 @@ getFile=/vol/funmic/metabarcoding/fractionAbundances_ASV33_glucose.png
 putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
 scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 #############################################################################################################
+
+
+
+
+
+cp /home/ubuntu/.sipPS.rda /vol/funmic/metabarcoding
+
+
+
+
+
 
