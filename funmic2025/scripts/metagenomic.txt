@@ -506,7 +506,7 @@ INTERPRO_DATA_DIR=/vol/funmic/databases/interproscan-5.73-104.0
 # Annotation of proteins with EggNOG-Mapper (VERY SLOW)
 
     emapper.py \
-        --cpu 12 \
+        --cpu 14 \
         -m diamond \
         --qtype seq \
         --seed_ortholog_evalue 0.00001 \
@@ -515,7 +515,7 @@ INTERPRO_DATA_DIR=/vol/funmic/databases/interproscan-5.73-104.0
         -o ${MAG}_EggNOG
 
 
-  sed -i '/^##/d' .*_EggNOG.emapper.annotations
+  sed -i '/^##/d' Annotation/*_EggNOG.emapper.annotations
 
 
 
