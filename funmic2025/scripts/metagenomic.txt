@@ -467,6 +467,68 @@ write.table(results$microtrait_result$rules_asserted,
 
 quit(save="no")
 
+#-------------------------------------------------------------------------------------------------------------------------------------------
+#  Annotation of proteins with InterPro
+#-------------------------------------------------------------------------------------------------------------------------------------------
+
+conda activate annotation
+
+FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
+
+cd ${FINAL_BINS_DIRECTORY}
+
+mkdir proteins
+
+for MAG in $(ls contigs/*.fa | xargs -n 1 basename | sed 's/.fa//g');
+
+do
+     prodigal \
+        -i contigs/${MAG}.fa \
+        -a proteins/${MAG}.faa \
+        -q
+done
+
+# prodigal generates amino acid sequences which end with an aesterix, *, symbolizing the stop codon.
+# InterProScan does not accept such seqeunces. The aesterix has to be removed with search & replace
+
+sed -i 's/\*//g' proteins/*.faa
+
+mkdir Annotation
+
+INTERPRO_DATA_DIR=/vol/funmic/databases/interproscan-5.73-104.0
+
+for MAG in $(ls proteins/*.faa | xargs -n 1 basename | sed 's/.faa//g');
+
+do
+
+    ${INTERPRO_DATA_DIR}/interproscan.sh \
+		-cpu 12 \
+        -appl Pfam,TIGRFAM,SUPERFAMILY \
+		-i proteins/${MAG}.faa \
+		-f tsv \
+		-o Annotation/${MAG}_InterProScan.tsv
+
+done
+
+# Annotation of proteins with EggNOG-Mapper (VERY SLOW)
+
+
+for MAG in $(ls proteins/*.faa | xargs -n 1 basename | sed 's/.faa//g');
+do
+
+    emapper.py \
+        --cpu 12 \
+        -m diamond \
+        --qtype seq \
+        --seed_ortholog_evalue 0.00001 \
+        -i proteins/${MAG}.faa \
+        --output_dir Annotation/ \
+        -o ${MAG}_EggNOG
+
+done
+
+  sed -i '/^##/d' .*_EggNOG.emapper.annotations
+
 
 
 
