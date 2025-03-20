@@ -2595,4 +2595,92 @@ find . -name gtdbtk.bac120.summary.tsv
 
 ssh  ubuntu@129.70.51.6 -p 30414 ## Tobias 
 
+####### change ps objects and SIP functions to use buoyant densities ##########
 
+## get a copy of the old data:
+getFile=/vol/funmic/datasets/Barcode2024/sip2024.csv
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical_repo/funmic2025/metabarcodeSpreadsheets/
+#scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+## and get the PS object we are using:
+
+getFile=/vol/funmic/metabarcoding/sipPS.rda
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/
+#scp -i ~/.ssh/funmicTeachingMachine -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
+
+R
+
+## new data from tillmann email
+samples <- c("A12-05","A12-06","A12-07","A13-06","A13-07","A13-08","G12-06","G12-07","G12-08","G12-09","G13-06","G13-07","G13-08","G13-09","G13-10","M12-07","M12-08","M12-09","M13-04","M13-05","M13-06","M13-07","M13-08")
+BD <- c("1.73192","1.72297","1.712","1.71599","1.70901","1.70101","1.71898","1.712","1.70101","1.68899","1.73589","1.72993","1.72098","1.71101","1.70201","1.7049","1.69504","1.67966","1.74199","1.73002","1.71911","1.70818","1.69723")
+
+length(samples)
+length(BD)
+
+names(BD)=samples
+samdf <- read.csv("sip2024.csv", row.names=1,)
+samdf$BD <- BD
+
+#write.csv(samdf, file="sip2024.csv")
+## this can be deployed to the VMs. 
+
+## we also need to change their ps objects to include the 
+## the new BD data
+
+## start again here
+
+library(phyloseq)
+library(ggplot2)
+
+samdf <- read.csv("/home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical_repo/funmic2025/metabarcodeSpreadsheets/sip2024.csv", row.names=1,)
+## get their ps object 
+load("/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/sipPS.rda")
+## add new sample_data
+sample_data(ps) <- samdf
+## save out, distribute both new ps object and csv to the computers, in a minute
+## first, let's see if we can modify our plotting function:
+## subset the dataframes
+## methanol
+samp.m <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "M",])
+ps.m <- prune_samples(samp.m, ps)
+ps.m.prop <- transform_sample_counts(ps.m, function(otu) otu/sum(otu))
+
+rm(getFractionAbundances)
+
+source("/home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical_repo/funmic2025/scripts/sipFunctions.R")
+
+plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
+
+dev.new()
+getFractionAbundances("ASV40",ps.m.prop,ptitle="ASV40",fracOrBD="BD")
+
+dev.new()
+getFractionAbundances("ASV40",ps.m.prop,ptitle="ASV40",fracOrBD="Fraction")
+
+getFractionAbundances = function(ASVname,whichPS,ptitle="",fracOrBD="BD")
+
+dev.new()
+getFractionAbundances("ASV100",ps.m.prop,ptitle="ASV100, Methanol",fracOrBD="Fraction")
+
+dev.new()
+getFractionAbundances("ASV100",ps.m.prop,ptitle="ASV100, Methanol",fracOrBD="BD")
+
+## seems to work. Deploy, test on some student computers. 
+
+## all students need the new ps, new csv, and new functions
+## put the csv and functions are on the githup. Also put the 
+## the ps object on there for a moment.:
+
+
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30361 ## Gabriela 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30311 ## Johannes 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30414 ## Tobias 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30425 ## Sascha 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30494 ## Nelly 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30344 ## Rika 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30337 ## Hanna 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30349 ## Silena 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
+ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
