@@ -58,12 +58,11 @@ ps.a.prop <- transform_sample_counts(ps.a, function(otu) otu/sum(otu))
 ## and let's look at these with a PCA approach:
 
 dev.new()
+
 plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
 
 dev.new()
 plotPCAWithSpecies(ps.a.prop, ptitle="Acetate PCA")
-
-## how would you plot the glucose plot? Try it on your own.
 
 dev.new()
 plotPCAWithSpecies(ps.g.prop, ptitle="glucose PCA")
@@ -74,12 +73,23 @@ plotPCAWithSpecies(ps.g.prop, ptitle="glucose PCA")
 ## let's check one out:
 ## here is a function that take the ASV name, the phyloseq object, and the title you want to give it:
 
+
+## plots from yesterday looked like this:
+
 dev.new()
 
-getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="methanol, ASV1")
+getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="Fraction")
+
+## we added the ability to graph by Buoyant Density:
 
 dev.new()
-getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33")
+getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
+
+dev.new()
+
+getFractionAbundances(ASVname="ASV19", whichPS=ps.g.prop, ptitle="glucose, ASV19", fracOrBD="BD")
+
+getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
 
 
 ## that function reports taxonomy. But we can also get it this way, with phyloseq:
@@ -89,7 +99,7 @@ tax_table(ps)["ASV8",]
 ## remember that if you want to save a plot, try the pdf() or png() functions:
 
 png(file="fractionAbundances_ASV33_glucose.png")
-getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33")
+getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33", fracOrBD="BD")
 dev.off()
 
 

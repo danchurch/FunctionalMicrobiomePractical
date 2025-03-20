@@ -2665,11 +2665,18 @@ getFractionAbundances("ASV100",ps.m.prop,ptitle="ASV100, Methanol",fracOrBD="Fra
 dev.new()
 getFractionAbundances("ASV100",ps.m.prop,ptitle="ASV100, Methanol",fracOrBD="BD")
 
+## save out the ps object:
+
+
 ## seems to work. Deploy, test on some student computers. 
 
 ## all students need the new ps, new csv, and new functions
 ## put the csv and functions are on the githup. Also put the 
 ## the ps object on there for a moment.:
+
+save(ps, file="/home/daniel/Documents/teaching/functionalMicrobiomes/FunctionalMicrobiomePractical_repo/funmic2025/metabarcodeData/sipPS.rda")
+
+## now each student computer should update by getting all three from github:
 
 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30299 ## Alica 
@@ -2684,3 +2691,17 @@ ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30349 ## Silena
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
+
+cd /vol/funmic/metabarcoding
+rm sipPS.rda
+wget https://github.com/danchurch/FunctionalMicrobiomePractical/raw/refs/heads/main/funmic2025/metabarcodeData/sipPS.rda
+
+cd /vol/funmic/datasets/Barcode2024
+rm sip2024.csv
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/metabarcodeData/sip2024.csv
+
+cd /vol/funmic/scripts
+rm sipFunctions.R
+wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R
+
+## test out R scripts on teaching comp...
