@@ -2688,20 +2688,23 @@ ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30494 ## Nelly
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30344 ## Rika 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30337 ## Hanna 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30349 ## Silena 
+
+## not yet updated new script, ps, vs:
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd 
+
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
 
 cd /vol/funmic/metabarcoding
 rm sipPS.rda
 wget https://github.com/danchurch/FunctionalMicrobiomePractical/raw/refs/heads/main/funmic2025/metabarcodeData/sipPS.rda
-
 cd /vol/funmic/datasets/Barcode2024
 rm sip2024.csv
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/metabarcodeData/sip2024.csv
-
 cd /vol/funmic/scripts
 rm sipFunctions.R
 wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2025/scripts/sipFunctions.R
+exit
 
 ## test out R scripts on teaching comp...
+## works, deploy to students
