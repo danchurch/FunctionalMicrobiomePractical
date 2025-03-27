@@ -2688,10 +2688,7 @@ ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30494 ## Nelly
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30344 ## Rika 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30337 ## Hanna 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30349 ## Silena 
-
-## not yet updated new script, ps, vs:
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30362 ## Floyd 
-
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30463 ## Carolina 
 ssh -i ~/.ssh/funmicTeachingMachine ubuntu@129.70.51.6 -p 30370 ## Ana-Lena 
 
@@ -2708,3 +2705,5 @@ exit
 
 ## test out R scripts on teaching comp...
 ## works, deploy to students
+
+## test out R scripts on student comp...
