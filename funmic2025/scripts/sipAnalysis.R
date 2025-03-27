@@ -109,3 +109,29 @@ putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
 scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
 #############################################################################################################
 
+#### addendum: interpreting the fraction figures ####
+
+## bring up the methanol ordination again:
+plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
+
+## a look at a not-GC rich species
+
+tax_table(ps)["ASV1",]
+
+dev.new()
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="Fraction")
+
+dev.new()
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="BD")
+
+## a look at a GC rich species from actinobacteria
+
+tax_table(ps)["ASV11",]
+
+dev.new()
+getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="Fraction")
+
+dev.new()
+getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="BD")
+
+

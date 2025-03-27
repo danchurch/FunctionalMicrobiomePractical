@@ -2706,4 +2706,46 @@ exit
 ## test out R scripts on teaching comp...
 ## works, deploy to students
 
-## test out R scripts on student comp...
+## for teaching example, use methanol/ASV1,
+
+## but for a high GC, not taking up the label, need an actinomycete in methanol, maybe
+
+## using the ps object from before:
+
+
+colnames(tax_table(ps))
+
+unique(tax_table(ps)[,"Phylum"]) 
+
+tax_table(ps)[,"Phylum"] == "Actinomycetota" 
+
+onlyActinos <- subset_taxa(ps, Phylum=="Actinomycetota")
+
+
+rownames(tax_table(onlyActinos)) ## lots, pick the most abundant:
+## "ASV3"    "ASV8"    "ASV11"
+
+#### transfer following to teaching script ####
+
+## bring up the methanol ordination again:
+plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
+
+## a look at a not-GC rich species 
+
+tax_table(ps)["ASV1",]
+
+dev.new()
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="Fraction")
+
+dev.new()
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="BD")
+
+## a look at a GC rich species from actinobacteria
+
+tax_table(ps)["ASV11",]
+
+dev.new()
+getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="Fraction")
+
+dev.new()
+getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="BD")
