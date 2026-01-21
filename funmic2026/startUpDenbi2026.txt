@@ -10,4 +10,4 @@ ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 31993
 
 ssh-keygen -t rsa -f officeComp_denbi26
 
-
+##
