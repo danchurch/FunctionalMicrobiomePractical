@@ -1,0 +1,10 @@
+## let's begin the process of setting up de.NBI for our practical:
+
+## let's get the log-in working
+
+ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 31993
+
+## need to update keys for denbi....
+
+## transfer keys from laptop tonight?
+
