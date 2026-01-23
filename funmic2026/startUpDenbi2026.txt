@@ -10,4 +10,18 @@ ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 31993
 
 ssh-keygen -t rsa -f officeComp_denbi26
 
-##
+## starting a new repo:
+git clone https://github.com/danchurch/FunctionalMicrobiomePractical.git
+git config --global user.email "danchurchthomas@gmail.com"
+git config --global user.name "danchurch"
+git remote set-url origin git@github.com:danchurch/FunctionalMicrobiomePractical.git
+
+ 
+ssh ubuntu@129.70.51.6 -p 31993 ## login works from laptop.
+
+## if we want to transfer with rsync, instead of scp, any problems there?
+
+rsync -auv daniel@132.180.112.24:/home/daniel/.ssh/officeComp_denbi26.pub ~/
+
+rsync -auvn ~/officeComp_denbi26.pub ubuntu@129.70.51.6:31993/
+
