@@ -6,5 +6,8 @@ ssh -i /path/to/your/ssh/private/key ubuntu@129.70.51.6 -p 31993
 
 ## need to update keys for denbi....
 
-## transfer keys from laptop tonight?
+## let's make a new key pair for our "new" desktop
+
+ssh-keygen -t rsa -f officeComp_denbi26
+
 
