@@ -85,17 +85,65 @@ source /vol/funmic/miniconda/miniconda3/bin/activate
 export PATH=/vol/funmic/miniconda3/miniconda3/bin:$PATH
 conda init
 
+## get the main channels that we use:
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+
+
 ## now start building the software environments...
 ## logging in and out, conda is stable. 
 ## but of course reboot kills it, because of the fstab issue. 
 ## for now remount and restart conda each time,
 
-## I think that means each time we need to do this:
+## I think that means each time we reboot we need to do this:
 sudo mount /dev/vdc /vol/funmic
 conda init
 source ~/.bashrc
 
 ## fix the fstabs individually when we have the other VMs. 
 
-
 ######## science software installs  ##########
+
+####### sra toolkit #######
+wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
+tar -xzf sratoolkit.current-ubuntu64.tar.gz
+
+cd /home/ubuntu/sratoolkit.3.3.0-ubuntu64/bin
+
+## set the working directory and temp file location to somewhere on the volume, then
+## seems to work, add to path
+
+## adding this to bashrc
+export PATH=/home/ubuntu/sratoolkit.3.3.0-ubuntu64/bin:$PATH
+
+####### Dimitri's data #######
+
+## from last year we have this script for getting his 
+## data. Does it work?
+
+####### getKelpReads.sh ############
+
+names=(
+"ERR3801502"
+"ERR3801542"
+"ERR3801603"
+)
+
+for i in ${names[@]}; do
+  prefetch $i
+  fasterq-dump --split-files $i
+done
+
+####################################
+
+## run this on the volume where we have plenty of room:
+
+mkdir -p /vol/funmic/datasets/kelpBiofilm
+
+cd /vol/funmic/datasets/kelpBiofilm
+
+nohup bash getKelpReads.sh &
+
+
