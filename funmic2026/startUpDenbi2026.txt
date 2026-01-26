@@ -1,3 +1,5 @@
+######## set up VM ##########
+
 ## let's begin the process of setting up de.NBI for our practical:
 
 ## let's get the log-in working
@@ -17,11 +19,83 @@ git config --global user.name "danchurch"
 git remote set-url origin git@github.com:danchurch/FunctionalMicrobiomePractical.git
 
  
-ssh ubuntu@129.70.51.6 -p 31993 ## login works from laptop.
+ssh ubuntu@129.70.51.6 -p 31993 ## login works from desktop. We're in business. 
 
 ## if we want to transfer with rsync, instead of scp, any problems there?
+## https://stackoverflow.com/questions/4549945/is-it-possible-to-specify-a-different-ssh-port-when-using-rsync
+## something like?: rsync -auv daniel@132.180.112.24:/home/daniel/.ssh/officeComp_denbi26.pub ~/
 
-rsync -auv daniel@132.180.112.24:/home/daniel/.ssh/officeComp_denbi26.pub ~/
+## let's just try rerun our installation scripts from last year:
 
-rsync -auvn ~/officeComp_denbi26.pub ubuntu@129.70.51.6:31993/
+## mount the drive, with fstab so it survives reboots:
 
+sudo mount /dev/vdc /vol/funmic
+
+blkid /dev/vda 
+
+## funny, volume is not listed as mounted, but seems to be working 
+## and rebooting doesn't really break it.  I don't understand.
+## but I guess if it isn't broken, don't fix it....
+
+## on the simpleVM de.NBI site, they mention the volumes may not
+## be formatted. Let's check.
+
+df -Th ## not listed there. I'm confused. How am I allowed to write to it?
+
+## something doesn't smell right.
+## let's try formatting the file system before we do any work. 
+## Might save us problems later:
+
+#sudo mkfs.ext4 /dev/vdc
+sudo mount /dev/vdc /vol/funmic ## now this works 
+
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
+
+## works. UUID = 1c547cd8-ce37-4efc-a49e-be6d967a72fa
+
+## but change the owner for this path away from Root to normal user:
+sudo chown ubuntu:ubuntu /vol/funmic
+
+## let's wait to add it to the fstab. I think this could cost
+## problems when we clone the whole setup. 
+
+## some housekeeping software...
+
+sudo apt install unzip
+
+## last year we had do some extra installs for port-forwarding
+## do we need to do this again?
+
+## not run ##
+apt search xorg
+
+apt search xauth
+
+sudo apt-get install xauth xorg
+## not run ^^ ##
+
+## of course, need conda:
+
+mkdir -p /vol/funmic/miniconda
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /vol/funmic/miniconda/miniconda.sh
+bash /vol/funmic/miniconda/miniconda.sh -b -u -p /vol/funmic/miniconda/miniconda3
+rm /vol/funmic/miniconda/miniconda.sh
+source /vol/funmic/miniconda/miniconda3/bin/activate
+export PATH=/vol/funmic/miniconda3/miniconda3/bin:$PATH
+conda init
+
+## now start building the software environments...
+## logging in and out, conda is stable. 
+## but of course reboot kills it, because of the fstab issue. 
+## for now remount and restart conda each time,
+
+## I think that means each time we need to do this:
+sudo mount /dev/vdc /vol/funmic
+conda init
+source ~/.bashrc
+
+## fix the fstabs individually when we have the other VMs. 
+
+
+######## science software installs  ##########
