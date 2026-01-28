@@ -207,4 +207,25 @@ sudo apt install default-jre
 ## last year installing maxbin2 and concoct via conda worked
 ## but had to compile metabat from source.
 
+### maxbin2 ###
+### concoct ###
+conda create -n binning -c bioconda maxbin2 concoct
+
+### metabat ###
+
+## have to install from source (https://bitbucket.org/berkeleylab/metabat/src/master/)
+
+apt search libboost-all-dev
+sudo apt install libboost-all-dev
+sudo apt install cmake
+sudo apt install g++ ## already installed 
+apt search autoconf ## already installed 
+
+## not run
+cd /vol/funmic
+
+wget https://bitbucket.org/berkeleylab/metabat/get/master.tar.gz
+
+
+
 
