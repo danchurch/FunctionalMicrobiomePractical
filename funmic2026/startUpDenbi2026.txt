@@ -1,3 +1,6 @@
+## no microtraits this year, drop it. We may use "s-cyc-db" 
+## which should just be a diamond-searchable db
+
 ######## set up VM ##########
 
 ## let's begin the process of setting up de.NBI for our practical:
@@ -104,7 +107,6 @@ source ~/.bashrc
 
 ## fix the fstabs individually when we have the other VMs. 
 
-######## science software installs  ##########
 
 ####### sra toolkit #######
 wget https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
@@ -145,5 +147,64 @@ mkdir -p /vol/funmic/datasets/kelpBiofilm
 cd /vol/funmic/datasets/kelpBiofilm
 
 nohup bash getKelpReads.sh &
+
+
+######## science software installs  ##########
+
+### cutadapt ###
+
+conda create -n qualityControlRawSequences -c bioconda cutadapt fastqc
+
+### phyloflash ###
+
+conda create -n communityComposition -c bioconda phyloflash
+
+##  formatted silva database for phyloFlash
+## looks like they have updated from last year to silva 138.2:
+
+cd /vol/funmic/databases
+
+wget https://zenodo.org/records/18158647/files/138.2.tar.gz
+
+tar -xzf 138.2.tar.gz
+
+mv 138.2/ phyloflashSilvaDB/
+
+### megahit ###
+conda create -n assembly -c bioconda megahit
+
+### quast ###
+conda create -n assemblyQC -c bioconda quast
+
+### minimap ###
+
+## the repo for minimap (https://github.com/lh3/minimap2?tab=readme-ov-file#install)
+## says just download binaries. so:
+
+mkdir /vol/funmic/.minimap2
+
+cd /vol/funmic/.minimap2
+
+curl -L https://github.com/lh3/minimap2/releases/download/v2.28/minimap2-2.28_x64-linux.tar.bz2 | tar -jxvf -
+
+## link to somewhere we can find it
+sudo ln -s /vol/funmic/.minimap2/minimap2-2.28_x64-linux/minimap2 /usr/local/bin/minimap2
+
+cd /vol/funmic
+
+wget https://netix.dl.sourceforge.net/project/bbmap/BBMap_39.62.tar.gz
+
+tar -xvzf BBMap_39.62.tar.gz
+
+mv bbmap /vol/funmic/.bbmap/
+
+## needs java:
+
+sudo apt install default-jre
+
+##### binning software #####
+
+## last year installing maxbin2 and concoct via conda worked
+## but had to compile metabat from source.
 
 
