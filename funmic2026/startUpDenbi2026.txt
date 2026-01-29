@@ -221,11 +221,24 @@ sudo apt install cmake
 sudo apt install g++ ## already installed 
 apt search autoconf ## already installed 
 
-## not run
 cd /vol/funmic
+git clone https://bitbucket.org/berkeleylab/metabat.git metabat
+cd metabat
+mkdir build 
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/vol/funmic/.metabat ..
+make
+make install
+cd ..
+rm -rf build
 
-wget https://bitbucket.org/berkeleylab/metabat/get/master.tar.gz
+## oops, put it in the home directory.
+## better in the vol
 
+ls /vol/funmic/.metabat/
+
+## add to path also?
+export PATH="/vol/funmic/.metabat/bin:$PATH"
 
 
 
