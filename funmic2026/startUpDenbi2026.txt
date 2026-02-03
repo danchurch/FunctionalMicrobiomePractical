@@ -232,13 +232,75 @@ make install
 cd ..
 rm -rf build
 
-## oops, put it in the home directory.
-## better in the vol
-
-ls /vol/funmic/.metabat/
-
-## add to path also?
+## add to path 
 export PATH="/vol/funmic/.metabat/bin:$PATH"
 
+##### refining bins #####
+### das_tool ###
+
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+conda create -n refine -c bioconda das_tool
+
+##### depreplication #####
+### deprep ###
+
+conda create -n dereplication -c bioconda  drep
+
+##### assign taxonomy to bins #####
+### gtdb-tk ###
+
+conda create -n assignTaxonomy -c conda-forge -c bioconda gtdbtk=2.6.1
 
 
+conda activate assignTaxonomy
+
+## try their script for downloading the GTDB:
+
+download-db.sh
+
+## they say to move this here:
+/vol/funmic/miniconda/miniconda3/envs/assignTaxonomy/share/assignTaxonomy/db/
+
+gtdbtk check_install
+
+## while that is running...
+
+##### metabarcoding #####
+
+### R ####
+sudo apt install r-base-core
+
+sudo R
+
+## of course some dependencies, variously in R and terminal
+install.packages("BiocManager", repos = "https://cloud.r-project.org")
+
+## from last year we were missing the following packages/libraries
+sudo apt install libcurl4-openssl-dev
+sudo apt install libssl-dev
+sudo apt install libblas-dev liblapack-dev
+sudo apt install libpng-dev
+sudo apt install libjpeg-dev
+sudo apt install liblzma-dev
+sudo apt install libbz2-dev
+
+BiocManager::install("dada2")
+
+## get a dada2-compatible silva:
+
+cd /vol/funmic/databases
+
+wget https://zenodo.org/records/14169026/files/silva_nr99_v138.2_toGenus_trainset.fa.gz
+
+### vegan ###
+install.packages('vegan')
+
+### phyloseq ###
+BiocManager::install("phyloseq")
+
+##### annotation software #####
+
+## not run 
+conda create -n annotation -c bioconda -c conda-forge prodigal diamond eggnog-mapper interproscan prokka
