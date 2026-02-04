@@ -339,7 +339,7 @@ vim ./etc/conda/activate.d/env_vars.sh ## to say:
 #############
 #!/bin/sh
 
-export EGGNOG_DATA_DIR=/vol/funmic/databases/eggnog-mapper-data/
+export EGGNOG_DATA_DIR=/vol/funmic/databases/EggNOG
 ###############
 
 ## and the deactivation script:
@@ -381,12 +381,7 @@ rsync -auv \
   -e "ssh -p 31993" \
   /media/vol/denbiFileTransfers/EggNOG ubuntu@129.70.51.6:/vol/funmic/databases/
 
+## test again:
+emapper.py 
 
-
-ubuntu@129.70.51.6 -p 31993
-
-rsync -rvz --rsh='ssh -p2222' --progress --remove-sent-files ./dir user@host:/path
-
-rsync -rvz --progress --remove-sent-files -e "ssh -p 2222" ./dir user@host/path
-
-## https://stackoverflow.com/questions/4549945/is-it-possible-to-specify-a-different-ssh-port-when-using-rsync
+## no error about databases. Test it deeper later. 
