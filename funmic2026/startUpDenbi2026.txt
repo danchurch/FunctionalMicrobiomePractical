@@ -59,7 +59,7 @@ lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"
 ## but change the owner for this path away from Root to normal user:
 sudo chown ubuntu:ubuntu /vol/funmic
 
-## let's wait to add it to the fstab. I think this could cost
+## let's wait to add it to the fstab. I think this could cause
 ## problems when we clone the whole setup. 
 
 ## some housekeeping software...
@@ -101,8 +101,9 @@ conda config --add channels conda-forge
 ## for now remount and restart conda each time,
 
 ## I think that means each time we reboot we need to do this:
+
 sudo mount /dev/vdc /vol/funmic
-conda init
+#conda init ## needed?
 source ~/.bashrc
 
 ## fix the fstabs individually when we have the other VMs. 
@@ -302,5 +303,90 @@ BiocManager::install("phyloseq")
 
 ##### annotation software #####
 
-## not run 
-conda create -n annotation -c bioconda -c conda-forge prodigal diamond eggnog-mapper interproscan prokka
+## as before, try one big environment:
+
+conda create -n annotation -c bioconda -c conda-forge prodigal diamond eggnog-mapper interproscan
+
+## I'm confused a bit, not sure if the databases downloaded with that?
+
+emapper.py ## nope
+
+
+## try their script for getting the database:
+
+download_eggnog_data.py
+
+## it wants a directory at: 
+cd /vol/funmic/miniconda/miniconda3/envs/annotation/lib/python3.11/site-packages/data
+## which doesn't exist. Not sure if I should make it.
+
+## last year I changed the shell variable for this environment to force it to check 
+## some where else. Try this again:
+
+conda activate annotation; echo $CONDA_PREFIX
+
+cd $CONDA_PREFIX
+
+mkdir -p ./etc/conda/activate.d
+mkdir -p ./etc/conda/deactivate.d
+mkdir /vol/funmic/databases/eggnog-mapper-data
+
+touch ./etc/conda/activate.d/env_vars.sh
+touch ./etc/conda/deactivate.d/env_vars.sh
+
+vim ./etc/conda/activate.d/env_vars.sh ## to say:
+
+#############
+#!/bin/sh
+
+export EGGNOG_DATA_DIR=/vol/funmic/databases/eggnog-mapper-data/
+###############
+
+## and the deactivation script:
+vim ./etc/conda/deactivate.d/env_vars.sh
+
+##############
+#!/bin/sh
+
+unset EGGNOG_DATA_DIR
+##############
+
+## try again:
+download_eggnog_data.py
+
+## not finding the embl website...why?
+
+vim -M /vol/funmic/miniconda/miniconda3/envs/annotation/bin/download_eggnog_data.py
+
+download_eggnog_data.py
+
+## from this script...
+http://eggnogdb.embl.de/download/emapperdb-{__DB_VERSION__}
+
+vim -M /vol/funmic/miniconda/miniconda3/envs/annotation/lib/python3.11/site-packages/eggnogmapper/version.py ## we need db version 5.0.2
+
+
+## yeah, the website for the eggnog mapper databases is down and apparently has
+## been for a couple months. I have added my name to the list of users on the issue.
+
+## let's try the version that Dimitri has locally on the nanopore computer:
+
+## on my desktop:
+rsync -auv test@132.180.112.115:/media/vol2/Databases/EggNOG /media/vol/denbiFileTransfers/
+
+## and then onto deNBI. 
+
+rsync -auv \
+  --progress \
+  -e "ssh -p 31993" \
+  /media/vol/denbiFileTransfers/EggNOG ubuntu@129.70.51.6:/vol/funmic/databases/
+
+
+
+ubuntu@129.70.51.6 -p 31993
+
+rsync -rvz --rsh='ssh -p2222' --progress --remove-sent-files ./dir user@host:/path
+
+rsync -rvz --progress --remove-sent-files -e "ssh -p 2222" ./dir user@host/path
+
+## https://stackoverflow.com/questions/4549945/is-it-possible-to-specify-a-different-ssh-port-when-using-rsync
