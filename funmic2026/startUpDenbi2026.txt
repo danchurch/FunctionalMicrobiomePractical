@@ -305,11 +305,16 @@ BiocManager::install("phyloseq")
 
 ## as before, try one big environment:
 
-conda create -n annotation -c bioconda -c conda-forge prodigal diamond eggnog-mapper interproscan
+conda create -n annotation -c bioconda -c conda-forge prodigal diamond eggnog-mapper 
+
+## not including interproscan because the conda version is pretty old.
 
 ## I'm confused a bit, not sure if the databases downloaded with that?
 
+conda activate annotation 
+
 emapper.py ## nope
+
 
 
 ## try their script for getting the database:
@@ -385,3 +390,55 @@ rsync -auv \
 emapper.py 
 
 ## no error about databases. Test it deeper later. 
+
+### interproscan ###
+
+## there is a repo... are the binaries and the database in there?
+
+cd /vol/funmic
+#git clone https://github.com/ebi-pf-team/interproscan.git
+
+## nope, not the way to do that...
+## as per: https://interproscan-docs.readthedocs.io/en/v5/UserDocs.html#obtaining-a-copy-of-interproscan
+
+mkdir /vol/funmic/databases/interproscan-5.77-108.0
+cd /vol/funmic/databases/interproscan-5.77-108.0
+wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.77-108.0/interproscan-5.77-108.0-64-bit.tar.gz
+
+
+wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.77-108.0/interproscan-5.77-108.0-64-bit.tar.gz.md5
+
+# Recommended checksum to confirm the download was successful:
+
+
+## not run
+
+md5sum -c interproscan-5.77-108.0-64-bit.tar.gz
+
+# Must return *interproscan-5.77-108.0-64-bit.tar.gz: OK*
+# If not - try downloading the file again as it may be a corrupted copy.
+
+## if all is good, extract
+tar -pxvzf interproscan-5.77-108.0-*-bit.tar.gz
+
+interproscan.sh -version
+
+
+### metabarcoding data ###
+
+## somehow felix made the metabarcode data from last year available
+## publically:
+
+wget -O oemik2025.zip https://cloud.bayceer.uni-bayreuth.de/index.php/s/Om31TQtpVSDj4SV/download?path=%2F&files=
+
+unzip oemik2025.zip
+
+mkdir /vol/funmic/datasets/Barcode2025/
+
+mv OemikExp032 datasets/Barcode2025/raw_reads
+
+## we need to run these through the pipelines in the class
+
+## where are the metadata for these? wait for instructions from Tillmann/Felix...
+
+
