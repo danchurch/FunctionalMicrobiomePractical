@@ -410,10 +410,11 @@ wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.77-108.0/interproscan-5
 
 # Recommended checksum to confirm the download was successful:
 
-
 ## not run
 
 md5sum -c interproscan-5.77-108.0-64-bit.tar.gz
+
+man md5sum 
 
 # Must return *interproscan-5.77-108.0-64-bit.tar.gz: OK*
 # If not - try downloading the file again as it may be a corrupted copy.
