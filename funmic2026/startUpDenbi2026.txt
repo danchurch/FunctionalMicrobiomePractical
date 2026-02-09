@@ -404,25 +404,13 @@ cd /vol/funmic
 mkdir /vol/funmic/databases/interproscan-5.77-108.0
 cd /vol/funmic/databases/interproscan-5.77-108.0
 wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.77-108.0/interproscan-5.77-108.0-64-bit.tar.gz
-
-
 wget https://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.77-108.0/interproscan-5.77-108.0-64-bit.tar.gz.md5
-
-# Recommended checksum to confirm the download was successful:
-
-## not run
-
-md5sum -c interproscan-5.77-108.0-64-bit.tar.gz
-
-man md5sum 
-
-# Must return *interproscan-5.77-108.0-64-bit.tar.gz: OK*
-# If not - try downloading the file again as it may be a corrupted copy.
-
-## if all is good, extract
+md5sum -c interproscan-5.77-108.0-64-bit.tar.gz.md5 ## looks good
 tar -pxvzf interproscan-5.77-108.0-*-bit.tar.gz
 
-interproscan.sh -version
+cd /vol/funmic/databases/interproscan-5.77-108.0
+
+./interproscan.sh -version ## seems to work.
 
 
 ### metabarcoding data ###
@@ -430,16 +418,104 @@ interproscan.sh -version
 ## somehow felix made the metabarcode data from last year available
 ## publically:
 
+## on my compuer: 
+cd /media/vol/funmicBackups/Barcode2025
+
 wget -O oemik2025.zip https://cloud.bayceer.uni-bayreuth.de/index.php/s/Om31TQtpVSDj4SV/download?path=%2F&files=
 
 unzip oemik2025.zip
 
-mkdir /vol/funmic/datasets/Barcode2025/
+## last year we had 3 substrates for analysis:
+## acetate, methanol, glucose
+## in the lab we processed glycerol
 
-mv OemikExp032 datasets/Barcode2025/raw_reads
+## this year we add glycerol to the analysis
 
-## we need to run these through the pipelines in the class
+## where are the sample data for these? wait for instructions from Tillmann/Felix.
+## notes from felix about data:
 
-## where are the metadata for these? wait for instructions from Tillmann/Felix...
+7 ~ 12C - glycerol
+Fractions 3-8
+=> 7.3 - 7.8
 
+8 ~ 13C - glycerol
+Fractions 2-7
+8.2 - 8.7
+
+## tillmann will supply the buoyant densities. 
+## in the meantime, we need a sample table, and to update the 
+
+## merge files from last year and the new substrate (glycerol):
+
+## still on my computer:
+ln -s /media/vol/funmicBackups/Barcode2024/raw_reads/* /media/vol/funmicBackups/Barcode2025/raw_reads
+
+## last year, file names were: letter for substrate + number of isotope + number of fraction
+## can we do the renaming of these files to match last year, and also generate our 
+## sample data spreadsheet at the same time?
+
+cd /media/vol/funmicBackups/Barcode2026
+
+#sudo pip3 install openpyxl
+
+python3
+
+import pandas as pd
+import re, os
+from pathlib import Path
+
+os.listdir()
+
+aa = pd.read_excel('OeMik-Exp032_Proben_v2.xlsx', sheet_name="Proben")[['Genomics Id', 'Probe Id', 'ID']]
+probefilter = aa['Probe Id'].isin(list(range(75,87)))
+bb = aa[probefilter]
+p = re.compile("\.|--")
+cc = bb['ID'].str.split(p,expand=True)
+dd = pd.concat([bb,cc], axis=1)
+dd.columns = ['Genomics Id', 'Probe Id', 'ID', 'isoCode', 'Fraction', 'PCRcycles']
+numberConvert = {"7":12, "8":13}
+dd['Isotope'] = dd['isoCode'].apply(lambda x: numberConvert[x])
+dd['sampleName'] = "Y" + dd['Isotope'].astype("string") + "-" + dd['Fraction'].str.zfill(2).astype("string")
+dd['newFileName'] = "/media/vol/funmicBackups/Barcode2026/raw_reads/" + dd['sampleName'] + r".fastq.gz"
+dd['oldFileName'] = "/media/vol/funmicBackups/OemikExp032/" + dd["Genomics Id"] + "_S" + dd["Probe Id"].astype('string') + "_L001_R1_001.fastq.gz"
+
+## test for real files:
+dd['oldFileName'].apply(lambda x: Path(x).exists()) ## looks okay
+
+## now rename them. 
+## will symbolic links work for us?
+for row in dd.itertuples():
+  os.symlink(row.oldFileName, row.newFileName)
+
+## let's create our datasheet. We need to merge our new sample data with 
+## the old, which is found here:
+
+sip2024 = pd.read_csv('/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2025/metabarcodeData/sip2024.csv')
+sip2024.rename({'Unnamed: 0': 'sampleName'}, axis=1, inplace=True)
+
+ee = dd.copy()[['Probe Id','Fraction','Isotope', 'sampleName']]
+ee['Substrate'] = 'Y'
+ee['BD'] = 0.000000001 ### fix this with Tillmann data when he sends it !!!!!!!!!!
+ee = ee[['sampleName','Substrate','Isotope','Fraction','BD' ]]
+
+sip2026 = pd.concat([sip2024,ee], axis=0)
+
+metabarcodeDataDir="/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2026/metabarcodeData/"
+sip2026.to_csv(metabarcodeDataDir + "sip2026.csv", index=False)
+
+## some minor differences from last year, named rowname column
+## all values quoted last year...both seem trivial.
+## Just need tillmann's BD data. Update when we get it.
+
+## we want to put these files on our denbi machine, with the soft link names 
+## not the original names... back in bash... note the "L" argument with rsync
+
+cd /media/vol/funmicBackups/Barcode2026/raw_reads
+
+getFile=/media/vol/funmicBackups/Barcode2026/raw_reads/
+putHere=/vol/funmic/datasets/Barcode2026/raw_reads/
+rsync -auvL \
+  --progress \
+  -e "ssh -p 31993" \
+  $getFile ubuntu@129.70.51.6:$putHere
 
