@@ -56,6 +56,8 @@ phyloFlash.pl -man
 ##(SILVA non-redundnat reference sequences, edition 138.1, pre-processed and formatted for phyloFlash)
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+
+mkdir /vol/funmic/phyloFlashOut
 OUTPUTDIRECTORY=/vol/funmic/phyloFlashOut/
 
 ## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
@@ -72,7 +74,7 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 			-clusterid 98 \
 			-taxlevel 7 \
 			-dbhome $phyloDB \
-			-CPUs 12 > /vol/funmicoflashlog.txt
+			-CPUs 12 > /vol/funmic/Kelp/logs/phyloflashlog.txt
 		
 		mv PhyloFlash_Kelp_${SAMPLE}* ${OUTPUTDIRECTORY}/${SAMPLE}
 	done
