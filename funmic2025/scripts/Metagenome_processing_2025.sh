@@ -2,6 +2,8 @@
 
 #### Metagenome analysis #######
 
+##Edit test##
+
 
 ## In this course we are analyzing DNA shotgun sequencing data from the following publication:
 ## paper: Van Erk et al. 2021, doi.org/mgt4
