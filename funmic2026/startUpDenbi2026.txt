@@ -571,8 +571,61 @@ sipMDnew.to_csv(metabarcodeDataDir + "sip2026.csv", index=False)
 
 ## okay, let's see if that works for our pipeline from previous years. 
 
-## switch over to denbiFunmic
+## switch over to denbiFunmic computer:
 
 conda activate qualityControlRawSequences 
 
-## 
+mkdir /vol/funmic/metabarcoding
+
+cd /vol/funmic/metabarcoding
+
+ls /vol/funmic/datasets/Barcode2026/allRawReads.gz
+
+cd /vol/funmic/datasets/Barcode2026/raw_reads
+
+cat * > ../allRawReads.gz
+
+fastqc -o .  -t 5 /vol/funmic/datasets/Barcode2026/allRawReads.gz
+
+getFile=/vol/funmic/datasets/Barcode2026/allRawReads_fastqc.html
+putHere=/home/daniel/Documents/teaching/funmic/scratchpad/
+rsync -auvL \
+  -e "ssh -p 31993" \
+  ubuntu@129.70.51.6:$getFile $putHere
+
+## try out one trim:
+
+## make a directory to hold trimmed read files:
+
+mkdir /vol/funmic/metabarcoding/trimmed_reads
+
+
+cd /vol/funmic/datasets/Barcode2026/raw_reads
+inputFastq=A12-05.fastq.gz ## example file
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+cutadapt --rc \
+    -g TCGTGYCAGCMGCCGCGGTAA \
+    --length 280 \
+    --minimum-length 200 \
+    -a GGACTACNVGGGTWTCTAAT \
+    -o ${outputDir}${inputFastq} \
+       ${inputFastq}
+
+
+## go to the directory with the raw read files
+cd /vol/funmic/datasets/Barcode2026/raw_reads
+
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+for inputFastq in *; do
+    cutadapt --rc \
+        -g TCGTGYCAGCMGCCGCGGTAA \
+        --length 280 \
+        -a GGACTACNVGGGTWTCTAAT \
+        -o ${outputDir}${inputFastq} \
+           ${inputFastq}
+done
+
+
+cd /vol/funmic/metabarcoding/trimmed_reads/
+
+
