@@ -57,8 +57,8 @@ phyloFlash.pl -man
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 
-mkdir /vol/funmic/phyloFlashOut
-OUTPUTDIRECTORY=/vol/funmic/phyloFlashOut/
+mkdir /vol/funmic/Kelp/phyloFlashOut
+OUTPUTDIRECTORY=/vol/funmic/Kelp/phyloFlashOut/
 
 ## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
 ## As reads for each sample are split into two files, we should only list one of the pair in order not to have samples listed twice.
