@@ -459,7 +459,6 @@ cd /media/vol/funmicBackups/Barcode2026
 #sudo pip3 install openpyxl
 
 python3
-
 import pandas as pd
 import re, os
 from pathlib import Path
@@ -522,4 +521,58 @@ rsync -auvL \
 #### revisit metabarcoding pipeline ####
 
 ## tillmann got us the buoyant densities
-##  
+## add these into our data:
+
+/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2026/metabarcodeData/sip2026.csv 
+
+## bd_glycerol.csv ##
+"Fraction","12C","13C"
+1, 1.76, 1.761
+2, 1.747, 1.749
+3, 1.731, 1.735
+4, 1.72, 1.722
+5, 1.708, 1.712
+6, 1.697, 1.699
+7, 1.686, 1.688
+8, 1.674, 1.676
+9, 1.662, 1.662
+
+python3
+import pandas as pd
+import re, os
+from pathlib import Path
+
+## our metadat so far is:
+sipMD = pd.read_csv('sip2026.csv')
+sipMD.head()
+
+aa = pd.read_csv("bd_glycerol.csv")
+C12 = aa[["Fraction","12C"]]
+C12["Isotope"] = 12
+C12.rename({"12C":"BD"}, axis="columns", inplace=True)
+C13 = aa[["Fraction","13C"]]
+C13["Isotope"] = 13
+C13.rename({"13C":"BD"}, axis="columns", inplace=True)
+glycerolOnly = pd.concat([C12, C13])
+glycerolOnly['sampleName'] = "Y"+ glycerolOnly['Isotope'].astype('str') + "-" + glycerolOnly['Fraction'].astype('str').str.zfill(2)
+glycerolOnly['Substrate'] = "Y"
+glycerolOnly = glycerolOnly[['sampleName','Substrate','Isotope','Fraction','BD']]
+hasReads = glycerolOnly['sampleName'].isin(sipMD['sampleName'])
+glycerolOnly = glycerolOnly[hasReads]
+sipMD = sipMD[sipMD['Substrate'] != "Y"]
+
+sipMDnew = (pd.concat([glycerolOnly, sipMD]).
+              sort_values(by=["Substrate","Isotope","Fraction"]).
+              reset_index(drop=True)
+            )
+
+metabarcodeDataDir="/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2026/metabarcodeData/"
+sipMDnew.to_csv(metabarcodeDataDir + "sip2026.csv", index=False)
+
+## okay, let's see if that works for our pipeline from previous years. 
+
+## switch over to denbiFunmic
+
+conda activate qualityControlRawSequences 
+
+## 
