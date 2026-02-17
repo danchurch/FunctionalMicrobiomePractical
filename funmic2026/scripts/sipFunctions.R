@@ -55,13 +55,15 @@ getFractionAbundances = function(ASVname,whichPS,ptitle="",fracOrBD="BD"){
     }
 }
 
-
-plotFamilies = function(howManyASVs=30){
-    topX <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:howManyASVs]
-    ps.topX <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+plotFamilies = function(phyloObject, howManyASVs=30){
+    topX <- names(sort(taxa_sums(phyloObject), decreasing=TRUE))[1:howManyASVs]
+    ps.topX <- transform_sample_counts(phyloObject, function(OTU) OTU/sum(OTU))
     ps.topX <- prune_taxa(topX, ps.topX)
-    plot_bar(ps.topX, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x")
+    ps.topX <- tax_glom(ps.topX, taxrank="Family")
+    ggBarplotPS <- plot_bar(ps.topX, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x")
+    return(ggBarplotPS)
 }
+
 
 NMS_braycurtis = function(physeq){
     sample_data(physeq)$Isotope = as.factor(sample_data(physeq)$Isotope)

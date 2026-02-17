@@ -770,10 +770,33 @@ save(ps, file="sipPS.rda")
 library(phyloseq)
 library(ggplot2)
 
+setwd("/vol/funmic/metabarcoding/")
+
 ## some extra functions
 download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R",
               "sipFunctions.R", method="wget")
 
 source("sipFunctions.R") 
 
+load("sipPS.rda")
 
+
+aa <- plot_bar(ps)
+
+ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
+
+familiesPlot <- plotFamilies(ps,30)
+
+ggsave("familiesBySubIso.pdf",
+        device = pdf,
+        plot = familiesPlot,
+        width = 10,
+        height = 6)
+
+getFile="/vol/funmic/metabarcoding/familiesBySubIso.pdf"
+putHere="/home/daniel/Documents/teaching/funmic/scratchpad/"
+rsync -auvL \
+  -e "ssh -p 31993" \
+  ubuntu@129.70.51.6:$getFile $putHere
+
+## 
