@@ -761,11 +761,19 @@ save(ps, file="sipPS.rda")
 
 ## dada2, phyloseq work
 
+## get extra R functions:
+
+
+
 ## onto the sip pipeline:
 
 library(phyloseq)
 library(ggplot2)
 
-source("/vol/funmic/scripts/sipFunctions.R") ## some extra functions
+## some extra functions
+download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R",
+              "sipFunctions.R", method="wget")
+
+source("sipFunctions.R") 
 
 
