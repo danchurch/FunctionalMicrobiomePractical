@@ -4,7 +4,11 @@ names=(
 "ERR3801603"
 )
 
-for i in ${names[@]}; do
-  prefetch $i
-  fasterq-dump --split-files $i
+for READ_SETS in ${names[@]}; do
+  fasterq-dump \
+    --progress \
+    --split-files \
+    --skip-technical \
+    --outdir ${READ_SETS} \
+    ${READ_SETS}
 done
