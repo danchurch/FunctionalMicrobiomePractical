@@ -803,3 +803,74 @@ rsync -auvL \
   ubuntu@129.70.51.6:$getFile $putHere
 
 ## 
+
+ps.m.prop <- subset_samples(ps.prop, Substrate == "M")
+ps.g.prop <- subset_samples(ps.prop, Substrate == "G")
+ps.a.prop <- subset_samples(ps.prop, Substrate == "A")
+ps.y.prop <- subset_samples(ps.prop, Substrate == "Y")
+
+dev.new()
+plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
+
+dev.new()
+plotPCAWithSpecies(ps.a.prop, ptitle="Acetate PCA")
+
+dev.new()
+plotPCAWithSpecies(ps.g.prop, ptitle="Glucose PCA")
+
+dev.new()
+plotPCAWithSpecies(ps.y.prop, ptitle="Glycerol PCA")
+
+
+
+dev.new()
+getFractionAbundances("ASV128",ps.m.prop,ptitle="ASV17, Methanol")
+
+dev.new()
+getFractionAbundances("ASV27",ps.m.prop,ptitle="ASV27, Methanol")
+
+dev.new()
+getFractionAbundances("ASV3",ps.m.prop,ptitle="ASV3, Methanol")
+
+dev.new()
+getFractionAbundances("ASV10",ps.m.prop,ptitle="ASV10, Methanol")
+
+## gc:
+dev.new()
+plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
+
+## not GC-rich:
+dev.new()
+getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="BD")
+
+## GC rich
+dev.new()
+getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="BD")
+
+## okay, everything in the metabarcoding seems to work. Code can be cleaned up a little.
+
+## look at the new data a little closer:
+
+dev.new()
+
+plotPCAWithSpecies(ps.y.prop, ptitle="Glycerol PCA", scalingAmount=5)
+
+dev.new()
+
+getFractionAbundances(ASVname="ASV39", whichPS=ps.y.prop, ptitle="Glycerol, ASV39", fracOrBD="BD")
+
+getFractionAbundances(ASVname="ASV96", whichPS=ps.y.prop, ptitle="Glycerol, ASV96", fracOrBD="BD")
+
+getFractionAbundances(ASVname="ASV96", whichPS=ps.y.prop, ptitle="Glycerol, ASV96", fracOrBD="Fraction")
+
+getFractionAbundances(ASVname="ASV111", whichPS=ps.y.prop, ptitle="Glycerol, ASV111", fracOrBD="BD")
+
+getFractionAbundances(ASVname="ASV111", whichPS=ps.y.prop, ptitle="Glycerol, ASV111", fracOrBD="Fraction")
+
+getFractionAbundances(ASVname="ASV182", whichPS=ps.y.prop, ptitle="Glycerol, ASV182", fracOrBD="BD")
+getFractionAbundances(ASVname="ASV182", whichPS=ps.y.prop, ptitle="Glycerol, ASV182", fracOrBD="Fraction")
+
+getFractionAbundances(ASVname="ASV64", whichPS=ps.y.prop, ptitle="Glycerol, ASV64", fracOrBD="BD")
+
+getFractionAbundances(ASVname="ASV64", whichPS=ps.y.prop, ptitle="Glycerol, ASV64", fracOrBD="Fraction")
+
