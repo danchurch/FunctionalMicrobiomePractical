@@ -787,6 +787,9 @@ ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 
 familiesPlot <- plotFamilies(ps,30)
 
+familiesPlot ## that will take forever
+
+## maybe better to save and download:
 ggsave("familiesBySubIso.pdf",
         device = pdf,
         plot = familiesPlot,

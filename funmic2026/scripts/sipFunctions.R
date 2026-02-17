@@ -45,15 +45,17 @@ getFractionAbundances = function(ASVname,whichPS,ptitle="",fracOrBD="BD"){
     print(tax_table(ps.12.ASV))
     ## how would we do this with ggplot?
     if(fracOrBD == "BD"){
-    ggplot(df12_13, aes(x=BD, y=Abundance, color=Isotope, shape=Isotope)) +
-      geom_point(size=4) +
-      geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
+    ggObj <- ggplot(df12_13, aes(x=BD, y=Abundance, color=Isotope, shape=Isotope)) +
+              geom_point(size=4) +
+              geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
     } else if (fracOrBD == "Fraction"){
-    ggplot(df12_13, aes(x=Fraction, y=Abundance, color=Isotope, shape=Isotope)) +
-      geom_point(size=4) +
-      geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
+    ggObj <- ggplot(df12_13, aes(x=Fraction, y=Abundance, color=Isotope, shape=Isotope)) +
+               geom_point(size=4) +
+               geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
     }
-}
+    return(ggObj)
+    }
+
 
 plotFamilies = function(phyloObject, howManyASVs=30){
     topX <- names(sort(taxa_sums(phyloObject), decreasing=TRUE))[1:howManyASVs]
