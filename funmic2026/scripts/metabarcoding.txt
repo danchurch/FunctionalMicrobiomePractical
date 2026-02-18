@@ -250,6 +250,11 @@ rsync -auv \
 ###### denoising and ASV definition #######
 
 ## we here we need R. 
+
+## make sure we are in our base conda environment:
+
+conda deactivate 
+
 ## back to our working directory
 
 cd /vol/funmic/metabarcoding/trimmed_reads
