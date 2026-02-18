@@ -50,6 +50,9 @@ for FILE in $(ls ${READ_DIRECTORY}/*.fastq.gz | xargs -n 1 basename | sed 's/.fa
 conda deactivate
 conda activate communityComposition
 
+# Importnat to be in a big directory where you have writing rights because PhyloFlash writes a lot of temporary files into the current directory
+cd /vol/funmic/Kelp
+
 phyloFlash.pl -man
 
 ## Defining the location of the SSU rRNA database 
@@ -110,7 +113,7 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 			
 	done
 	
-## Time with 7 cores: 53 min for k21, 30 min for subsequent iterations, 9h 40 min per metagenome
+## Time with 12 cores: 5 h per metagenome
 
 
 ## Simplify contig names down to simple IDs, removing everything that follows the space in the header
