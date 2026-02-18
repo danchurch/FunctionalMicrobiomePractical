@@ -7,19 +7,28 @@ conda deactivate
 ## go back to our metabarcoding working directory:
 
 
-
 cd /vol/funmic/metabarcoding
 
 ## start R and get libraries:
 
 R 
 
-## just make sure we are in the right place
-setwd("/vol/funmic/metabarcoding") 
+
+## where are you? 
+
+getwd()
+
+## is it where you want to be?
 
 library(phyloseq)
 library(ggplot2)
-source("/vol/funmic/scripts/sipFunctions.R") ## some extra functions
+
+## let's get some extra functions from github repo:
+
+download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R",
+              "sipFunctions.R", method="wget")
+
+source("sipFunctions.R") 
 
 ## load up our phyloseq object from our metabarcoding pipeline:
 
@@ -36,108 +45,89 @@ ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 
 ## a quick look at the relative abundance of the most common ASVs:
 
-plotFamilies(30)
+familiesPlot <- plotFamilies(ps,30)
 
-dev.new() ## start a new plotter, so we don't clobber the old figure
+familiesPlot 
 
+## this takes forever. To download a copy:
+ggsave("familiesBySubIso.pdf",
+        device = pdf,
+        plot = familiesPlot,
+        width = 10,
+        height = 6)
+
+
+## we can try to an overview with an NMS graphic of all of our samples:
+dev.new() 
 NMS_braycurtis(ps.prop)
 
+## is the stress okay?
 
-## let's break up our data by substrate, making abundances in each proportional:
+## but that doesn't give us much information.
 
-## methanol
-samp.m <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "M",])
-ps.m <- prune_samples(samp.m, ps)
-ps.m.prop <- transform_sample_counts(ps.m, function(otu) otu/sum(otu))
-
-## glucose
-samp.g <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "G",])
-ps.g <- prune_samples(samp.g, ps)
-ps.g.prop <- transform_sample_counts(ps.g, function(otu) otu/sum(otu))
-
-## acetate
-samp.a <- rownames(sample_data(ps)[sample_data(ps)$Substrate == "A",])
-ps.a <- prune_samples(samp.a, ps)
-ps.a.prop <- transform_sample_counts(ps.a, function(otu) otu/sum(otu))
+## let's break up our data by substrate
+ps.m <- subset_samples(ps, Substrate == "M")
+ps.g <- subset_samples(ps, Substrate == "G")
+ps.a <- subset_samples(ps, Substrate == "A")
+ps.y <- subset_samples(ps, Substrate == "Y")
 
 
-## and let's look at these with a PCA approach:
+## and let's look at these with a PCA approach.
+## use another custom function:
 
 dev.new()
+plotPCAWithSpecies(ps.m, ptitle="Methanol PCA")
 
-plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
-
-dev.new()
-plotPCAWithSpecies(ps.a.prop, ptitle="Acetate PCA")
+## how would you look at the other substrates: acetate, glucose and glycerol?
 
 dev.new()
-plotPCAWithSpecies(ps.g.prop, ptitle="glucose PCA")
+plotPCAWithSpecies(ps.a, ptitle="Acetate PCA")
+
+dev.new()
+plotPCAWithSpecies(ps.g, ptitle="Glucose PCA")
+
+dev.new()
+plotPCAWithSpecies(ps.y, ptitle="Glycerol PCA")
 
 ## the PCA and species scoring algorithms are such that the species are positioned close to 
 ## the sites that they are most important in distinguishing. 
 
 ## let's check one out:
-## here is a function that take the ASV name, the phyloseq object, and the title you want to give it:
+## here is a function that take the following arguments:
+## ASV name, the phyloseq object, and the title you want to give it:
 
-
-## plots from yesterday looked like this:
+## ASV1 looks important:
+## we can graph by Fraction or Buoyant Density :
 
 dev.new()
-
 getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="Fraction")
 
-## we added the ability to graph by Buoyant Density:
-
 dev.new()
 getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
 
-dev.new()
-
-getFractionAbundances(ASVname="ASV19", whichPS=ps.g.prop, ptitle="glucose, ASV19", fracOrBD="BD")
-
-getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
-
-
-## that function reports taxonomy. But we can also get it this way, with phyloseq:
-
-tax_table(ps)["ASV8",]
-
-## remember that if you want to save a plot, try the pdf() or png() functions:
-
-png(file="fractionAbundances_ASV33_glucose.png")
-getFractionAbundances(ASVname="ASV33", whichPS=ps.g.prop, ptitle="glucose, ASV33", fracOrBD="BD")
-dev.off()
-
-
-############## I have to do this to get my file, but you probably don't, just use MobaXterm!! ###############
-getFile=/vol/funmic/metabarcoding/fractionAbundances_ASV33_glucose.png
-putDir=/home/daniel/Documents/teaching/funmic/scratchpad/
-scp -i /home/daniel/.ssh -P 30423 -r ubuntu@129.70.51.6:$getFile $putDir
-#############################################################################################################
-
-#### addendum: interpreting the fraction figures ####
-
-## bring up the methanol ordination again:
-plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
-
-## a look at a not-GC rich species
-
-tax_table(ps)["ASV1",]
+## an example of an "unshifted" organism: 
 
 dev.new()
-getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="Fraction")
 
-dev.new()
-getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="BD")
+## example of two gc-rich species, no strong evidence of uptake of heavy isotope: 
+getFractionAbundances(ASVname="ASV3", whichPS=ps.m.prop, ptitle="Methanol, ASV3", fracOrBD="BD")
+tax_table(ps)["ASV3",]
 
-## a look at a GC rich species from actinobacteria
+getFractionAbundances(ASVname="ASV7", whichPS=ps.m.prop, ptitle="Methanol, ASV7", fracOrBD="BD")
+tax_table(ps)["ASV7",]
 
-tax_table(ps)["ASV11",]
+## etc etc 
 
-dev.new()
-getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="Fraction")
+## remember what to do if you want to save a plot?:
 
-dev.new()
-getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="BD")
+methOH_ASV33 <- getFractionAbundances(ASVname="ASV33", whichPS=ps.m.prop, ptitle="glucose, ASV33", fracOrBD="BD")
+
+ggsave("ASV33_MethOH_buoyantDensAbundances.pdf",
+        device = pdf,
+        plot = methOH_ASV33)
+
+ggsave("ASV33_MethOH_buoyantDensAbundances.png",
+        device = png,
+        plot = methOH_ASV33)
 
 
