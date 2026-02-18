@@ -160,6 +160,14 @@ conda create -n qualityControlRawSequences -c bioconda cutadapt fastqc
 
 conda create -n communityComposition -c bioconda phyloflash
 
+## not working, maybe try an older version:
+
+#conda create -n phyloflash_3.4.1 bioconda::phyloflash==3.4.1 ## nope
+
+## last supported version for linux on bioconda:
+conda create -n phyloflash_3.3b1 bioconda::phyloflash==3.3b1
+## bioconda/linux-64::bbmap-39.52-he5f24ec_0
+
 ##  formatted silva database for phyloFlash
 ## looks like they have updated from last year to silva 138.2:
 
@@ -173,41 +181,46 @@ mv 138.2/ phyloflashSilvaDB/
 
 conda activate communityComposition # 
 
+## test 
 phyloFlash.pl -dbhome /vol/funmic/databases/phyloflashSilvaDB -lib TEST -CPUs 8 \
  -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
  -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
  -almosteverything
+
+## seems to work.
+## but not working for Dimitris reads
 
 ## dimitris code from last time :
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 OUTPUTDIRECTORY=/vol/funmic/Kelp/phyloFlashOut/
 
-## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
-## As reads for each sample are split into two files, we should only list one of the pair in order not to have samples listed twice.
+cd /vol/funmic/databases/phyloflashSilvaDB
 
-for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
-    do
-        mkdir ${OUTPUTDIRECTORY}/${SAMPLE}
-        phyloFlash.pl \
-            -lib PhyloFlash_Kelp_${SAMPLE} \
-            -read1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
-            -read2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
-            -readlength 250 \
-            -clusterid 98 \
-            -taxlevel 7 \
-            -dbhome $phyloDB \
-            -CPUs 12 > /vol/funmic/Kelp/logs/Phyloflashlog.txt
+## break his code up into one command:
 
-        mv PhyloFlash_Kelp_${SAMPLE}* ${OUTPUTDIRECTORY}/${SAMPLE}
-    done
+mkdir /vol/funmic/danTesting
 
-## break this up into one command:
-conda activate communityComposition # 
-READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
-phyloDB=/vol/funmic/databases/phyloflashSilvaDB
-SAMPLE=ERR3801502
 cd /vol/funmic/danTesting
+
+conda activate phyloflash_3.3b1 
+#conda activate phyloflash_3.4.1  ## same error
+#conda activate communityComposition # 
+
+
+## just checking, if we reorder our path variable?
+
+echo $PATH
+
+which bbmap.sh
+
+export PATH="/vol/funmic/.metabat/bin:/home/ubuntu/sratoolkit.3.3.0-ubuntu64/bin:/vol/funmic/miniconda/miniconda3/envs/phyloflash_3.3b1/bin:/vol/funmic/miniconda/miniconda3/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/vol/funmic/.bbmap"
+
+which bbmap.sh ## goes to the conda-installed bbmap
+
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+phyloDB=/vol/funmic/databases/phyloflashSilvaDB/138.2
+SAMPLE=ERR3801502
 phyloFlash.pl \
     -lib PhyloFlash_Kelp_${SAMPLE} \
     -read1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
@@ -216,19 +229,56 @@ phyloFlash.pl \
     -clusterid 98 \
     -taxlevel 7 \
     -dbhome $phyloDB \
-    -CPUs 5 
+    -CPUs 10 \
+    -everything
+
+
+## could the issue be with bbmap? Try with sortmerna instead
+
+
+conda activate pf_sortmerna 
+
+phyloDB=/vol/funmic/databases/phyloflashSilvaDB/138.2
+phyloFlash.pl -dbhome $phyloDB -lib TEST -CPUs 4 \
+ -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
+ -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
+ -sortmerna \
+ -almosteverything
+
+## meh, looks like we need to muck around a lot with sortmerrna to 
+## make that work..
+
 
 ## since the test files are running well, this seems funny. 
 
 ## let's try repairing the illumina reads:
 
-ERR3801502_1.fastq.gz
-ERR3801502_2.fastq.gz
-repair.sh in=<input file> 
-          in2=<input file> 
-          out=<pair output> 
-          out2=
-          outs=<singleton output>
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+repair.sh in=${READ_DIRECTORY}/ERR3801502_1.fastq.gz \
+          in2=${READ_DIRECTORY}/ERR3801502_2.fastq.gz \
+          out=test_1.fastq \
+          out2=test_2.fastq \
+          outs=singles.fastq
+
+## nope, don't seem to be any issues there.
+
+ls -l ${READ_DIRECTORY}/ERR3801502_1.fastq.gz 
+
+ls -l ${READ_DIRECTORY}/ERR3801502_2.fastq.gz 
+
+wc -l ${READ_DIRECTORY}/ERR3801502_1.fastq.gz 
+
+wc -l test_1.fastq
+
+head test_1.fastq
+
+wc -l ${READ_DIRECTORY}/ERR3801502_2.fastq.gz 
+wc -l test_2.fastq
+
+## not sure what is going on...
+
+
+## 
 
 ### megahit ###
 conda create -n assembly -c bioconda megahit
@@ -639,21 +689,43 @@ rsync -auv \
   $getFile ubuntu@129.70.51.6:$putHere
 
 
-## get Tillmann his spreadsheets:
+###### get Tillmann his spreadsheets #########
 
 ## this starts around line 2500 from last year's startup script:
 
 ## genus level:
 
 aa <- as.data.frame(otu_table(ps))
-
 bb <- as.data.frame(tax_table(ps))
-
 cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family,";g__",bb$Genus, sep="")
-
 all(rownames(tax_table(ps)) == colnames(aa))
-
 colnames(aa) <- cc
-
 dd <- cbind(aa,sample_data(ps))
+level6df <- dd
+rm(aa,bb,cc,dd)
+
+## family level
+ps.family <- tax_glom( ps, taxrank = "Family")
+aa <- as.data.frame(otu_table(ps.family))
+bb <- as.data.frame(tax_table(ps.family)[,1:5])
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family, sep="")
+## do the rownames of our OTUtable match the order of our taxonomic names?
+all(rownames(tax_table(ps.family)) == colnames(aa)) ## yes
+## so use these as our colnames:
+colnames(aa) <- cc
+## and he wants the sample info as the last columns:
+dd <- cbind(aa,sample_data(ps.family))
+level5df <- dd
+rm(aa,bb,cc,dd)
+
+write.csv(level6df, "level6.csv")
+write.csv(level5df, "level5.csv")
+
+getFile=/vol/funmic/metabarcoding/level*.csv
+putDir=/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2026/metabarcodeData/
+rsync -auv \
+  --progress \
+  -e "ssh -p 31993" \
+  ubuntu@129.70.51.6:$getFile $putDir
+
 
