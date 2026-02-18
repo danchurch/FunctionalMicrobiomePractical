@@ -45,27 +45,23 @@ getFractionAbundances = function(ASVname,whichPS,ptitle="",fracOrBD="BD"){
     print(tax_table(ps.12.ASV))
     ## how would we do this with ggplot?
     if(fracOrBD == "BD"){
-    ggObj <- ggplot(df12_13, aes(x=BD, y=Abundance, color=Isotope, shape=Isotope)) +
-              geom_point(size=4) +
-              geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
+    ggplot(df12_13, aes(x=BD, y=Abundance, color=Isotope, shape=Isotope)) +
+      geom_point(size=4) +
+      geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
     } else if (fracOrBD == "Fraction"){
-    ggObj <- ggplot(df12_13, aes(x=Fraction, y=Abundance, color=Isotope, shape=Isotope)) +
-               geom_point(size=4) +
-               geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
+    ggplot(df12_13, aes(x=Fraction, y=Abundance, color=Isotope, shape=Isotope)) +
+      geom_point(size=4) +
+      geom_smooth(se=FALSE, fullrange=FALSE, linetype="dashed") + ggtitle(ptitle)
     }
-    return(ggObj)
-    }
-
-
-plotFamilies = function(phyloObject, howManyASVs=30){
-    topX <- names(sort(taxa_sums(phyloObject), decreasing=TRUE))[1:howManyASVs]
-    ps.topX <- transform_sample_counts(phyloObject, function(OTU) OTU/sum(OTU))
-    ps.topX <- prune_taxa(topX, ps.topX)
-    ps.topX <- tax_glom(ps.topX, taxrank="Family")
-    ggBarplotPS <- plot_bar(ps.topX, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x")
-    return(ggBarplotPS)
 }
 
+
+plotFamilies = function(howManyASVs=30){
+    topX <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:howManyASVs]
+    ps.topX <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+    ps.topX <- prune_taxa(topX, ps.topX)
+    plot_bar(ps.topX, x="Fraction", fill="Family") + facet_wrap(~Substrate + Isotope, scales="free_x")
+}
 
 NMS_braycurtis = function(physeq){
     sample_data(physeq)$Isotope = as.factor(sample_data(physeq)$Isotope)

@@ -822,7 +822,6 @@ dev.new()
 plotPCAWithSpecies(ps.y.prop, ptitle="Glycerol PCA")
 
 
-
 dev.new()
 getFractionAbundances("ASV128",ps.m.prop,ptitle="ASV17, Methanol")
 
