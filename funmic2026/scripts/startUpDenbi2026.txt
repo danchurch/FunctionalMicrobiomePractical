@@ -737,6 +737,8 @@ rsync -auv \
 
 cd /home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin
 
-
 cut -f2 -d, studentList.csv
+
+## to be continued. check out line 2080 from last years startup.
+## first need to spin up VMs. 
 
