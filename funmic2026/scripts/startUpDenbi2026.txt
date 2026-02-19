@@ -160,6 +160,14 @@ conda create -n qualityControlRawSequences -c bioconda cutadapt fastqc
 
 conda create -n communityComposition -c bioconda phyloflash
 
+## not working, maybe try an older version:
+
+#conda create -n phyloflash_3.4.1 bioconda::phyloflash==3.4.1 ## nope
+
+## last supported version for linux on bioconda:
+conda create -n phyloflash_3.3b1 bioconda::phyloflash==3.3b1
+## bioconda/linux-64::bbmap-39.52-he5f24ec_0
+
 ##  formatted silva database for phyloFlash
 ## looks like they have updated from last year to silva 138.2:
 
@@ -173,41 +181,46 @@ mv 138.2/ phyloflashSilvaDB/
 
 conda activate communityComposition # 
 
+## test 
 phyloFlash.pl -dbhome /vol/funmic/databases/phyloflashSilvaDB -lib TEST -CPUs 8 \
  -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
  -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
  -almosteverything
+
+## seems to work.
+## but not working for Dimitris reads
 
 ## dimitris code from last time :
 phyloDB=/vol/funmic/databases/phyloflashSilvaDB
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 OUTPUTDIRECTORY=/vol/funmic/Kelp/phyloFlashOut/
 
-## The variable SAMPLE is read from listing all files ending with _1.fastq.gz in the folder containing the data.
-## As reads for each sample are split into two files, we should only list one of the pair in order not to have samples listed twice.
+cd /vol/funmic/databases/phyloflashSilvaDB
 
-for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
-    do
-        mkdir ${OUTPUTDIRECTORY}/${SAMPLE}
-        phyloFlash.pl \
-            -lib PhyloFlash_Kelp_${SAMPLE} \
-            -read1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
-            -read2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
-            -readlength 250 \
-            -clusterid 98 \
-            -taxlevel 7 \
-            -dbhome $phyloDB \
-            -CPUs 12 > /vol/funmic/Kelp/logs/Phyloflashlog.txt
+## break his code up into one command:
 
-        mv PhyloFlash_Kelp_${SAMPLE}* ${OUTPUTDIRECTORY}/${SAMPLE}
-    done
+mkdir /vol/funmic/danTesting
 
-## break this up into one command:
-conda activate communityComposition # 
-READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
-phyloDB=/vol/funmic/databases/phyloflashSilvaDB
-SAMPLE=ERR3801502
 cd /vol/funmic/danTesting
+
+conda activate phyloflash_3.3b1 
+#conda activate phyloflash_3.4.1  ## same error
+#conda activate communityComposition # 
+
+
+## just checking, if we reorder our path variable?
+
+echo $PATH
+
+which bbmap.sh
+
+export PATH="/vol/funmic/.metabat/bin:/home/ubuntu/sratoolkit.3.3.0-ubuntu64/bin:/vol/funmic/miniconda/miniconda3/envs/phyloflash_3.3b1/bin:/vol/funmic/miniconda/miniconda3/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/vol/funmic/.bbmap"
+
+which bbmap.sh ## goes to the conda-installed bbmap
+
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+phyloDB=/vol/funmic/databases/phyloflashSilvaDB/138.2
+SAMPLE=ERR3801502
 phyloFlash.pl \
     -lib PhyloFlash_Kelp_${SAMPLE} \
     -read1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
@@ -216,19 +229,56 @@ phyloFlash.pl \
     -clusterid 98 \
     -taxlevel 7 \
     -dbhome $phyloDB \
-    -CPUs 5 
+    -CPUs 10 \
+    -everything
+
+
+## could the issue be with bbmap? Try with sortmerna instead
+
+
+conda activate pf_sortmerna 
+
+phyloDB=/vol/funmic/databases/phyloflashSilvaDB/138.2
+phyloFlash.pl -dbhome $phyloDB -lib TEST -CPUs 4 \
+ -read1 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_F.fq.gz \
+ -read2 ${CONDA_PREFIX}/lib/phyloFlash/test_files/test_R.fq.gz \
+ -sortmerna \
+ -almosteverything
+
+## meh, looks like we need to muck around a lot with sortmerrna to 
+## make that work..
+
 
 ## since the test files are running well, this seems funny. 
 
 ## let's try repairing the illumina reads:
 
-ERR3801502_1.fastq.gz
-ERR3801502_2.fastq.gz
-repair.sh in=<input file> 
-          in2=<input file> 
-          out=<pair output> 
-          out2=
-          outs=<singleton output>
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+repair.sh in=${READ_DIRECTORY}/ERR3801502_1.fastq.gz \
+          in2=${READ_DIRECTORY}/ERR3801502_2.fastq.gz \
+          out=test_1.fastq \
+          out2=test_2.fastq \
+          outs=singles.fastq
+
+## nope, don't seem to be any issues there.
+
+ls -l ${READ_DIRECTORY}/ERR3801502_1.fastq.gz 
+
+ls -l ${READ_DIRECTORY}/ERR3801502_2.fastq.gz 
+
+wc -l ${READ_DIRECTORY}/ERR3801502_1.fastq.gz 
+
+wc -l test_1.fastq
+
+head test_1.fastq
+
+wc -l ${READ_DIRECTORY}/ERR3801502_2.fastq.gz 
+wc -l test_2.fastq
+
+## not sure what is going on...
+
+
+## 
 
 ### megahit ###
 conda create -n assembly -c bioconda megahit
@@ -638,239 +688,44 @@ rsync -auv \
   -e "ssh -p 31993" \
   $getFile ubuntu@129.70.51.6:$putHere
 
-## okay, let's see if that works for our pipeline from previous years. 
 
-## switch over to denbiFunmic computer:
+###### get Tillmann his spreadsheets #########
 
-conda activate qualityControlRawSequences 
+## this starts around line 2500 from last year's startup script:
 
-mkdir /vol/funmic/metabarcoding
+## genus level:
 
-cd /vol/funmic/metabarcoding
+aa <- as.data.frame(otu_table(ps))
+bb <- as.data.frame(tax_table(ps))
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family,";g__",bb$Genus, sep="")
+all(rownames(tax_table(ps)) == colnames(aa))
+colnames(aa) <- cc
+dd <- cbind(aa,sample_data(ps))
+level6df <- dd
+rm(aa,bb,cc,dd)
 
-ls /vol/funmic/datasets/Barcode2026/allRawReads.gz
+## family level
+ps.family <- tax_glom( ps, taxrank = "Family")
+aa <- as.data.frame(otu_table(ps.family))
+bb <- as.data.frame(tax_table(ps.family)[,1:5])
+cc <- paste("d__",bb$Kingdom,";p__",bb$Phylum,";c__",bb$Class,";o__",bb$Order,";f__",bb$Family, sep="")
+## do the rownames of our OTUtable match the order of our taxonomic names?
+all(rownames(tax_table(ps.family)) == colnames(aa)) ## yes
+## so use these as our colnames:
+colnames(aa) <- cc
+## and he wants the sample info as the last columns:
+dd <- cbind(aa,sample_data(ps.family))
+level5df <- dd
+rm(aa,bb,cc,dd)
 
-cd /vol/funmic/datasets/Barcode2026/raw_reads
+write.csv(level6df, "level6.csv")
+write.csv(level5df, "level5.csv")
 
-cat * > ../allRawReads.gz
-
-fastqc -o .  -t 5 /vol/funmic/datasets/Barcode2026/allRawReads.gz
-
-getFile=/vol/funmic/datasets/Barcode2026/allRawReads_fastqc.html
-putHere=/home/daniel/Documents/teaching/funmic/scratchpad/
-rsync -auvL \
+getFile=/vol/funmic/metabarcoding/level*.csv
+putDir=/home/daniel/Documents/teaching/funmic/FunctionalMicrobiomePractical/funmic2026/metabarcodeData/
+rsync -auv \
+  --progress \
   -e "ssh -p 31993" \
-  ubuntu@129.70.51.6:$getFile $putHere
+  ubuntu@129.70.51.6:$getFile $putDir
 
-## try out one trim:
-
-## make a directory to hold trimmed read files:
-
-mkdir /vol/funmic/metabarcoding/trimmed_reads
-
-cd /vol/funmic/datasets/Barcode2026/raw_reads
-inputFastq=A12-05.fastq.gz ## example file
-outputDir=/vol/funmic/metabarcoding/trimmed_reads/
-cutadapt --rc \
-    -g TCGTGYCAGCMGCCGCGGTAA \
-    --length 280 \
-    --minimum-length 200 \
-    -a GGACTACNVGGGTWTCTAAT \
-    -o ${outputDir}${inputFastq} \
-       ${inputFastq}
-
-
-## go to the directory with the raw read files
-cd /vol/funmic/datasets/Barcode2026/raw_reads
-
-outputDir=/vol/funmic/metabarcoding/trimmed_reads/
-
-for inputFastq in *; do
-    cutadapt --rc \
-        -g TCGTGYCAGCMGCCGCGGTAA \
-        --length 280 \
-        -a GGACTACNVGGGTWTCTAAT \
-        -o ${outputDir}${inputFastq} \
-           ${inputFastq}
-done
-
-
-cd /vol/funmic/metabarcoding/trimmed_reads/
-
-## run through R script, works, consider adding ggsave
-
-R
-
-## test rest of the pipeline: dada2, plotting of BDs of each 
-## sample, and overall PCAs
-
-
-cd /vol/funmic/metabarcoding/trimmed_reads
-
-R
-library(dada2)
-library(phyloseq)
-
-fileNames <- list.files()
-
-filterPath <- "/vol/funmic/metabarcoding/filtered"
-
-out <- filterAndTrim(fileNames, filterPath,
-              maxN=0, maxEE=2, truncQ=2, rm.phix=TRUE,
-              compress=TRUE, multithread=TRUE)
-
-setwd("/vol/funmic/metabarcoding/filtered")
-
-err <- learnErrors(fileNames, multithread=TRUE)
-save(err, file="err.rda")
-
-plotErrors(err, nominalQ=TRUE)
-dadaF <- dada(fileNames, err=err, pool=TRUE, multithread=TRUE)
-
-seqtab <- makeSequenceTable(dadaF)
-
-seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
-
-rownames(seqtab.nochim)
-
-rownames(seqtab.nochim) <- unlist(strsplit(rownames(seqtab.nochim), ".fastq.gz"))
-
-path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
-
-taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
-
-samdf <- read.csv("/vol/funmic/datasets/Barcode2026/sip2026.csv",
-                  row.names=1,)
-
-samdf$Isotope <- as.factor( samdf$Isotope )
-
-ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
-               sample_data(samdf),
-               tax_table(taxa))
-
-## insert our representative sequences for our OTUs:
-dna <- Biostrings::DNAStringSet(taxa_names(ps))
-names(dna) <- taxa_names(ps)
-ps <- merge_phyloseq(ps, dna)
-## give our ASVs pretty names instead of DNA sequences:
-taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
-
-setwd("/vol/funmic/metabarcoding/")
-
-save(ps, file="sipPS.rda")
-
-## dada2, phyloseq work
-
-## get extra R functions:
-
-
-
-## onto the sip pipeline:
-
-library(phyloseq)
-library(ggplot2)
-
-setwd("/vol/funmic/metabarcoding/")
-
-## some extra functions
-download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R",
-              "sipFunctions.R", method="wget")
-
-source("sipFunctions.R") 
-
-load("sipPS.rda")
-
-
-aa <- plot_bar(ps)
-
-ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
-
-familiesPlot <- plotFamilies(ps,30)
-
-familiesPlot ## that will take forever
-
-## maybe better to save and download:
-ggsave("familiesBySubIso.pdf",
-        device = pdf,
-        plot = familiesPlot,
-        width = 10,
-        height = 6)
-
-getFile="/vol/funmic/metabarcoding/familiesBySubIso.pdf"
-putHere="/home/daniel/Documents/teaching/funmic/scratchpad/"
-rsync -auvL \
-  -e "ssh -p 31993" \
-  ubuntu@129.70.51.6:$getFile $putHere
-
-## 
-
-ps.m.prop <- subset_samples(ps.prop, Substrate == "M")
-ps.g.prop <- subset_samples(ps.prop, Substrate == "G")
-ps.a.prop <- subset_samples(ps.prop, Substrate == "A")
-ps.y.prop <- subset_samples(ps.prop, Substrate == "Y")
-
-dev.new()
-plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
-
-dev.new()
-plotPCAWithSpecies(ps.a.prop, ptitle="Acetate PCA")
-
-dev.new()
-plotPCAWithSpecies(ps.g.prop, ptitle="Glucose PCA")
-
-dev.new()
-plotPCAWithSpecies(ps.y.prop, ptitle="Glycerol PCA")
-
-
-
-dev.new()
-getFractionAbundances("ASV128",ps.m.prop,ptitle="ASV17, Methanol")
-
-dev.new()
-getFractionAbundances("ASV27",ps.m.prop,ptitle="ASV27, Methanol")
-
-dev.new()
-getFractionAbundances("ASV3",ps.m.prop,ptitle="ASV3, Methanol")
-
-dev.new()
-getFractionAbundances("ASV10",ps.m.prop,ptitle="ASV10, Methanol")
-
-## gc:
-dev.new()
-plotPCAWithSpecies(ps.m.prop, ptitle="Methanol PCA")
-
-## not GC-rich:
-dev.new()
-getFractionAbundances(ASVname="ASV1", whichPS=ps.m.prop, ptitle="Methanol, ASV1", fracOrBD="BD")
-
-## GC rich
-dev.new()
-getFractionAbundances(ASVname="ASV11", whichPS=ps.m.prop, ptitle="Methanol, ASV11", fracOrBD="BD")
-
-## okay, everything in the metabarcoding seems to work. Code can be cleaned up a little.
-
-## look at the new data a little closer:
-
-dev.new()
-
-plotPCAWithSpecies(ps.y.prop, ptitle="Glycerol PCA", scalingAmount=5)
-
-dev.new()
-
-getFractionAbundances(ASVname="ASV39", whichPS=ps.y.prop, ptitle="Glycerol, ASV39", fracOrBD="BD")
-
-getFractionAbundances(ASVname="ASV96", whichPS=ps.y.prop, ptitle="Glycerol, ASV96", fracOrBD="BD")
-
-getFractionAbundances(ASVname="ASV96", whichPS=ps.y.prop, ptitle="Glycerol, ASV96", fracOrBD="Fraction")
-
-getFractionAbundances(ASVname="ASV111", whichPS=ps.y.prop, ptitle="Glycerol, ASV111", fracOrBD="BD")
-
-getFractionAbundances(ASVname="ASV111", whichPS=ps.y.prop, ptitle="Glycerol, ASV111", fracOrBD="Fraction")
-
-getFractionAbundances(ASVname="ASV182", whichPS=ps.y.prop, ptitle="Glycerol, ASV182", fracOrBD="BD")
-getFractionAbundances(ASVname="ASV182", whichPS=ps.y.prop, ptitle="Glycerol, ASV182", fracOrBD="Fraction")
-
-getFractionAbundances(ASVname="ASV64", whichPS=ps.y.prop, ptitle="Glycerol, ASV64", fracOrBD="BD")
-
-getFractionAbundances(ASVname="ASV64", whichPS=ps.y.prop, ptitle="Glycerol, ASV64", fracOrBD="Fraction")
 

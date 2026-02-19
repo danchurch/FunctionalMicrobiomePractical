@@ -1,0 +1,251 @@
+## to log in with a terminal:
+
+ssh -Y -p 30476 -i /home/daniel/.ssh/./id_ed25519 ubuntu@129.70.51.6
+
+ssh -Y -p 30476 -i /home/daniel/.ssh/./id_ed25519 ubuntu@129.70.51.6
+
+## you can try this, or you can use MobaXterm
+
+## playing around with BASH (the linux command line)
+
+## use wget to get the latest version of the intro script (this document!)
+
+## first, you need to get this document, somehow...point and click from the link on the 
+## skript pdf (section C1, page 21) 
+
+https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/scripts/funBASHterminalScript.txt
+
+## you can use the command "wget" to download it while you are in the terminal:
+
+https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/scripts/funBASHterminalScript.txt
+
+
+## and now, let's practice some commands and getting around in a linux filetree.
+
+pwd 
+
+ls 
+
+cd  /
+
+## to get back to home drive:
+
+cd 
+
+## most of our work will actually not be in the "home" directory. 
+## Look at the storage volume:
+
+cd /vol/funMicStorage
+
+mkdir someFiles
+
+
+
+cp 
+
+
+
+
+
+cp bin1.fa zoop.fa
+
+mv zoop.fa ../  
+
+mv zoop.fa /vol/funMicStorage
+
+
+mkdir newDirectory
+
+mkdir /vol/funMicStorage/zoop
+
+rmdir 
+
+echo 
+
+cat 
+
+rm 
+
+sudo 
+
+top 
+
+man top
+top --help
+top -h
+
+
+head 
+
+tail 
+
+less 
+
+## special characters
+
+
+
+
+## ~  ##
+
+cd ~
+
+## .  ##
+
+
+## .. ## 
+
+
+
+
+
+cd ..
+
+
+
+
+
+
+
+## > ##
+
+echo "this a file" > file.txt
+
+
+
+## |  ##
+
+one program | second program
+
+## ;  ##
+
+ls; cd ~
+
+ls
+cd ~
+
+
+## /  ##
+
+## \  ##
+
+ls -ltrh
+
+ls -l -t -r -h
+
+ls -l \
+   -t \
+   -r \
+   -h
+
+## &  ##
+
+
+
+
+top &
+
+
+
+
+
+## = and $ ##
+
+X="this is a variable"
+echo $X
+
+
+
+vol 
+
+cd someFiles
+
+
+
+
+## *  ##
+
+ls bin*
+
+## ? ##
+
+ls bin??fa
+
+
+
+
+## this is a note 
+
+
+
+
+
+
+## # ## 
+
+## loops ##
+
+for ZOOP in *
+do
+  echo $ZOOP
+done
+
+echo $FILENAME
+
+FILENAME="zzoop"
+
+echo $FILENAME
+
+## 
+
+## we can use files as lists:
+
+cd someFiles 
+
+for i in $(cat bin5.fa)
+do
+  echo "this is data?" $i
+done
+
+## or look at some numbers...
+
+for i in {0..10}; do
+  echo "this is a number?" $i
+done
+
+### and a note about filepaths in linux
+
+## relative file paths
+cd 
+
+cd /vol
+
+cd funMicStorage
+
+cd ..
+
+pwd
+
+## absolute file paths
+
+cd /vol/funMicStorage
+
+## what's the difference between these?
+## (relative and absolute file paths)
+
+## and now let's learn how to get files onto and off our VM. 
+
+## find one of the fasta files in the directory called
+## /vol/funMicStorage/someFiles with MobaXterm and put 
+## it on your local computer. 
+
+## Make sure you can find it on both computers.
+
+
+## you probably don't need to do this, just use MobaXterm
+getFile=/vol/funMicStorage/zymoAnalysis/rawReadQC/ERR7255689_?_fastqc.html
+putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
+scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
+##
+
+
