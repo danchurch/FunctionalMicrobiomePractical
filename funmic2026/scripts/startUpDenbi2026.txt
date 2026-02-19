@@ -742,3 +742,38 @@ cut -f2 -d, studentList.csv
 ## to be continued. check out line 2080 from last years startup.
 ## first need to spin up VMs. 
 
+## stop here Feb 19 ## 
+
+## store keys locally at 
+
+cd /home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys ## officeComp
+## = ? for laptop
+
+## make 10 keys:
+for i in {01..10}; do
+  echo $i
+  ssh-keygen -f funmicStudent$i -N ""
+done
+
+## not run ##
+
+
+path2key="/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys" ## officeComp
+
+
+portNu=
+ssh-copy-id -p $portNu -i ${path2key} funmicStudent1.pub ubuntu@129.70.51.6
+## test login:
+ssh -Xvi ${path2key} funmicStudent1.pub ubuntu@129.70.51.6 -p $portNu
+
+for i in {01..10}; do
+  echo funmicStudent$i
+  ssh-copy-id -p $portNu -i ${path2key} funmicStudent${i}.pub ubuntu@129.70.51.6
+done
+
+## test login:
+ssh -Xvi ${path2key} funmicStudent${i}.pub ubuntu@129.70.51.6 -p $portNu
+
+## deploy keys
+## fix fstab tables
+
