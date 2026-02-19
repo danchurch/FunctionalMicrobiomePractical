@@ -358,6 +358,10 @@ conda create -n refine -c bioconda das_tool
 
 conda create -n dereplication -c bioconda  drep
 
+## however, this had a problem. The version of pandas installed 
+## automatically was too new, Dimitri re-installed with a 
+## pandas version from 2024
+
 ##### assign taxonomy to bins #####
 ### gtdb-tk ###
 
@@ -728,4 +732,11 @@ rsync -auv \
   -e "ssh -p 31993" \
   ubuntu@129.70.51.6:$getFile $putDir
 
+
+### generating keys for students. We have eight students. 
+
+cd /home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin
+
+
+cut -f2 -d, studentList.csv
 
