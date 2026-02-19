@@ -37,9 +37,6 @@ cd
 
 cd /vol/funMicStorage
 
-mkdir someFiles
-
-
 
 cp 
 
@@ -109,13 +106,22 @@ cd ..
 
 ## > ##
 
+echo "this a file" 
+
 echo "this a file" > file.txt
 
 
 
 ## |  ##
 
-one program | second program
+#one program | second program
+
+bbmap.sh -h
+
+less
+
+bbmap.sh -h | less
+
 
 ## ;  ##
 
