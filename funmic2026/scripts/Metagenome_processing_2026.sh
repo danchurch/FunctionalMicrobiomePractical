@@ -385,7 +385,7 @@ mkdir /vol/funmic/Kelp/Final_bins
 FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
 
 mkdir ${FINAL_BINS_DIRECTORY}/contigs
-scp ${DEREP_BINS_DIRECTORY}/*.fa ${FINAL_BINS_DIRECTORY}/contigs/
+scp ${DEREP_BINS_DIRECTORY}/dereplicated_genomes/*.fa ${FINAL_BINS_DIRECTORY}/contigs/
 
 ## Time 1 h 20 min
 
@@ -415,16 +415,14 @@ conda deactivate
 conda activate assignTaxonomy
 
 BINNING_DIRECTORY=/vol/funmic/Kelp/binning
-DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/dereplicated_bins/dereplicated_genomes
-
+FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
 
 gtdbtk classify_wf \
-    --mash_db /vol/funmic/databases/gtdb/release220/gtdb-tk-r220.msh \
 	--cpus 12 \
 	--pplacer_cpus 12 \
-	--genome_dir {FINAL_BINS_DIRECTORY}/contigs/ \
+	--genome_dir ${FINAL_BINS_DIRECTORY}/contigs/ \
 	-x fa \
-	--out_dir {FINAL_BINS_DIRECTORY}/GTDB
+	--out_dir ${FINAL_BINS_DIRECTORY}/GTDB
 	
 ## Time 4h 45 min
 
