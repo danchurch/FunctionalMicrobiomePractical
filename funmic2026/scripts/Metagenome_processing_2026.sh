@@ -416,8 +416,11 @@ conda activate assignTaxonomy
 
 BINNING_DIRECTORY=/vol/funmic/Kelp/binning
 FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
+ANI_SKETCH_DIR=${GTDBTK_DATA_PATH}/skani_sketch
 
 gtdbtk classify_wf \
+	--scratch_dir ./ \
+	--skani_sketch_dir ${ANI_SKETCH_DIR} \
 	--cpus 12 \
 	--pplacer_cpus 12 \
 	--genome_dir ${FINAL_BINS_DIRECTORY}/contigs/ \
