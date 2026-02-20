@@ -747,6 +747,7 @@ cut -f2 -d, studentList.csv
 ## store keys locally at 
 
 cd /home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys ## officeComp
+
 ## = ? for laptop
 
 ## make 10 keys:
@@ -755,25 +756,112 @@ for i in {01..10}; do
   ssh-keygen -f funmicStudent$i -N ""
 done
 
-## not run ##
-
+## my keys are on these. Each needs its corresponding student key, and dimitri's 
+## key.
 
 path2key="/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys" ## officeComp
 
 
-portNu=
-ssh-copy-id -p $portNu -i ${path2key} funmicStudent1.pub ubuntu@129.70.51.6
-## test login:
-ssh -Xvi ${path2key} funmicStudent1.pub ubuntu@129.70.51.6 -p $portNu
+cut -f3,4 -d, studentList.csv
 
-for i in {01..10}; do
-  echo funmicStudent$i
-  ssh-copy-id -p $portNu -i ${path2key} funmicStudent${i}.pub ubuntu@129.70.51.6
+cd /home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin
+keyDir="/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys"
+clear
+for i in $(cut -f3,4 -d, studentList.csv); do
+  studentNumber=${i%','*}
+  studentKey=${keyDir}/${studentNumber}.pub
+  portNumber=${i##*','}
+  echo $studentNumber $portNumber $studentKey
+  ssh-copy-id -p $portNumber -i $studentKey ubuntu@129.70.51.6
 done
 
-## test login:
-ssh -Xvi ${path2key} funmicStudent${i}.pub ubuntu@129.70.51.6 -p $portNu
+## that worked for a minute, then froze. 
+## great. Which VMs got their keys?
 
-## deploy keys
+ssh -i ~/.ssh/officeComp_denbi26.pub ubuntu@129.70.51.6 -p 30414
+## weird, host identities for this are in there, and old. 
+## remove them. 
+back,up,funmicStudent09,30414
+
+## from their ssh warning:
+ssh-keygen -f "/home/daniel/.ssh/known_hosts" -R "[129.70.51.6]:30414"
+
+ssh -v -p $portNumber ubuntu@129.70.51.6
+
+## that works. Not sure if the above loop is working or not...
+
+## go through these, one by one:
+
+path2key="/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys" ## officeComp
+
+## funmicStudent01
+ssh -Xvi ${path2key}/funmicStudent01.pub ubuntu@129.70.51.6 -p 30323
+## funmicStudent02
+ssh -Xvi ${path2key}/funmicStudent02.pub ubuntu@129.70.51.6 -p 30281
+## key is on there, but not accepted?
+ssh-copy-id -p 30281 -i ${path2key}/funmicStudent02.pub ubuntu@129.70.51.6
+## funmicStudent03
+
+ssh -Xvi ${path2key}/funmicStudent03.pub ubuntu@129.70.51.6 -p 30365
+## no key
+ssh-copy-id -p 30365 -i ${path2key}/funmicStudent03.pub ubuntu@129.70.51.6
+## funmicStudent04
+ssh -Xvi ${path2key}/funmicStudent04.pub ubuntu@129.70.51.6 -p 30500
+ssh-copy-id -p 30500 -i ${path2key}/funmicStudent04.pub ubuntu@129.70.51.6
+## funmicStudent05
+ssh -Xvi ${path2key}/funmicStudent05.pub ubuntu@129.70.51.6 -p 30272
+ssh-copy-id -p 30272 -i ${path2key}/funmicStudent05.pub ubuntu@129.70.51.6
+## funmicStudent06
+ssh -Xvi ${path2key}/funmicStudent06.pub ubuntu@129.70.51.6 -p 30453
+ssh-copy-id -p 30453 -i ${path2key}/funmicStudent06.pub ubuntu@129.70.51.6
+## funmicStudent07
+ssh -Xvi ${path2key}/funmicStudent07.pub ubuntu@129.70.51.6 -p 30306
+ssh-copy-id -p 30306 -i ${path2key}/funmicStudent07.pub ubuntu@129.70.51.6
+## funmicStudent08
+ssh -Xvi ${path2key}/funmicStudent08.pub ubuntu@129.70.51.6 -p 30460
+ssh-copy-id -p 30460 -i ${path2key}/funmicStudent08.pub ubuntu@129.70.51.6
+## funmicStudent09
+ssh-copy-id -p 30414 -i ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6
+ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
+
+## they all seem to work, but not sure if they are actually using the keys. 
+## Test them with the laptop later.
+
+## add dimitris key to all of these:
+
+cp deNBI_public_key_dimitri deNBI_public_key_dimitri.pub
+
+ssh-copy-id -p 30323 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30281 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30365 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30500 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30272 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30453 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30306 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+ssh-copy-id -p 30460 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+
+## not run
+ssh-copy-id -p 30414 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+
+tracepath -bp 30453 129.70.51.6
+
+ssh -Xvi ${path2key}/funmicStudent01.pub ubuntu@129.70.51.6 -p 30323
+
+ssh -Xvi ${path2key}/funmicStudent02.pub ubuntu@129.70.51.6 -p 30281
+ssh -Xvi ${path2key}/funmicStudent03.pub ubuntu@129.70.51.6 -p 30365
+ssh -Xvi ${path2key}/funmicStudent04.pub ubuntu@129.70.51.6 -p 30500
+ssh -Xvi ${path2key}/funmicStudent05.pub ubuntu@129.70.51.6 -p 30272
+
+ssh -Xvi ${path2key}/funmicStudent06.pub ubuntu@129.70.51.6 -p 30453
+ssh -Xvi ${path2key}/funmicStudent07.pub ubuntu@129.70.51.6 -p 30306
+ssh -Xvi ${path2key}/funmicStudent08.pub ubuntu@129.70.51.6 -p 30460
+ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
+
 ## fix fstab tables
+
+## since we have individual VMs, we can theoretically fix the 
+## fstab in each to hand reboots. 
+
+
+
 
