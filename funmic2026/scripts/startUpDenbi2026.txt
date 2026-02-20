@@ -801,7 +801,6 @@ ssh -Xvi ${path2key}/funmicStudent02.pub ubuntu@129.70.51.6 -p 30281
 ## key is on there, but not accepted?
 ssh-copy-id -p 30281 -i ${path2key}/funmicStudent02.pub ubuntu@129.70.51.6
 ## funmicStudent03
-
 ssh -Xvi ${path2key}/funmicStudent03.pub ubuntu@129.70.51.6 -p 30365
 ## no key
 ssh-copy-id -p 30365 -i ${path2key}/funmicStudent03.pub ubuntu@129.70.51.6
@@ -825,37 +824,25 @@ ssh-copy-id -p 30414 -i ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6
 ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
 
 ## they all seem to work, but not sure if they are actually using the keys. 
-## Test them with the laptop later.
+## Test them with the laptop 
 
-## add dimitris key to all of these:
+ssh -Xv ubuntu@129.70.51.6 -p 30323
+ssh -Xv ubuntu@129.70.51.6 -p 30281
+ssh -Xv ubuntu@129.70.51.6 -p 30365
+ssh -Xv ubuntu@129.70.51.6 -p 30500
+ssh -Xv ubuntu@129.70.51.6 -p 30272
+ssh -Xv ubuntu@129.70.51.6 -p 30453
+ssh -Xv ubuntu@129.70.51.6 -p 30306
+ssh -Xv ubuntu@129.70.51.6 -p 30460
+ssh -Xv ubuntu@129.70.51.6 -p 30414
 
-cp deNBI_public_key_dimitri deNBI_public_key_dimitri.pub
-
-ssh-copy-id -p 30323 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30281 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30365 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30500 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30272 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30453 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30306 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-ssh-copy-id -p 30460 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
-
-## not run
-ssh-copy-id -p 30414 -i ${path2key}/deNBI_public_key_dimitri ubuntu@129.70.51.6
+## all check out from laptop
 
 tracepath -bp 30453 129.70.51.6
 
-ssh -Xvi ${path2key}/funmicStudent01.pub ubuntu@129.70.51.6 -p 30323
+#path2key="/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys" ## officeComp
 
-ssh -Xvi ${path2key}/funmicStudent02.pub ubuntu@129.70.51.6 -p 30281
-ssh -Xvi ${path2key}/funmicStudent03.pub ubuntu@129.70.51.6 -p 30365
-ssh -Xvi ${path2key}/funmicStudent04.pub ubuntu@129.70.51.6 -p 30500
-ssh -Xvi ${path2key}/funmicStudent05.pub ubuntu@129.70.51.6 -p 30272
-
-ssh -Xvi ${path2key}/funmicStudent06.pub ubuntu@129.70.51.6 -p 30453
-ssh -Xvi ${path2key}/funmicStudent07.pub ubuntu@129.70.51.6 -p 30306
-ssh -Xvi ${path2key}/funmicStudent08.pub ubuntu@129.70.51.6 -p 30460
-ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
+## check with my laptop key:
 
 ## fix fstab tables
 
