@@ -38,7 +38,7 @@ cd
 
 cd /vol
 
-cd funMicStorage
+cd funmic
 
 cd ..
 
@@ -46,7 +46,7 @@ pwd
 
 ## absolute file path:
 
-cd /vol/funMicStorage
+cd /vol/funmic
 
 ## what's the difference between these?
 ## (relative and absolute file paths)
@@ -90,12 +90,12 @@ mkdir newDirectory
 
 
 
-mkdir /vol/funMicStorage/zoop
+mkdir /vol/funmic/zoop
 
-
-
-rmdir 
-
+## delete it:
+cd /vol/funmic
+rm zoop
+## does this work?
 
 
 
