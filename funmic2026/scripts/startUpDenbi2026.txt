@@ -826,15 +826,20 @@ ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
 ## they all seem to work, but not sure if they are actually using the keys. 
 ## Test them with the laptop 
 
-ssh -Xv ubuntu@129.70.51.6 -p 30323
-ssh -Xv ubuntu@129.70.51.6 -p 30281
-ssh -Xv ubuntu@129.70.51.6 -p 30365
-ssh -Xv ubuntu@129.70.51.6 -p 30500
-ssh -Xv ubuntu@129.70.51.6 -p 30272
-ssh -Xv ubuntu@129.70.51.6 -p 30453
-ssh -Xv ubuntu@129.70.51.6 -p 30306
-ssh -Xv ubuntu@129.70.51.6 -p 30460
-ssh -Xv ubuntu@129.70.51.6 -p 30414
+## working on:
+ssh -X ubuntu@129.70.51.6 -p 30323
+
+## still needs help
+ssh -X ubuntu@129.70.51.6 -p 30281
+ssh -X ubuntu@129.70.51.6 -p 30365
+ssh -X ubuntu@129.70.51.6 -p 30500
+ssh -X ubuntu@129.70.51.6 -p 30272
+ssh -X ubuntu@129.70.51.6 -p 30453
+ssh -X ubuntu@129.70.51.6 -p 30306
+ssh -X ubuntu@129.70.51.6 -p 30460
+
+## done
+ssh -X ubuntu@129.70.51.6 -p 30414
 
 ## all check out from laptop
 
@@ -849,6 +854,36 @@ tracepath -bp 30453 129.70.51.6
 ## since we have individual VMs, we can theoretically fix the 
 ## fstab in each to hand reboots. 
 
+## play with the back up computer, for now:
 
 
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"  ## dev name is different. ugh. have to check each one.
+
+lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | grep "vd"
+
+
+## save the old fstab in case disaster strikes:
+cp /etc/fstab ~/.fstab.bk
+
+## adding this line to the fstab
+
+sudo vim /etc/fstab
+
+#UUID=1c547cd8-ce37-4efc-a49e-be6d967a72fa       /vol/funmic      auto    defaults        0       2
+/dev/vdc        /vol/funmic      auto    defaults        0       2
+
+sudo reboot
+
+## nope. need to remount.
+sudo mount /dev/vdc /vol/funmic 
+
+sudo mount /dev/vdd /vol/funmic 
+
+## and weird, the UUID went away. 
+## let's use the device name and hope this is stable.
+## edited above
+
+## and works. UUID reappears, also, but let's just hope it is good as is. 
+
+## repeat for other VMs.
 
