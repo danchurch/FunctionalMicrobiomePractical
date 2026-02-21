@@ -826,20 +826,23 @@ ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
 ## they all seem to work, but not sure if they are actually using the keys. 
 ## Test them with the laptop 
 
+## already rebooted, log in to check
+
 ## working on:
-ssh -X ubuntu@129.70.51.6 -p 30323
 
 ## still needs help
-ssh -X ubuntu@129.70.51.6 -p 30281
-ssh -X ubuntu@129.70.51.6 -p 30365
-ssh -X ubuntu@129.70.51.6 -p 30500
-ssh -X ubuntu@129.70.51.6 -p 30272
-ssh -X ubuntu@129.70.51.6 -p 30453
 ssh -X ubuntu@129.70.51.6 -p 30306
 ssh -X ubuntu@129.70.51.6 -p 30460
+ssh -X ubuntu@129.70.51.6 -p 30414
 
 ## done
-ssh -X ubuntu@129.70.51.6 -p 30414
+ssh -X ubuntu@129.70.51.6 -p 30323
+ssh -X ubuntu@129.70.51.6 -p 30281
+ssh -X ubuntu@129.70.51.6 -p 30365 
+ssh -X ubuntu@129.70.51.6 -p 30500
+ssh -X ubuntu@129.70.51.6 -p 30272
+ssh -X ubuntu@129.70.51.6 -p 30453 
+
 
 ## all check out from laptop
 
@@ -854,36 +857,66 @@ tracepath -bp 30453 129.70.51.6
 ## since we have individual VMs, we can theoretically fix the 
 ## fstab in each to hand reboots. 
 
-## play with the back up computer, for now:
-
 
 lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | egrep -v "^loop"  ## dev name is different. ugh. have to check each one.
 
 lsblk -o NAME,SIZE,MOUNTPOINT,FSTYPE,TYPE,UUID | grep "vd"
 
+lsblk -o NAME,MOUNTPOINT,UUID | grep "vd"
+
+cat /etc/fstab
+
 
 ## save the old fstab in case disaster strikes:
 cp /etc/fstab ~/.fstab.bk
+
+cat ~/.fstab.bk
 
 ## adding this line to the fstab
 
 sudo vim /etc/fstab
 
-#UUID=1c547cd8-ce37-4efc-a49e-be6d967a72fa       /vol/funmic      auto    defaults        0       2
-/dev/vdc        /vol/funmic      auto    defaults        0       2
+UUID=1c547cd8-ce37-4efc-a49e-be6d967a72fa       /vol/funmic      auto    defaults        0       2
+
+
+## these aren't really stable
+#/dev/vdc        /vol/funmic      auto    defaults        0       2
+#/dev/vdd        /vol/funmic      auto    defaults        0       2
 
 sudo reboot
 
-## nope. need to remount.
-sudo mount /dev/vdc /vol/funmic 
+## nope. UUID didn't work for mounting - need to remount.
 
+#sudo mount /dev/vdc /vol/funmic 
 sudo mount /dev/vdd /vol/funmic 
 
-## and weird, the UUID went away. 
-## let's use the device name and hope this is stable.
-## edited above
+## and weird, the UUID went away. Unassigned. This why it didn't
+## work, it needs a new id. 
 
-## and works. UUID reappears, also, but let's just hope it is good as is. 
+## and works. UUID reappears, also
+## but this is a problem, when I reboot again the device 
+## sometimes renamed as vdc or vdd. 
 
-## repeat for other VMs.
+## so not stable. I think we have to use UUIDs
+
+##################################################################################################
+## updating funmicAdmin folders, laptop and desktop
+
+## pull from desktop
+laptopAdmin="/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2026admin"
+desktopAdmin="daniel@132.180.112.24:/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin"
+rsync -auvn  \
+  ${desktopAdmin}/ \
+  ${laptopAdmin}/ 
+
+
+## push to desktop
+laptopAdmin="/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2026admin"
+desktopAdmin="daniel@132.180.112.24:/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin"
+rsync -auvn  \
+  ${laptopAdmin}/ \
+  ${desktopAdmin}/ 
+
+##################################################################################################
+
 
