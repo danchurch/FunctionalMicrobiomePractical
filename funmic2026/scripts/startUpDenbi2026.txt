@@ -829,11 +829,9 @@ ssh -Xvi ${path2key}/funmicStudent09.pub ubuntu@129.70.51.6 -p 30414
 ## already rebooted, log in to check
 
 ## working on:
+ssh -X ubuntu@129.70.51.6 -p 30414
 
 ## still needs help
-ssh -X ubuntu@129.70.51.6 -p 30306
-ssh -X ubuntu@129.70.51.6 -p 30460
-ssh -X ubuntu@129.70.51.6 -p 30414
 
 ## done
 ssh -X ubuntu@129.70.51.6 -p 30323
@@ -842,11 +840,10 @@ ssh -X ubuntu@129.70.51.6 -p 30365
 ssh -X ubuntu@129.70.51.6 -p 30500
 ssh -X ubuntu@129.70.51.6 -p 30272
 ssh -X ubuntu@129.70.51.6 -p 30453 
-
+ssh -X ubuntu@129.70.51.6 -p 30306
+ssh -X ubuntu@129.70.51.6 -p 30460
 
 ## all check out from laptop
-
-tracepath -bp 30453 129.70.51.6
 
 #path2key="/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin/keys" ## officeComp
 
@@ -913,7 +910,7 @@ rsync -auvn  \
 ## push to desktop
 laptopAdmin="/home/daniel/Documents/teaching/functionalMicrobiomes/funmic2026admin"
 desktopAdmin="daniel@132.180.112.24:/home/daniel/Documents/teaching/funmic/2025-2026/practicalCompAdmin"
-rsync -auvn  \
+rsync -auv  \
   ${laptopAdmin}/ \
   ${desktopAdmin}/ 
 
