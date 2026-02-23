@@ -834,14 +834,15 @@ ssh -X ubuntu@129.70.51.6 -p 30414
 ## still needs help
 
 ## done
-ssh -X ubuntu@129.70.51.6 -p 30323
-ssh -X ubuntu@129.70.51.6 -p 30281
-ssh -X ubuntu@129.70.51.6 -p 30365 
-ssh -X ubuntu@129.70.51.6 -p 30500
-ssh -X ubuntu@129.70.51.6 -p 30272
-ssh -X ubuntu@129.70.51.6 -p 30453 
-ssh -X ubuntu@129.70.51.6 -p 30306
-ssh -X ubuntu@129.70.51.6 -p 30460
+ssh -X ubuntu@129.70.51.6 -p 30323 ## Dennis, funmicStudent01
+ssh -X ubuntu@129.70.51.6 -p 30281 ## Federico, funmicStudent02
+ssh -X ubuntu@129.70.51.6 -p 30365 ## Zoi, funmicStudent03
+ssh -X ubuntu@129.70.51.6 -p 30500 ## Dongun, funmicStudent04
+ssh -X ubuntu@129.70.51.6 -p 30272 ## Fiona, funmicStudent05
+ssh -X ubuntu@129.70.51.6 -p 30453 ## Hannes, funmicStudent06
+ssh -X ubuntu@129.70.51.6 -p 30306 ## Romina, funmicStudent07
+ssh -X ubuntu@129.70.51.6 -p 30460 ## Isabelle, funmicStudent08
+
 
 ## all check out from laptop
 
