@@ -41,4 +41,37 @@ for FILE in $(ls ${READ_DIRECTORY}/*.fastq.gz | xargs -n 1 basename | sed 's/.fa
 	done
 
 
+## The quality statistics are summarized in the fastqc.html files for each read file
+## Can be opened in a browser, for example by navigating to the containing folder in MobaXterm file browser (left side), right-clicking the html and select "open with " e.g. Chrome
+
+
+####### assembly #####
+
+conda activate assembly
+
+mkdir -p /vol/funmic/Kelp/assemblies
+
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblies
+
+## Iterative assembly with different k-mer sizes. K-mer size must be odd. K-mer sizes range from 21 and up to the full read length in increments of 10 bp
+## At the end contigs shorter than 1000 bp are discarded from the final assembly, as they cannot be reliably attributed to genomes or annotated in a meaningful way
+
+for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's/_1.fastq.gz//g');
+	do
+		megahit \
+			-1 ${READ_DIRECTORY}/${SAMPLE}_1.fastq.gz \
+			-2 ${READ_DIRECTORY}/${SAMPLE}_2.fastq.gz \
+			-o ${OUTPUTDIRECTORY}/${SAMPLE} \
+			--k-min 21 \
+			--k-max 249 \
+			--k-step 10 \
+			-m 1 \
+			-t 12 \
+			--min-contig-len 1000 \
+			--out-prefix ${SAMPLE} > /vol/funmic/Kelp/logs/${SAMPLE}_megahitlog.txt
+
+	done
+
+
 
