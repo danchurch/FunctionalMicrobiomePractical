@@ -69,6 +69,7 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 			--k-step 10 \
 			-m 1 \
 			-t 12 \
+			-o \
 			--min-contig-len 1000 \
 			--out-prefix ${SAMPLE} > /vol/funmic/Kelp/logs/${SAMPLE}_megahitlog.txt
 
