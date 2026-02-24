@@ -18,3 +18,9 @@ mkdir /vol/funmic/Kelp
 # Make a sub directory to store log files of some programs
 mkdir /vol/funmic/Kelp/logs
 
+## The Illumina reads from the white kelp biofims from Helgoland is here: /vol/funmic/datasets/kelpBiofilm
+## We store this location under the variable READ_DIRECTORY
+READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
+
+
+
