@@ -26,4 +26,19 @@ READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 mkdir /vol/funmic/Kelp/rawReadQC
 OUTPUTDIRECTORY=/vol/funmic/Kelp/rawReadQC
 
+## The variable FILE is read from listing all files ending with fastq.gz in the folder containing the data.
+## xargs ensures only the file names and not the entire path is listed
+## sed performs a search and replace operation replacing .fastq.gz with nothing, so that only the sample names are read into the vaiable and the file type extension is not dragged along
+
+conda activate qualityControlRawSequences
+
+for FILE in $(ls ${READ_DIRECTORY}/*.fastq.gz | xargs -n 1 basename | sed 's/.fastq.gz//g');
+	do
+		fastqc \
+		-t 12 \
+		-o ${OUTPUTDIRECTORY} \
+		${READ_DIRECTORY}/${FILE}.fastq.gz > /vol/funmic/Kelp/logs/${FILE}.fastqcLog.txt
+	done
+
+
 
