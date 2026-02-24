@@ -22,5 +22,8 @@ mkdir /vol/funmic/Kelp/logs
 ## We store this location under the variable READ_DIRECTORY
 READ_DIRECTORY=/vol/funmic/datasets/kelpBiofilm
 
+#Checking read quality with FastQC for all reads. FastQC can also be run with an interactive GUI by typing 'fastqc' into the command line
+mkdir /vol/funmic/Kelp/rawReadQC
+OUTPUTDIRECTORY=/vol/funmic/Kelp/rawReadQC
 
 
