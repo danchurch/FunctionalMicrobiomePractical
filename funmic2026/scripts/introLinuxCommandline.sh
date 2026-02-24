@@ -1,26 +1,18 @@
+
+## for macs, you will need to log in directly with SSH from your terminal
+
 ## to log in with a terminal:
+ssh -X ubuntu@129.70.51.6 -p 31993 ## this is for my VM. Your port will be different. 
 
-ssh -Y -p 30476 -i /home/daniel/.ssh/./id_ed25519 ubuntu@129.70.51.6
+## you may need to tell ssh  where you put your private ssh key:
 
-ssh -Y -p 30476 -i /home/daniel/.ssh/./id_ed25519 ubuntu@129.70.51.6
+ssh -X -i /home/daniel/.ssh/./officeComp_denbi26 ubuntu@129.70.51.6 -p 31993 
+## this is for my VM. Your port will be different. 
 
-## you can try this, or you can use MobaXterm
-
-## playing around with BASH (the linux command line)
-
-## use wget to get the latest version of the intro script (this document!)
-
-## first, you need to get this document, somehow...point and click from the link on the 
-## skript pdf (section C1, page 21) 
-
-https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/scripts/funBASHterminalScript.txt
-
-## you can use the command "wget" to download it while you are in the terminal:
-
-https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/main/funmic2024/scripts/funBASHterminalScript.txt
+## for windows users, you can try this, and/or you can use MobaXterm
 
 
-## and now, let's practice some commands and getting around in a linux filetree.
+## let's practice some commands and getting around in a linux filetree.
 
 pwd 
 
@@ -35,37 +27,102 @@ cd
 ## most of our work will actually not be in the "home" directory. 
 ## Look at the storage volume:
 
-cd /vol/funMicStorage
-
-
-cp 
+cd /vol/funmic
 
 
 
+### and a note about filepaths in linux
+
+## relative file path
+cd 
+
+cd /vol
+
+cd funmic
+
+cd ..
+
+pwd
+
+## absolute file path:
+
+cd /vol/funmic
+
+## what's the difference between these?
+## (relative and absolute file paths)
+
+## get back to your home directory, and back into the someFiles directory
+
+## the file path is:
+/home/ubuntu/someFiles
+
+## how will you get there?:
 
 
-cp bin1.fa zoop.fa
+## and what is in there?:
 
-mv zoop.fa ../  
 
-mv zoop.fa /vol/funMicStorage
+## the copy command is safe:
+
+cp A12-05.fastq  anotherFile.fastq
+
+
+
+
+
+## the mv (move) command is not so safe (but useful!)
+
+mv anotherFile.fastq thisIsTheSameFile.fastq
+
+
+
+
+mv thisIsTheSameFile.fastq doNotOverwriteMePlease.txt
+
+
+
+## the rm (remove) command is also dangerous!!
+
+rm doNotOverwriteMePlease.txt
 
 
 mkdir newDirectory
 
-mkdir /vol/funMicStorage/zoop
 
-rmdir 
+
+mkdir /vol/funmic/zoop
+
+## delete it:
+cd /vol/funmic
+rm zoop
+## does this work?
+
+
 
 echo 
 
+
+
+
 cat 
+
+
+
 
 rm 
 
+
+
+
 sudo 
 
+
+
+
 top 
+
+
+
 
 man top
 top --help
@@ -85,9 +142,10 @@ less
 
 ## ~  ##
 
-cd ~
+
 
 ## .  ##
+
 
 
 ## .. ## 
@@ -96,7 +154,7 @@ cd ~
 
 
 
-cd ..
+
 
 
 
@@ -120,18 +178,11 @@ bbmap.sh -h
 
 less
 
-bbmap.sh -h | less
-
-
-## ;  ##
-
-ls; cd ~
-
-ls
-cd ~
 
 
 ## /  ##
+
+## see filepaths
 
 ## \  ##
 
@@ -148,6 +199,9 @@ ls -l \
 
 
 
+top
+
+
 
 top &
 
@@ -162,23 +216,22 @@ echo $X
 
 
 
-vol 
-
-cd someFiles
-
-
-
 
 ## *  ##
 
-ls bin*
+## go back to someFiles
 
-## ? ##
+ls 
 
-ls bin??fa
+ls A12*
+
+ls doNot*
+
+ls *Please.txt
 
 
 
+## # ## 
 
 ## this is a note 
 
@@ -187,28 +240,25 @@ ls bin??fa
 
 
 
-## # ## 
 
 ## loops ##
 
-for ZOOP in *
+for FILENAME in *
 do
-  echo $ZOOP
+  echo here is a file: $FILENAME
 done
 
-echo $FILENAME
 
-FILENAME="zzoop"
 
-echo $FILENAME
+#### advanced stuff ####
 
-## 
+### more loops ###
 
 ## we can use files as lists:
 
-cd someFiles 
+## go back to someFiles directory
 
-for i in $(cat bin5.fa)
+for i in $(cat A12-05.fastq)
 do
   echo "this is data?" $i
 done
@@ -219,39 +269,41 @@ for i in {0..10}; do
   echo "this is a number?" $i
 done
 
-### and a note about filepaths in linux
+### find command ###
 
-## relative file paths
+## did you lose a file? find it with find!
+
 cd 
 
-cd /vol
+find . -name doNotOverwriteMePlease.txt
 
-cd funMicStorage
 
-cd ..
+find /vol/funmic/datasets -name sip2026.csv
 
-pwd
 
-## absolute file paths
 
-cd /vol/funMicStorage
-
-## what's the difference between these?
-## (relative and absolute file paths)
-
-## and now let's learn how to get files onto and off our VM. 
-
-## find one of the fasta files in the directory called
-## /vol/funMicStorage/someFiles with MobaXterm and put 
-## it on your local computer. 
-
+## find one of the files in the someFiles directory
+## try using MobaXterm and put it on your local computer. 
 ## Make sure you can find it on both computers.
 
+## if you are using a mac, you'll need to do your 
+## transfer the old-fashioned way, from the terminal
+## on your home computer (log off of de.NBI VM or 
+## open a new terminal
 
-## you probably don't need to do this, just use MobaXterm
-getFile=/vol/funMicStorage/zymoAnalysis/rawReadQC/ERR7255689_?_fastqc.html
-putDir=/home/daniel/Documents/teaching/functionalMicrobiomes/readQC/zymoQC
-scp -i /home/daniel/.ssh -P 30476 -r ubuntu@129.70.51.6:$getFile $putDir
-##
+## scp
+getFile=/home/ubuntu/someFiles/A12-05.fastq
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad
+scp -i /home/daniel/.ssh -P 31993 -r ubuntu@129.70.51.6:$getFile $putDir
 
+## or rsync:
+
+getFile=/home/ubuntu/someFiles/A12-05.fastq
+putDir=/home/daniel/Documents/teaching/funmic/scratchpad
+rsync -auv \
+  --progress \
+  -e "ssh -p 31993" \
+  ubuntu@129.70.51.6:$getFile $putDir
+
+ 
 
