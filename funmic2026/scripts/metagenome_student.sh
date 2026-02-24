@@ -14,3 +14,7 @@ ssh deNBI
 
 # Make a new directory "Kelp" under /vol/funmic/
 mkdir /vol/funmic/Kelp
+
+# Make a sub directory to store log files of some programs
+mkdir /vol/funmic/Kelp/logs
+
