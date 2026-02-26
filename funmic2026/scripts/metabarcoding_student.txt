@@ -2,6 +2,7 @@ wget https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/r
 
 
 
+
 ## Let's go through the results of last year's SIP experiment.
 ## Next year they will do the same with your data!
 
@@ -248,7 +249,6 @@ fileNames <- list.files()
 
 
 
-fileNames <- list.files()
 
 ## did that work?:
 
@@ -265,11 +265,22 @@ out <- filterAndTrim(fileNames, filterPath,
 
 ## did we lose a lot of reads?:
 
+out 
+
+
+
 setwd("/vol/funmic/metabarcoding/filtered")
+
+
+
 
 ## use characterize the errors in the base calling of the sequencer
 
+learnErrors
+
 err <- learnErrors(fileNames, multithread=TRUE)
+
+
 
 save(err, file="err.rda")
 
@@ -277,5 +288,14 @@ save(err, file="err.rda")
 load("err.rda")
 
 
-wget("https://github.com/danchurch/FunctionalMicrobiomePractical/blob/main/funmic2026/scripts/metabarcoding_student.txt")
+## this step defines our ASVs:
+dadaF <- dada(fileNames, err=err, pool=TRUE, multithread=TRUE)
+
+## now that we have ASVs, we can make an OTU table:
+seqtab <- makeSequenceTable(dadaF)
+
+
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+
+
 
