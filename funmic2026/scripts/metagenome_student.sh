@@ -178,3 +178,17 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
         -t 12
 	done
 
+
+## perform binning with MaxBin
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+  do
+    mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin
+# create MaxBin input tables by extracting the coverage columns from the metabat input table and saving as separate files. Header line is removed in the process
+    for i in $(seq 4 +2 8);
+        do
+            cut -f 1,"$i"  ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt | perl -0pe 's/contigName.*\n//g' > ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundance_"$i".txt
+        done
+
+    ls ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/*.txt > ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundances_list.txt
+done
+
