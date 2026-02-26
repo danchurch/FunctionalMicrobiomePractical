@@ -74,5 +74,11 @@ for SAMPLE in $(ls ${READ_DIRECTORY}/*_1.fastq.gz | xargs -n 1 basename | sed 's
 
 	done
 
+## Simplify contig names down to simple IDs, removing everything that follows the space in the header
+sed -i 's/\ .*//g' ${OUTPUTDIRECTORY}/*/*.contigs.fa
+for ASSEMBLY in $(ls ${OUTPUTDIRECTORY} | xargs -n 1 basename);
+	do
+		sed -i 's/>/>'$ASSEMBLY'_/g' ${OUTPUTDIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa
+	done
 
 
