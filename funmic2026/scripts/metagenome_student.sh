@@ -158,4 +158,14 @@ BINNING_DIRECTORY=/vol/funmic/Kelp/binning
 
 #This script is part of the MetaBAT module and reads out the bam files to generate a coverage table (incl. coverage variation) for the contigs
 
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}
+		mkdir ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT
+		jgi_summarize_bam_contig_depths \
+			--outputDepth ${BINNING_DIRECTORY}/${ASSEMBLY}/MetaBAT/${ASSEMBLY}_coverage_Depths.txt \
+			--referenceFasta  ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+			${MAPPING_DIRECTORY}/*_to_${ASSEMBLY}_sorted.bam
+    done
+
 
