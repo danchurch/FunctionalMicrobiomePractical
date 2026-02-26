@@ -82,3 +82,26 @@ for ASSEMBLY in $(ls ${OUTPUTDIRECTORY} | xargs -n 1 basename);
 	done
 
 
+
+## okay, let's look at it with quast
+conda deactivate
+
+conda activate assemblyQC
+
+mkdir /vol/funmic/Kelp/assemblyQC
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies/
+OUTPUTDIRECTORY=/vol/funmic/Kelp/assemblyQC/
+
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+	do
+		quast -t 12 \
+			-o ${OUTPUTDIRECTORY}/${ASSEMBLY}/ \
+			${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+			> /vol/funmic/Kelp/logs/${ASSEMBLY}_quastLog.txt
+	done
+
+conda deactivate
+## trivial amount of time and memory used.
+
+
+
