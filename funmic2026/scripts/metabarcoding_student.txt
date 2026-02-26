@@ -11,17 +11,11 @@ cd /vol/funmic
 mkdir metabarcoding
 
 
+
 ## go to the directory with the raw read files
 cd /vol/funmic/datasets/Barcode2026/raw_reads
 
-inputFastq=A12-05.fastq.gz ## example file
-outputDir=/vol/funmic/metabarcoding/trimmed_reads/
-cutadapt --rc \
-    -g TCGTGYCAGCMGCCGCGGTAA \
-    --length 280 \
-    -a GGACTACNVGGGTWTCTAAT \
-    -o ${outputDir}${inputFastq} \
-       ${inputFastq}
+
 
 
 
@@ -72,12 +66,38 @@ GGACTACNVGGGTWTCTAAT
 ## make a folder to put your trimmed reads:
 
 
-/vol/funmic/metabarcoding/
+inputFastq=A12-05.fastq.gz ## example file
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+
+cutadapt --rc \
+    -g TCGTGYCAGCMGCCGCGGTAA \
+    --length 280 \
+    -a GGACTACNVGGGTWTCTAAT \
+    -o ${outputDir}${inputFastq} \
+       ${inputFastq}
 
 
-
+cd /vol/funmic/datasets/Barcode2026
 
 mkdir /vol/funmic/metabarcoding/trimmed_reads/
+
+## make a directory to put our trimmed files, if you didn't already above
+mkdir /vol/funmic/metabarcoding/trimmed_reads/
+
+## make sure you are still in the directory with the raw read files
+cd /vol/funmic/datasets/Barcode2026/raw_reads
+
+## and redo, this time looping through ALL of our raw reads files
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+for inputFastq in *; do
+    cutadapt --rc \
+        -g TCGTGYCAGCMGCCGCGGTAA \
+        --length 280 \
+        -a GGACTACNVGGGTWTCTAAT \
+        -o ${outputDir}${inputFastq} \
+           ${inputFastq}
+done
+
 
 
 
