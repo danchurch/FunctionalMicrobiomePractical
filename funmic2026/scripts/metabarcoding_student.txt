@@ -306,13 +306,30 @@ load("dadaF.rda")
 seqtab <- makeSequenceTable(dadaF)
 
 
+
+
+
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+
+
+
 
 
 ## look at them:
 rownames(seqtab.nochim)
 
+
+
+
+
+
+
+
 rownames(seqtab.nochim) <- unlist(strsplit(rownames(seqtab.nochim), ".fastq.gz"))
+
+
+
+
 
 ## how do they look now?
 rownames(seqtab.nochim)
