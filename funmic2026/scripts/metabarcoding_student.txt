@@ -175,7 +175,13 @@ ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
 
 ## if you want to start a different plotter:
 
+
+
+
 dev.new()
+
+
+
 
 ggplot(df, aes(x=hp, y=mpg, color=am, shape=cyl)) +
     geom_point(size=3)
@@ -185,19 +191,74 @@ ggplot(df, aes(x=hp, y=mpg, color=am, shape=cyl)) +
 ## if you want to save this graphic, save it as a
 ## variable and...
 
+
+
 prettyGraphic <- ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
                  geom_point(size=3)
 
-ggsave("prettyGraphic.pdf",
+
+prettyGraphic
+
+ggsave("~/prettyGraphic.pdf",
         device = pdf,
         plot = prettyGraphic,
         width = 10,
         height = 6)
 
 
+############ denoising reads ###########
+
+
+
+## we here we need R.
+
+## make sure we are in our base conda environment:
+
+q()
+
+
+conda deactivate
+
+## back to our working directory
 
 
 
 
+cd /vol/funmic/metabarcoding/trimmed_reads
+
+
+
+
+
+## start R!
+
+R
+
+
+library(dada2)
+library(phyloseq)
+ 
+
+
+fileNames <- list.files()
+
+
+
+fileNames <- list.files()
+
+## did that work?:
+
+fileNames
+
+## do some quality filtering on these reads before denoising
+
+## where should we put these?
+filterPath <- "/vol/funmic/metabarcoding/filtered"
+
+out <- filterAndTrim(fileNames, filterPath,
+              maxN=0, maxEE=2, truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE)
+
+## did we lose a lot of reads?:
 
 
