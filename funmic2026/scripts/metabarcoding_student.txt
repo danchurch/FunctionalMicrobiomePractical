@@ -22,5 +22,43 @@ cd /vol/funmic/metabarcoding
 
 ## our raw sequence data is stored here:
 
+
+
 ls /vol/funmic/datasets/Barcode2026/raw_reads
+
+zless Y13-07.fastq.gz
+
+
+
+
+cd /vol/funmic/datasets/Barcode2026
+
+
+
+fastqc -o . -t 2 allRawReads.fastq.gz
+
+
+## just for Dan:
+scp -P 31993 ubuntu@129.70.51.6:/vol/funmic/datasets/Barcode2026/allRawReads_fastqc.html /home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/
+## just for Dan ^
+
+## we have a set of forward 16s primers (515F) that look like this:
+  GTGYCAGCMGCCGCGGTAA
+ CGTGYCAGCMGCCGCGGTAA
+TCGTGYCAGCMGCCGCGGTAA
+
+## our 16S 806 reverse primer is:
+GGACTACNVGGGTWTCTAAT
+
+## (https://www.bioinformatics.org/sms/iupac.html)
+
+## we can feed this info to our primer-cutting software
+
+## make a folder to put your trimmed reads:
+
+mkdir /vol/funmic/metabarcoding/trimmed_reads/
+
+
+## we can run a quality check using the program fastqc
+fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2026/allRawReads.fastq.gz
 
