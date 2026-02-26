@@ -336,8 +336,6 @@ rownames(seqtab.nochim)
 
 
 
-
-
 ## now we have OTUs (ASVs) and an otu table
 ## let's get taxonomic assignments:
 
@@ -351,25 +349,5 @@ taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
 
 samdf <- read.csv("/vol/funmic/datasets/Barcode2026/sip2026.csv",
                    row.names=1,)
-
-
-samdf$Isotope <- as.factor( samdf$Isotope )
-
-
-## how does it look?
-
-samdf
-
-## now we have ASVs with their DNA sequences, and OTU table showing their abundance
-s,
-## taxonomic assignments for these ASVs, and sample information
-## These are the basic components of a microbial community ecology dataset.
-## let's bring these together into a single object using the Phyloseq package
-
-
-ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
-               sample_data(samdf),
-               tax_table(taxa))
-
 
 
