@@ -372,12 +372,45 @@ ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
                tax_table(taxa))
 
 
+
+
+ps
+
+
+sample_data(ps)
+
+
+
+tax_table(ps)
+
+
+otu_table(ps)
+
+
+
+
 ## insert our representative sequences for our OTUs:
 dna <- Biostrings::DNAStringSet(taxa_names(ps))
 names(dna) <- taxa_names(ps)
 ps <- merge_phyloseq(ps, dna)
 ## give our ASVs pretty names instead of DNA sequences:
 taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+
+
+## now you can explore your data with phyloseq!
+## for a good intro to phyloseq, see: https://vaulot.github.io/tutorials/Phyloseq_tutorial.html#gettin-started
+
+## save this object for later!:
+
+## move back to our working directory:
+setwd("/vol/funmic/metabarcoding/")
+
+save(ps, file="sipPS.rda")
+
+## you can then bring this phyloseq object back into your
+## R environment whenever you want by typing:
+
+load("sipPS.rda")
 
 
 
