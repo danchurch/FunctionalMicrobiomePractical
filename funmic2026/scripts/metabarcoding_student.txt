@@ -173,6 +173,28 @@ df$cyl <- as.factor(df$cyl)
 ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
     geom_point(size=3)
 
+## if you want to start a different plotter:
+
+dev.new()
+
+ggplot(df, aes(x=hp, y=mpg, color=am, shape=cyl)) +
+    geom_point(size=3)
+
+
+
+## if you want to save this graphic, save it as a
+## variable and...
+
+prettyGraphic <- ggplot(df, aes(x=hp, y=mpg, color=cyl, shape=cyl)) +
+                 geom_point(size=3)
+
+ggsave("prettyGraphic.pdf",
+        device = pdf,
+        plot = prettyGraphic,
+        width = 10,
+        height = 6)
+
+
 
 
 
