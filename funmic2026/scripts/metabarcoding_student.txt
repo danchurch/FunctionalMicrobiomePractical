@@ -3,3 +3,24 @@
 
 conda activate qualityControlRawSequences
 
+
+
+cd /vol/funmic
+
+
+mkdir metabarcoding
+
+
+
+
+mkdir /vol/funmic/metabarcoding
+
+
+
+cd /vol/funmic/metabarcoding
+
+
+## our raw sequence data is stored here:
+
+ls /vol/funmic/datasets/Barcode2026/raw_reads
+
