@@ -192,3 +192,13 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
     ls ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/*.txt > ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundances_list.txt
 done
 
+# run MaxBin
+for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY}/ | xargs -n 1 basename);
+  do
+    run_MaxBin.pl \
+        -contig ${ASSEMBLY_DIRECTORY}/${ASSEMBLY}/${ASSEMBLY}.contigs.fa \
+        -abund_list ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_abundances_list.txt \
+        -out ${BINNING_DIRECTORY}/${ASSEMBLY}/MaxBin/${ASSEMBLY}_MaxBin \
+        -thread 14
+  done
+
