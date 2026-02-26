@@ -138,5 +138,24 @@ for ASSEMBLY in $(ls ${ASSEMBLY_DIRECTORY} | xargs -n 1 basename);
 			done
 	done
 
+####### BINNING ######
+
+
+
+mkdir /vol/funmic/Kelp/binning
+
+#defining some variables. DATA_FOLDER should be an absolute path to where the data for the project is stored, with fastq reads being in a subfolder called "reads".
+#PROJECTNAME is a prefix which was used for the assembly etc.
+#METAWATTPATH should be the absolute path to the folder with the Metawatt jar file. METAWATT_DATABASES is the absolute path to the Metawatt databases
+#CONCOCTPATH should be the absolute path to the concoct folder containing subfolders "bin" and "scripts"
+
+MAPPING_DIRECTORY=/vol/funmic/Kelp/mapping
+ASSEMBLY_DIRECTORY=/vol/funmic/Kelp/assemblies
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+
+
+#Binning of the metagenomes co-assembly
+
+#This script is part of the MetaBAT module and reads out the bam files to generate a coverage table (incl. coverage variation) for the contigs
 
 
