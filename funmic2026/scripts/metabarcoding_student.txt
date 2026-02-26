@@ -372,4 +372,12 @@ ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE),
                tax_table(taxa))
 
 
+## insert our representative sequences for our OTUs:
+dna <- Biostrings::DNAStringSet(taxa_names(ps))
+names(dna) <- taxa_names(ps)
+ps <- merge_phyloseq(ps, dna)
+## give our ASVs pretty names instead of DNA sequences:
+taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+
+
 
