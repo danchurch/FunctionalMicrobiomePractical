@@ -261,4 +261,16 @@ out <- filterAndTrim(fileNames, filterPath,
 
 ## did we lose a lot of reads?:
 
+setwd("/vol/funmic/metabarcoding/filtered")
+
+## use characterize the errors in the base calling of the sequencer
+
+err <- learnErrors(fileNames, multithread=TRUE)
+
+save(err, file="err.rda")
+
+
+load("err.rda")
+
+
 
