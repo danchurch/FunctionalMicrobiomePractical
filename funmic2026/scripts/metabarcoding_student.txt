@@ -1,3 +1,5 @@
 ## Let's go through the results of last year's SIP experiment.
 ## Next year they will do the same with your data!
 
+conda activate qualityControlRawSequences
+
