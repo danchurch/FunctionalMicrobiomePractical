@@ -282,14 +282,25 @@ err <- learnErrors(fileNames, multithread=TRUE)
 
 
 
+
+
 save(err, file="err.rda")
 
 
 load("err.rda")
 
 
+
+
+
 ## this step defines our ASVs:
 dadaF <- dada(fileNames, err=err, pool=TRUE, multithread=TRUE)
+
+
+save(dadaF, file="dadaF.rda")
+
+load("dadaF.rda")
+
 
 ## now that we have ASVs, we can make an OTU table:
 seqtab <- makeSequenceTable(dadaF)
@@ -298,4 +309,17 @@ seqtab <- makeSequenceTable(dadaF)
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 
 
+## look at them:
+rownames(seqtab.nochim)
+
+rownames(seqtab.nochim) <- unlist(strsplit(rownames(seqtab.nochim), ".fastq.gz"))
+
+## how do they look now?
+rownames(seqtab.nochim)
+
+
+## now we have OTUs (ASVs) and an otu table
+## let's get taxonomic assignments:
+
+path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
 
