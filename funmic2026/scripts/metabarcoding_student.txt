@@ -405,7 +405,12 @@ taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
 ## move back to our working directory:
 setwd("/vol/funmic/metabarcoding/")
 
+
+
 save(ps, file="sipPS.rda")
+
+
+
 
 ## you can then bring this phyloseq object back into your
 ## R environment whenever you want by typing:
