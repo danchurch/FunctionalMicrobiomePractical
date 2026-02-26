@@ -11,6 +11,18 @@ cd /vol/funmic
 mkdir metabarcoding
 
 
+## go to the directory with the raw read files
+cd /vol/funmic/datasets/Barcode2026/raw_reads
+
+inputFastq=A12-05.fastq.gz ## example file
+outputDir=/vol/funmic/metabarcoding/trimmed_reads/
+cutadapt --rc \
+    -g TCGTGYCAGCMGCCGCGGTAA \
+    --length 280 \
+    -a GGACTACNVGGGTWTCTAAT \
+    -o ${outputDir}${inputFastq} \
+       ${inputFastq}
+
 
 
 mkdir /vol/funmic/metabarcoding
@@ -37,6 +49,9 @@ cd /vol/funmic/datasets/Barcode2026
 
 fastqc -o . -t 2 allRawReads.fastq.gz
 
+## we can run a quality check using the program fastqc
+fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2026/allRawReads.fastq.gz
+
 
 ## just for Dan:
 scp -P 31993 ubuntu@129.70.51.6:/vol/funmic/datasets/Barcode2026/allRawReads_fastqc.html /home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/
@@ -56,9 +71,15 @@ GGACTACNVGGGTWTCTAAT
 
 ## make a folder to put your trimmed reads:
 
+
+/vol/funmic/metabarcoding/
+
+
+
+
 mkdir /vol/funmic/metabarcoding/trimmed_reads/
 
 
-## we can run a quality check using the program fastqc
-fastqc -o .  -t 12 /vol/funmic/datasets/Barcode2026/allRawReads.fastq.gz
+
+
 
