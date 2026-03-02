@@ -358,7 +358,6 @@ conda deactivate
 conda activate completeness_estimate
 
 BINNING_DIRECTORY=/vol/funmic/Kelp/Final_bins
-# ALL_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/all_bins
 
 DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins/contigs
 
@@ -367,7 +366,7 @@ checkm2 predict \
 	--threads 12 \
 	--remove_intermediates \
 	--input ${FINAL_BINS_DIRECTORY}/contigs \
-	--extension .fa \
+	--extension fa \
 	--output-directory ${FINAL_BINS_DIRECTORY}/CheckM
 
 ## Time 6 min
