@@ -357,9 +357,7 @@ conda deactivate
 
 conda activate completeness_estimate
 
-BINNING_DIRECTORY=/vol/funmic/Kelp/Final_bins
-
-DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins/contigs
+FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
 
 checkm2 predict \
 	--allmodels \
