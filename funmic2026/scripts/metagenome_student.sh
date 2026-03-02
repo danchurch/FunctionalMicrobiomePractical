@@ -351,14 +351,16 @@ rm -r Annotation/ CheckM/ GTDB/ emapper* proteins/ temp/ \{FINAL_BINS_DIRECTORY\
 
 conda deactivate
 
+
+
 ## Check MAG completeness and contamination with the new checkm2. Results from CheckM 1.2.2 should be available from dRep
 
 conda activate completeness_estimate
 
-BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+BINNING_DIRECTORY=/vol/funmic/Kelp/Final_bins
 # ALL_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/all_bins
 
-DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/dereplicated_bins/dereplicated_genomes
+DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins/contigs
 
 checkm2 predict \
 	--allmodels \
