@@ -917,4 +917,34 @@ rsync -auv  \
 
 ##################################################################################################
 
+##################################################################################################
+## grabbing data object from a student comp (in this case Fiona's computer)
+getFile="/vol/funmic/metabarcoding/sipPS.rda"
+putDir="/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/"
+rsync -auvn \
+      --progress \
+      -e "ssh -p 30272" \
+      ubuntu@129.70.51.6:$getFile $putDir
+
+## put it onto another denbi comp (in this case mine)
+
+putDir="/vol/funmic/metabarcoding/"
+getFile="/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/sipPS.rda"
+rsync -auvn \
+      --progress \
+      -e "ssh -p 31993" \
+      $getFile ubuntu@129.70.51.6:$putDir
+
+##################################################################################################
+
+## get get slow plots, put them local to show students:
+
+
+getFile="/vol/funmic/metabarcoding/methanolPCA.pdf"
+putDir="/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/"
+rsync -auv \
+      --progress \
+      -e "ssh -p 31993" \
+      ubuntu@129.70.51.6:$getFile $putDir
+
 

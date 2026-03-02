@@ -25,8 +25,7 @@ library(ggplot2)
 
 ## let's get some extra functions from github repo:
 
-download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R",
-              "sipFunctions.R", method="wget")
+download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R", "sipFunctions.R", method="wget")
 
 source("sipFunctions.R") 
 
@@ -38,6 +37,9 @@ load("sipPS.rda")
 
 plot_bar(ps)
 
+
+
+
 ## how might this affect our analysis?
 
 ## one very simple adjustment would be to change to proportions:
@@ -45,11 +47,11 @@ ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 
 ## a quick look at the relative abundance of the most common ASVs:
 
-familiesPlot <- plotFamilies(ps,30)
+familiesPlot <- plotFamilies(ps.prop,30)
 
-familiesPlot 
+#familiesPlot ## but wait!! takes a really long time.  
 
-## this takes forever. To download a copy:
+## since this takes forever. To get a copy to download:
 ggsave("familiesBySubIso.pdf",
         device = pdf,
         plot = familiesPlot,
@@ -57,9 +59,17 @@ ggsave("familiesBySubIso.pdf",
         height = 6)
 
 
+
 ## we can try to an overview with an NMS graphic of all of our samples:
-dev.new() 
-NMS_braycurtis(ps.prop)
+#dev.new() 
+
+nmsAllsamples <- NMS_braycurtis(ps.prop)
+
+#ggsave("nmsAllsamples.pdf",
+#        device = pdf,
+#        plot = nmsAllsamples,
+#        width = 10,
+#        height = 6)
 
 ## is the stress okay?
 
@@ -73,24 +83,47 @@ ps.y <- subset_samples(ps, Substrate == "Y")
 
 
 ## and let's look at these with a PCA approach.
-## use another custom function:
+## use another custom function: "plotPCAWithSpecies"
+
+
 
 dev.new()
-plotPCAWithSpecies(ps.m, ptitle="Methanol PCA")
+
+acetatePCA <- plotPCAWithSpecies(ps.a, ptitle="Acetate PCA")
+
+ggsave("acetatePCA.pdf",
+        device = pdf,
+        plot = acetatePCA,
+        width = 10,
+        height = 6)
 
 ## how would you look at the other substrates: acetate, glucose and glycerol?
 
-dev.new()
-plotPCAWithSpecies(ps.a, ptitle="Acetate PCA")
 
-dev.new()
-plotPCAWithSpecies(ps.g, ptitle="Glucose PCA")
+methanolPCA <- plotPCAWithSpecies(ps.m, ptitle="Methanol PCA")
+glucosePCA <- plotPCAWithSpecies(ps.g, ptitle="Glucose PCA")
+glycerolPCA <- plotPCAWithSpecies(ps.y, ptitle="Glycerol PCA")
 
-dev.new()
-plotPCAWithSpecies(ps.y, ptitle="Glycerol PCA")
+#ggsave("glycerolPCA.pdf",
+#        device = pdf,
+#        plot = glycerolPCA,
+#        width = 10,
+#        height = 6)
 
 ## the PCA and species scoring algorithms are such that the species are positioned close to 
 ## the sites that they are most important in distinguishing. 
+
+
+
+
+## remember, we haven't transformed our abundances of our phyloseq objects by substrate
+## how would we do this?
+
+ps.m.prop <- transform_sample_counts(ps.m, function(otu) otu/sum(otu))
+ps.g.prop <- transform_sample_counts(ps.g, function(otu) otu/sum(otu))
+ps.a.prop <- transform_sample_counts(ps.a, function(otu) otu/sum(otu))
+ps.y.prop <- transform_sample_counts(ps.y, function(otu) otu/sum(otu))
+
 
 ## let's check one out:
 ## here is a function that take the following arguments:
@@ -99,18 +132,27 @@ plotPCAWithSpecies(ps.y, ptitle="Glycerol PCA")
 ## ASV1 looks important:
 ## we can graph by Fraction or Buoyant Density :
 
-dev.new()
-getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="Fraction")
+
+ASV1Methanol_fraction <- getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="Fraction")
 
 dev.new()
-getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
+ASV1Methanol_fraction
+
+
+ASV1Methanol_BD  <- getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
+
+dev.new()
+ASV1Methanol_BD
+
 
 ## an example of an "unshifted" organism: 
 
 dev.new()
 
 ## example of two gc-rich species, no strong evidence of uptake of heavy isotope: 
+
 getFractionAbundances(ASVname="ASV3", whichPS=ps.m.prop, ptitle="Methanol, ASV3", fracOrBD="BD")
+
 tax_table(ps)["ASV3",]
 
 getFractionAbundances(ASVname="ASV7", whichPS=ps.m.prop, ptitle="Methanol, ASV7", fracOrBD="BD")
@@ -118,16 +160,15 @@ tax_table(ps)["ASV7",]
 
 ## etc etc 
 
-## remember what to do if you want to save a plot?:
 
-methOH_ASV33 <- getFractionAbundances(ASVname="ASV33", whichPS=ps.m.prop, ptitle="glucose, ASV33", fracOrBD="BD")
+## getting taxonomy:
 
-ggsave("ASV33_MethOH_buoyantDensAbundances.pdf",
-        device = pdf,
-        plot = methOH_ASV33)
+tax_table(ps)["ASV1"]
 
-ggsave("ASV33_MethOH_buoyantDensAbundances.png",
-        device = png,
-        plot = methOH_ASV33)
+
+
+
+
+### getting out spreadsheets of our data for tomorrow's "SIP amplicon data mining" session:
 
 
