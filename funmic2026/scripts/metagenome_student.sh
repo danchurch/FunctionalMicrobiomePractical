@@ -374,7 +374,6 @@ conda deactivate
 ##  Classify the bins taxonomically with GTDB-Tk
 conda activate assignTaxonomy
 
-BINNING_DIRECTORY=/vol/funmic/Kelp/binning
 FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
 ANI_SKETCH_DIR=${GTDBTK_DATA_PATH}/skani_sketch
 
