@@ -343,3 +343,7 @@ scp ${DEREP_BINS_DIRECTORY}/dereplicated_genomes/*.fa ${FINAL_BINS_DIRECTORY}/co
 ## Time 1 h 20 min
 
 conda deactivate
+
+cd /vol/funmic/Kelp/Final_bins/
+rm -r Annotation/ CheckM/ GTDB/ emapper* proteins/ temp/ \{FINAL_BINS_DIRECTORY\}/
+
