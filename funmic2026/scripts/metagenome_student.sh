@@ -367,9 +367,6 @@ checkm2 predict \
 	--extension fa \
 	--output-directory ${FINAL_BINS_DIRECTORY}/CheckM
 
-## Time 6 min
-conda deactivate
-
 conda deactivate
 
 
