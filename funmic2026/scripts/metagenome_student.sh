@@ -345,5 +345,29 @@ scp ${DEREP_BINS_DIRECTORY}/dereplicated_genomes/*.fa ${FINAL_BINS_DIRECTORY}/co
 conda deactivate
 
 cd /vol/funmic/Kelp/Final_bins/
+
 rm -r Annotation/ CheckM/ GTDB/ emapper* proteins/ temp/ \{FINAL_BINS_DIRECTORY\}/
+
+
+conda deactivate
+
+## Check MAG completeness and contamination with the new checkm2. Results from CheckM 1.2.2 should be available from dRep
+
+conda activate completeness_estimate
+
+BINNING_DIRECTORY=/vol/funmic/Kelp/binning
+# ALL_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/all_bins
+
+DEREP_BINS_DIRECTORY=/vol/funmic/Kelp/binning/drep/dereplicated_bins/dereplicated_genomes
+
+checkm2 predict \
+	--allmodels \
+	--threads 12 \
+	--remove_intermediates \
+	--input ${FINAL_BINS_DIRECTORY}/contigs \
+	--extension .fa \
+	--output-directory ${FINAL_BINS_DIRECTORY}/CheckM
+
+## Time 6 min
+conda deactivate
 
