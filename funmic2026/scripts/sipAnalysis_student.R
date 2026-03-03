@@ -1,12 +1,23 @@
 ## this is a continuation of our metabarcoding analysis from last week. 
 
+## where is this file
+
+find . -name sipPS.rda
+
+R
+
+
 
 ## we need some extra, custom functions for handling our SIP data:
 
-download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunct
-ions.R", "sipFunctions.R", method="wget")
+download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/scripts/sipFunctions.R", "sipFunctions.R", method="wget")
 
 source("sipFunctions.R")
+
+library(phyloseq)
+library(ggplot2)
+load("sipPS.rda")
+
 
 
 
@@ -15,7 +26,7 @@ source("sipFunctions.R")
 
 
 
-
+plot_bar(ps)
 
 
 
@@ -36,6 +47,9 @@ source("sipFunctions.R")
 ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 
 
+ps 
+
+ps.prop 
 
 
 
@@ -44,9 +58,10 @@ ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
 
 ## a quick look at the relative abundance of the most common ASVs:
 
+
+
+
 familiesPlot <- plotFamilies(ps.prop,30)
-
-
 
 
 ## plotting interactively takes forever. To get a copy to download:
@@ -65,7 +80,12 @@ ggsave("familiesBySubIso.pdf",
 ## as a first step, let's ordinate all of our samples into a single
 ## graphic:
 
-nmsAllsamples <- NMS_braycurtis(_________) ## what argument goes in here???
+nmsAllsamples <- NMS_braycurtis(ps.prop) ## what argument goes in here???
+
+
+nmsAllsamples
+
+
 
 ## you can try to view it in the plotter or save the ggplot graphic as we
 ## did above with ggsave()
@@ -87,6 +107,11 @@ nmsAllsamples <- NMS_braycurtis(_________) ## what argument goes in here???
 ## example, methanol phyloseq
 
 ps.m <- subset_samples(ps, Substrate == "M")
+ps.g <- subset_samples(ps, Substrate == "G")
+ps.a <- subset_samples(ps, Substrate == "A")
+ps.y <- subset_samples(ps, Substrate == "Y")
+
+
 
 ## how would you subset your phyloseq to other substrates?:
 
@@ -150,7 +175,11 @@ ps.m.prop <- transform_sample_counts(ps.m, function(otu) otu/sum(otu))
 
 ASV1Methanol_fraction <- getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="Fraction")
 
+ASV1Methanol_fraction
+
+
 dev.new()
+
 ASV1Methanol_fraction
 
 
@@ -158,7 +187,9 @@ ASV1Methanol_fraction
 ASV1Methanol_BD  <- getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methanol",fracOrBD="BD")
 
 dev.new()
-ASV1Methanol_BD
+
+ASV1Methanol_BD  
+
 
 
 
@@ -171,6 +202,8 @@ tax_table(ps)["ASV1"]
 ## what do unshifted species look like?
 
 tax_table(ps)["ASV3",]
+
+dev.new()
 
 getFractionAbundances(ASVname="ASV3", whichPS=ps.m.prop, ptitle="Methanol, ASV3", fracOrBD="BD")
 

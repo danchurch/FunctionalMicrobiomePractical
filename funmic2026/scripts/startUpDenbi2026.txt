@@ -939,7 +939,6 @@ rsync -auvn \
 
 ## get get slow plots, put them local to show students:
 
-
 getFile="/vol/funmic/metabarcoding/methanolPCA.pdf"
 putDir="/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/"
 rsync -auv \
@@ -947,4 +946,27 @@ rsync -auv \
       -e "ssh -p 31993" \
       ubuntu@129.70.51.6:$getFile $putDir
 
+## it looks like the samples were mislabeled in the acetate 
+## data. 
 
+## we need to update the acetate group with new sampled data:
+
+## fixing acetate sample data:
+
+cd /vol/funmic/metabarcoding
+
+R
+
+library(phyloseq)
+
+load("sipPS.rda")
+
+download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/metabarcodeData/sip2026.csv", "sip2026.csv", method="wget")
+
+samdf <- read.csv("sip2026.csv", row.names=1)
+
+samdf$Isotope <- as.factor( samdf$Isotope )
+
+sample_data(ps) = samdf
+
+sample_data(ps)
