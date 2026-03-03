@@ -970,3 +970,6 @@ samdf$Isotope <- as.factor( samdf$Isotope )
 sample_data(ps) = samdf
 
 sample_data(ps)
+
+save(ps, file = "sipPS.rda")
+
