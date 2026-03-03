@@ -7,6 +7,7 @@
 ## paper: Van Erk et al. 2021, doi.org/mgt4
 ## dataset accession number on NCBI/ENA: PRJEB36085
 
+
 ## First, create a folder  for all the new files that you will generate during the analysis.
 ## We will keep it organized and structured to easily find the output produced by the different tools
 
@@ -414,7 +415,6 @@ conda deactivate
 ##  Classify the bins taxonomically with GTDB-Tk
 conda activate assignTaxonomy
 
-BINNING_DIRECTORY=/vol/funmic/Kelp/binning
 FINAL_BINS_DIRECTORY=/vol/funmic/Kelp/Final_bins
 ANI_SKETCH_DIR=${GTDBTK_DATA_PATH}/skani_sketch
 
@@ -429,75 +429,7 @@ gtdbtk classify_wf \
 	
 ## Time 4h 45 min
 
-##-------------------------------------------------------------------------------------------------------------------------
-## Functional prediction with MicroTrait
-##-------------------------------------------------------------------------------------------------------------------------
-
-conda activate annotation
-
-cd ${FINAL_BINS_DIRECTORY}
-
-/usr/bin/R
-
-library(microtrait)
-require(stringr)
-
-genomes_dir <- "contigs/"
-out_dir <- "microtrait/"
-
-genomes <- str_replace_all(list.files(genomes_dir, pattern=".fa"), ".fa$", "")
-
-for(GENOME in genomes) {
-  results_protein <- extract.traits(in_file=paste(genomes_dir, GENOME, ".fa", sep=""),
-                                    out_dir = "microtrait/",
-                                    type="genomic",
-                                    mode="single",
-                                    growthrate_predict = T,
-                                    optimalT_predict = T)
-  
-    write.table(results_protein$microtrait_result$trait_counts_atgranularity3,
-              file=paste(out_dir,GENOME,"trait_counts_atgranularity3.tsv", sep=""),
-              sep="\t",
-              quote=F,
-              row.names=F)
-}
-
-
-rds_files <- list.files(out_dir, 
-                        pattern=".rds", 
-                        full.names=T)
-
-genomeset_results = make.genomeset.results(rds_files,
-                                           ids = genomes,
-                                           growthrate = T,
-                                           optimumT = T,
-                                           ncores = 12)
-
-
-write.table(genomeset_results$hmm_matrix, 
-                file=paste(out_dir,"Genomes_hmm_matrix.tsv", sep=""), 
-                sep="\t", 
-                row.names=F, 
-                quote=F, 
-                na="")                                           
-
-write.table(genomeset_results$trait_matrixatgranularity3, 
-                file=paste(out_dir,"Genomes_trait_matrixatgranularity3.tsv", sep=""), 
-                sep="\t", 
-                row.names=F, 
-                quote=F, 
-                na="")
-
-write.table(genomeset_results$rule_matrix, 
-                file=paste(out_dir,"Genomes_rule_matrix.tsv", sep=""), 
-                sep="\t", 
-                row.names=F, 
-                quote=F, 
-                na="")
-
-
-quit(save="no")
-
+conda deactivate
 
 # Annotation of proteins with InterPro
 
@@ -525,23 +457,23 @@ sed -i 's/\*//g' proteins/*.faa
 
 mkdir Annotation
 
-INTERPRO_DATA_DIR=/vol/funmic/databases/interproscan-5.73-104.0
+INTERPRO_DATA_DIR=/vol/funmic/databases/interproscan-5.77-108.0/
 
-for MAG in $(ls proteins/*.faa | xargs -n 1 basename | sed 's/.faa//g');
+for MAG in $(cat ${FINAL_BINS_DIRECTORY}/Best_bins.txt);
 
 do
 
     ${INTERPRO_DATA_DIR}/interproscan.sh \
 		-cpu 12 \
         -appl Pfam,TIGRFAM,SUPERFAMILY \
-		-i proteins/${MAG}.faa \
+		-i ${FINAL_BINS_DIRECTORY}/proteins/${MAG}.faa \
 		-f tsv \
-		-o Annotation/${MAG}_InterProScan.tsv
+		-o ${FINAL_BINS_DIRECTORY}/Annotation/${MAG}_InterProScan.tsv
 
 done
        
 # Annotation of proteins with EggNOG-Mapper (VERY SLOW)
-
+EGGNOG_DATA_DIR=/vol/funmic/databases/EggNOG
 
 for MAG in $(ls proteins/*.faa | xargs -n 1 basename | sed 's/.faa//g');
 do
@@ -549,8 +481,10 @@ do
     emapper.py \
         --cpu 12 \
         -m diamond \
+        --data_dir ${EGGNOG_DATA_DIR} \
+        --dmnd_db ${EGGNOG_DATA_DIR}/eggnog_proteins.dmnd \
         --qtype seq \
-        --seed_ortholog_evalue 0.00001 \
+        --seed_ortholog_evalue 1e-10 \
         -i proteins/${MAG}.faa \
         --output_dir Annotation/ \
         -o ${MAG}_EggNOG
