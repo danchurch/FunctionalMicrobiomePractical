@@ -834,15 +834,21 @@ ssh -X ubuntu@129.70.51.6 -p 30414
 ## still needs help
 
 ## done
-ssh -X ubuntu@129.70.51.6 -p 30323 ## Dennis, funmicStudent01
-ssh -X ubuntu@129.70.51.6 -p 30281 ## Federico, funmicStudent02
-ssh -X ubuntu@129.70.51.6 -p 30365 ## Zoi, funmicStudent03
-ssh -X ubuntu@129.70.51.6 -p 30500 ## Dongun, funmicStudent04
-ssh -X ubuntu@129.70.51.6 -p 30272 ## Fiona, funmicStudent05
-ssh -X ubuntu@129.70.51.6 -p 30453 ## Hannes, funmicStudent06
-ssh -X ubuntu@129.70.51.6 -p 30306 ## Romina, funmicStudent07
-ssh -X ubuntu@129.70.51.6 -p 30460 ## Isabelle, funmicStudent08
 
+path2key=/home/ubuntu/.ssh/funmic0_to_funmic ## on denbi
+
+ssh -X -i $path2key  ubuntu@129.70.51.6 -p 30323 ## Dennis, funmicStudent01
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30281 ## Federico, funmicStudent02
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30365 ## Zoi, funmicStudent03
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30500 ## Dongun, funmicStudent04
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30272 ## Fiona, funmicStudent05
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30453 ## Hannes, funmicStudent06
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30306 ## Romina, funmicStudent07
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30460 ## Isabelle, funmicStudent08
+
+
+## let's add a key to allow funmic0 (ours) to the student computers:
+ssh-keygen -f funmic0_to_funmic -N "" 
 
 ## all check out from laptop
 
@@ -946,12 +952,22 @@ rsync -auv \
       -e "ssh -p 31993" \
       ubuntu@129.70.51.6:$getFile $putDir
 
-## it looks like the samples were mislabeled in the acetate 
-## data. 
 
 ## we need to update the acetate group with new sampled data:
 
-## fixing acetate sample data:
+##### fixing acetate sample data: ####
+
+## it looks like the samples were mislabeled in the acetate 
+## data. The heavy and light samples were switched, it looks 
+## like. Somewhere in the labeling of files. 
+
+## I switched the labeling of the samples back in the sample 
+## metadata, but I think the read files may also need to be
+## corrected. Not sure. 
+
+## Just switching the names in the sample data causes two 
+## samples to be lost:
+
 
 cd /vol/funmic/metabarcoding
 
@@ -961,15 +977,49 @@ library(phyloseq)
 
 load("sipPS.rda")
 
+sample_data(ps)
+
+sample_data(ps)[sample_data(ps)$Substrate == "A"]
+
 download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/metabarcodeData/sip2026.csv", "sip2026.csv", method="wget")
 
 samdf <- read.csv("sip2026.csv", row.names=1)
 
+samdf[samdf$Substrate == "A",]
 samdf$Isotope <- as.factor( samdf$Isotope )
+
+ps.backup <- ps
 
 sample_data(ps) = samdf
 
-sample_data(ps)
+sample_data(ps)[sample_data(ps)$Substrate == "A"]
 
-save(ps, file = "sipPS.rda")
+sample_data(ps.backup)[sample_data(ps)$Substrate == "A"]
+
+ps
+ps.backup
+
+## yup, two samples are dropped. This is probably because 
+## two of the sample names are for samples that don't exist:
+
+A12-06
+A12-07
+A13-06
+A13-07
+
+A12-05
+A12-06
+A12-07
+A13-06
+Y13-06
+Y13-07
+
+## this also means we probably misallocated the data here
+## as in, the reads we are now calling A12-06 may have originally 
+## been A12-05, etc. 
+
+## okay, so we also need to correct our file names for our
+## acetate reads, I think. 
+
+#save(ps, file = "sipPS.rda") ## don't save this until we are sure...
 
