@@ -65,6 +65,8 @@ ggsave("familiesBySubIso.pdf",
 
 nmsAllsamples <- NMS_braycurtis(ps.prop)
 
+nmsAllsamples
+
 #ggsave("nmsAllsamples.pdf",
 #        device = pdf,
 #        plot = nmsAllsamples,
@@ -78,7 +80,9 @@ nmsAllsamples <- NMS_braycurtis(ps.prop)
 ## let's break up our data by substrate
 ps.m <- subset_samples(ps, Substrate == "M")
 ps.g <- subset_samples(ps, Substrate == "G")
+
 ps.a <- subset_samples(ps, Substrate == "A")
+
 ps.y <- subset_samples(ps, Substrate == "Y")
 
 
@@ -91,11 +95,15 @@ dev.new()
 
 acetatePCA <- plotPCAWithSpecies(ps.a, ptitle="Acetate PCA")
 
+acetatePCA 
+
 ggsave("acetatePCA.pdf",
         device = pdf,
         plot = acetatePCA,
         width = 10,
         height = 6)
+
+
 
 ## how would you look at the other substrates: acetate, glucose and glycerol?
 
@@ -121,7 +129,9 @@ glycerolPCA <- plotPCAWithSpecies(ps.y, ptitle="Glycerol PCA")
 
 ps.m.prop <- transform_sample_counts(ps.m, function(otu) otu/sum(otu))
 ps.g.prop <- transform_sample_counts(ps.g, function(otu) otu/sum(otu))
+
 ps.a.prop <- transform_sample_counts(ps.a, function(otu) otu/sum(otu))
+
 ps.y.prop <- transform_sample_counts(ps.y, function(otu) otu/sum(otu))
 
 
@@ -144,6 +154,24 @@ ASV1Methanol_BD  <- getFractionAbundances("ASV1",ps.m.prop,ptitle="ASV1, Methano
 dev.new()
 ASV1Methanol_BD
 
+ASV100Acetate_BD  <- getFractionAbundances("ASV100",ps.a.prop,ptitle="ASV100, Acetate",fracOrBD="BD")
+ASV455Acetate_BD <- getFractionAbundances("ASV455",ps.a.prop,ptitle="ASV455, Acetate",fracOrBD="BD")
+ASV31Acetate_BD  <- getFractionAbundances("ASV31",ps.a.prop,ptitle="ASV31, Acetate",fracOrBD="BD")
+ggsave("ASV31Acetate_BD.pdf",
+        device = pdf,
+        plot = ASV31Acetate_BD,
+        width = 10,
+        height = 6)
+
+#getFile="/vol/funmic/metabarcoding/acetatePCA.pdf"
+getFile="/vol/funmic/metabarcoding/ASV*Acetate_BD.pdf"
+putDir="/home/daniel/Documents/teaching/functionalMicrobiomes/scratchpad/"
+rsync -auvn \
+      --progress \
+      -e "ssh -p 31993" \
+      ubuntu@129.70.51.6:$getFile $putDir
+
+## this looks better. 
 
 ## an example of an "unshifted" organism: 
 
@@ -164,8 +192,6 @@ tax_table(ps)["ASV7",]
 ## getting taxonomy:
 
 tax_table(ps)["ASV1"]
-
-
 
 
 

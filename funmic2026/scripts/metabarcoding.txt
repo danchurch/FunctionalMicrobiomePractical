@@ -317,7 +317,6 @@ save(dadaF, file="dadaF.rda")
 ## now that we have ASVs, we can make an OTU table:
 seqtab <- makeSequenceTable(dadaF) 
 
-
 seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
 
 

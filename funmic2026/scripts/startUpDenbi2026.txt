@@ -1081,15 +1081,94 @@ rm *.bk
 ## rerun our dada2 pipeline with these new filenames and
 ## sample data. Then try some sip analysis.
 
+## no, changing these file names flipped the c12 and c13
+
+## so back up. It looks like changing the sample data was good,
+## but there is a mismatch in the files names 
+
+## restore the old files, closely inspect the sample data 
+## see if there are mismatches 
+
+## datasheet
+A13-05,A,13,5,1.73192
+A13-06,A,13,6,1.72297
+A13-07,A,13,7,1.712
+A12-06,A,12,6,1.71599
+A12-07,A,12,7,1.70901
+A12-08,A,12,8,1.70101
+
+## files:
+A12-05.fastq.gz
+A12-06.fastq.gz
+A12-07.fastq.gz
+A13-06.fastq.gz
+A13-07.fastq.gz
+A13-08.fastq.gz
+
+## our datasheet has no information for these files:
+A12-05.fastq.gz ## heaviest/lowest-numbered A12
+A13-08.fastq.gz ## lightest/highest-numbered A13
+
+## it has an extra entry (with no file) for:
+A13-05,A,13,5,1.73192
+A12-08,A,12,8,1.70101
+
+## it is unlikely that these c13 had DNA in these lighter fractions,
+## so it is likely that fraction labels were mixed up, not the isotope
+## as in, they labeled the lowest/heaviest fraction number from
+## the c12 samples with the fraction numbers that actually belonged to 
+## the c13 tube.
+
+## it also looks to me in the ordination that A12-05 and A12-06 
+## were mixed up.
+
+## so how to fix this? the range of values needs to be shifted
+## and exchange the A12-05 and A12-06 names
+
+A12-05.fastq.gz
+A12-06.fastq.gz
+A12-07.fastq.gz
+
+A13-06.fastq.gz
+A13-07.fastq.gz
+A13-08.fastq.gz
+
+cd /vol/funmic/datasets/Barcode2026/raw_reads
+
+for i in A1*; do
+  echo $i
+  echo ${i/\.gz/.gz.bk}
+  cp $i ${i/\.gz/.gz.bk}
+done
+
+## exchange A12-05 and -06
+
+mv A12-05.fastq.gz  A12-06.fastq.gz 
+mv A12-06.fastq.gz.bk  A12-05.fastq.gz 
+cp A12-06.fastq.gz A12-06.fastq.gz.bk  
+
+## and correct the fraction number in the names:
+
+mv A12-05.fastq.gz  A12-06.fastq.gz 
+mv A12-06.fastq.gz.bk  A12-07.fastq.gz
+mv A12-07.fastq.gz.bk  A12-08.fastq.gz
+
+mv A13-06.fastq.gz  A13-05.fastq.gz
+mv A13-07.fastq.gz  A13-06.fastq.gz
+mv A13-08.fastq.gz  A13-07.fastq.gz
+
+## try the metabarcode pipeline again.
+
+
 ## if results make sense, change these files 
 ## on home computer, etc. 
 
 ## put these on Zoi and Romina's computers:
 
 path2key=/home/ubuntu/.ssh/funmic0_to_funmic ## on denbi
+
 ssh -X -i $path2key ubuntu@129.70.51.6 -p 30365 ## Zoi, funmicStudent03
 ssh -X -i $path2key ubuntu@129.70.51.6 -p 30306 ## Romina, funmicStudent07
-
 
 getFile="/vol/funmic/metabarcoding/sipPS.rda"
 putDir="/vol/funmic/metabarcoding/"
@@ -1097,5 +1176,12 @@ rsync -auv \
       --progress \
       -e "ssh -p 30306 -i $path2key" \
       $getFile ubuntu@129.70.51.6:$putDir
+
+
+## let's assume for the moment that these are the correct
+## readnames and sample data, at least until students
+## tell us otherwise.
+
+## get them on the laptop:
 
 
