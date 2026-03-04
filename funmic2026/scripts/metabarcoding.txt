@@ -269,6 +269,9 @@ library(phyloseq)
 
 ## where are our trimmed reads?
 
+setwd("/vol/funmic/metabarcoding/trimmed_reads")
+
+
 fileNames <- list.files()
 
 ## did that work?:
@@ -304,8 +307,12 @@ load("err.rda")
 plotErrors(err, nominalQ=TRUE)
 
 
+
 ## this step defines our ASVs:
 dadaF <- dada(fileNames, err=err, pool=TRUE, multithread=TRUE)
+
+save(dadaF, file="dadaF.rda")
+
 
 ## now that we have ASVs, we can make an OTU table:
 seqtab <- makeSequenceTable(dadaF) 
@@ -332,6 +339,7 @@ rownames(seqtab.nochim)
 path2silvaDB <- "/vol/funmic/databases/metabarcodingSilvaDB/silva_nr99_v138.2_toGenus_trainset.fa.gz"
 
 taxa <- assignTaxonomy(seqtab.nochim, path2silvaDB, multithread=TRUE)
+
 
 
 ## sample information is contained in the file names,

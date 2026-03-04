@@ -1023,3 +1023,79 @@ Y13-07
 
 #save(ps, file = "sipPS.rda") ## don't save this until we are sure...
 
+
+## we have the following files
+
+A12-05.fastq.gz
+A12-06.fastq.gz
+A12-07.fastq.gz
+A13-06.fastq.gz
+A13-07.fastq.gz
+A13-08.fastq.gz
+
+## these look weird, because the c12 fractions are smaller,
+## implying that the c12 samples are heavier
+
+## the most likely explanation is that:
+
+A12-05.fastq.gz == A13-05.fastq.gz
+A12-06.fastq.gz == A13-06.fastq.gz
+A12-07.fastq.gz == A13-07.fastq.gz
+A13-06.fastq.gz == A12-06.fastq.gz
+A13-07.fastq.gz == A12-07.fastq.gz
+A13-08.fastq.gz == A12-08.fastq.gz
+
+## so back up our raw read files
+
+mkdir /vol/funmic/datasets/Barcode2026/raw_reads_bk/
+
+cp /vol/funmic/datasets/Barcode2026/raw_reads/* /vol/funmic/datasets/Barcode2026/raw_reads_bk/
+
+## to reset:
+rm -f /vol/funmic/datasets/Barcode2026/raw_reads/*
+
+cp /vol/funmic/datasets/Barcode2026/raw_reads_bk/* /vol/funmic/datasets/Barcode2026/raw_reads/
+
+cd /vol/funmic/datasets/Barcode2026/raw_reads/
+
+## and try to correct our file names.
+## have to be careful not to overwrite existing names
+
+for i in A1*; do
+  echo $i
+  echo ${i/\.gz/.gz.bk}
+  cp $i ${i/\.gz/.gz.bk}
+done
+
+## rename these
+
+mv A12-05.fastq.gz  A13-05.fastq.gz 
+mv A12-06.fastq.gz  A13-06.fastq.gz
+mv A12-07.fastq.gz  A13-07.fastq.gz
+mv A13-06.fastq.gz.bk  A12-06.fastq.gz
+mv A13-07.fastq.gz.bk  A12-07.fastq.gz
+mv A13-08.fastq.gz  A12-08.fastq.gz
+
+rm *.bk
+
+## rerun our dada2 pipeline with these new filenames and
+## sample data. Then try some sip analysis.
+
+## if results make sense, change these files 
+## on home computer, etc. 
+
+## put these on Zoi and Romina's computers:
+
+path2key=/home/ubuntu/.ssh/funmic0_to_funmic ## on denbi
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30365 ## Zoi, funmicStudent03
+ssh -X -i $path2key ubuntu@129.70.51.6 -p 30306 ## Romina, funmicStudent07
+
+
+getFile="/vol/funmic/metabarcoding/sipPS.rda"
+putDir="/vol/funmic/metabarcoding/"
+rsync -auv \
+      --progress \
+      -e "ssh -p 30306 -i $path2key" \
+      $getFile ubuntu@129.70.51.6:$putDir
+
+
