@@ -206,26 +206,3 @@ tax_table(ps)["ASV3",]
 dev.new()
 
 getFractionAbundances(ASVname="ASV3", whichPS=ps.m.prop, ptitle="Methanol, ASV3", fracOrBD="BD")
-
-
-cd /vol/funmic/metabarcoding
-
-R
-
-library(phyloseq)
-
-load("sipPS.rda")
-
-download.file("https://raw.githubusercontent.com/danchurch/FunctionalMicrobiomePractical/refs/heads/main/funmic2026/metabarcodeData/sip2026.csv", "sip2026.csv", method="wget")
-
-samdf <- read.csv("sip2026.csv", row.names=1)
-
-samdf$Isotope <- as.factor( samdf$Isotope )
-
-sample_data(ps) = samdf
-
-sample_data(ps)
-
-save(ps, file = "sipPS.rda")
-
-
